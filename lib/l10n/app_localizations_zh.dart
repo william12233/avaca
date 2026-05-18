@@ -226,6 +226,228 @@ class AppLocalizationsZh extends AppLocalizations {
   String get english => '英文';
 }
 
+/// The translations for Chinese, as used in China (`zh_CN`).
+class AppLocalizationsZhCn extends AppLocalizationsZh {
+  AppLocalizationsZhCn() : super('zh_CN');
+
+  @override
+  String get addTitle => '新增收藏';
+
+  @override
+  String get noPhoto => '尚无照片';
+
+  @override
+  String get selectPhoto => '选择照片';
+
+  @override
+  String get removePhoto => '移除照片';
+
+  @override
+  String get actressNameRequired => '女优姓名 (必填)';
+
+  @override
+  String get saveCard => '保存卡片';
+
+  @override
+  String get changePhoto => '更换照片';
+
+  @override
+  String get deletePhoto => '删除照片';
+
+  @override
+  String get noAttributesSet => '尚未设置属性';
+
+  @override
+  String get bodyInfo => '身体资料';
+
+  @override
+  String get heightCm => '身高 (cm)';
+
+  @override
+  String get weightKg => '体重 (kg)';
+
+  @override
+  String get cup => '罩杯';
+
+  @override
+  String get measurements => '三围';
+
+  @override
+  String get privateNotes => '私人笔记';
+
+  @override
+  String get noNotes => '尚无笔记';
+
+  @override
+  String get confirmDeleteTitle => '确认删除？';
+
+  @override
+  String get deleteWarningWithPhoto => '删除后将无法恢复，连同照片文件也会被清除。';
+
+  @override
+  String get cancel => '取消';
+
+  @override
+  String get confirmDelete => '确定删除';
+
+  @override
+  String get appTitle => 'AVACA 收藏库';
+
+  @override
+  String get search => '搜索';
+
+  @override
+  String get filterAndSort => '筛选与排序';
+
+  @override
+  String get add => '新增';
+
+  @override
+  String get settings => '设置';
+
+  @override
+  String loadFailed(String error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String get noData => '尚无资料';
+
+  @override
+  String get searchNameHint => '输入名称快速搜索...';
+
+  @override
+  String get applySettings => '应用设置';
+
+  @override
+  String get themeMode => '主题模式';
+
+  @override
+  String get followSystem => '跟随系统';
+
+  @override
+  String get lightTheme => '浅色';
+
+  @override
+  String get darkTheme => '深色';
+
+  @override
+  String get customTheme => '自定义主题';
+
+  @override
+  String get pureBlackAmoled => '纯黑 AMOLED';
+
+  @override
+  String get pureBlackOnlyDarkOrCustom => '仅深色 / 自定义主题有效';
+
+  @override
+  String get colorSurface => '背景';
+
+  @override
+  String get colorSurfaceContainer => '卡片背景';
+
+  @override
+  String get colorOnSurface => '主要文字';
+
+  @override
+  String get colorOnSurfaceVariant => '次要文字';
+
+  @override
+  String get colorPrimary => '交互主色';
+
+  @override
+  String get colorOnPrimary => '主色文字';
+
+  @override
+  String get colorOutline => '边框 / 分隔线';
+
+  @override
+  String adjustColorTitle(String colorLabel) {
+    return '调整 $colorLabel';
+  }
+
+  @override
+  String get apply => '应用';
+
+  @override
+  String get imageReadFailedUnsupportedFormat => '图片读取失败，可能格式不支持';
+
+  @override
+  String get enterName => '请输入姓名';
+
+  @override
+  String get collectionAdded => '收藏成功';
+
+  @override
+  String get alreadyInCollection => '已经在收藏库中';
+
+  @override
+  String get dataDeleted => '资料已彻底删除';
+
+  @override
+  String get deleteFailed => '删除失败';
+
+  @override
+  String get photoCroppedRememberSave => '照片裁切完成，请记得按下保存！';
+
+  @override
+  String get detailSaved => '详细资料已保存！';
+
+  @override
+  String get saveFailedDuplicateName => '保存失败，可能是姓名与他人重复';
+
+  @override
+  String get dataNotFound => '找不到资料';
+
+  @override
+  String get attrCensored => '有码';
+
+  @override
+  String get attrUncensored => '无码';
+
+  @override
+  String get attrWestern => '欧美';
+
+  @override
+  String get attrFc2 => 'FC2';
+
+  @override
+  String get attrDomestic => '国产';
+
+  @override
+  String get filterAll => '全部';
+
+  @override
+  String get imageCropLoadErrorTitle => '图片读取错误';
+
+  @override
+  String get close => '关闭';
+
+  @override
+  String get imageDecodeFailed => '图片解码失败';
+
+  @override
+  String get cropZoom => '放大缩小';
+
+  @override
+  String get cropPanX => '左右平移';
+
+  @override
+  String get cropPanY => '上下平移';
+
+  @override
+  String get confirmCrop => '确定裁切';
+
+  @override
+  String get language => '语言';
+
+  @override
+  String get traditionalChineseTaiwan => '繁体中文（台湾）';
+
+  @override
+  String get english => '英文';
+}
+
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');

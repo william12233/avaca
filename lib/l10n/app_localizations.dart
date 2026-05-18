@@ -94,9 +94,10 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('zh', 'TW'),
+    Locale('zh', 'CN'),
     Locale('en'),
     Locale('zh'),
-    Locale('zh', 'TW'),
   ];
 
   /// No description provided for @addTitle.
@@ -549,6 +550,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
     case 'zh':
       {
         switch (locale.countryCode) {
+          case 'CN':
+            return AppLocalizationsZhCn();
           case 'TW':
             return AppLocalizationsZhTw();
         }

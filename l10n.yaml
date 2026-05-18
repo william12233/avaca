@@ -3,3 +3,7 @@ template-arb-file: app_zh_TW.arb
 output-localization-file: app_localizations.dart
 output-dir: lib/l10n
 nullable-getter: false
+preferred-supported-locales:
+  - zh_TW
+  - zh_CN
+  - en
