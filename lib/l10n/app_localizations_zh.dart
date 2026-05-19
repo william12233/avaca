@@ -224,6 +224,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get english => '英文';
+
+  @override
+  String get simplifiedChinese => '簡體中文';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -446,6 +449,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get english => '英文';
+
+  @override
+  String get simplifiedChinese => '简体中文';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -668,4 +674,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get english => '英文';
+
+  @override
+  String get simplifiedChinese => '簡體中文';
 }

@@ -30,15 +30,12 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void initState() {
     super.initState();
-
     controller = SettingsController(
       db: widget.db,
     );
-
     // 載入目前儲存的外觀設定
     controller.loadFromPrefs();
     controller.loadCustomTheme();
-
     // 監聽設定變更並同步更新畫面
     controller.addListener(_onControllerChanged);
   }
@@ -52,14 +49,12 @@ class _SettingsViewState extends State<SettingsView> {
   // 將 controller 的外觀與語言狀態同步給外層，並重建目前畫面
   void _onControllerChanged() {
     if (!mounted) return;
-
     widget.onThemeChanged(
       controller.themeMode,
       controller.isPureBlack,
       controller.isCustomTheme ? controller.customColors : null,
     );
     widget.onLocaleChanged(controller.appLocale);
-
     setState(() {});
   }
 
@@ -102,41 +97,94 @@ class _SettingsViewState extends State<SettingsView> {
 
   // 主題模式選擇區塊
   Widget _themeModeSelector() {
-    return DropdownButtonFormField<String>(
-      initialValue: controller.getAppearanceState()['theme_mode'] as String,
-      decoration: InputDecoration(
-        labelText: AppLocalizations.of(context).themeMode,
+    final current =
+        controller.getAppearanceState()['theme_mode'] as String;
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(AppLocalizations.of(context).themeMode),
+      trailing: _popupTheme(
+        child: PopupMenuButton<String>(
+          initialValue: current,
+          tooltip: '',
+          padding: EdgeInsets.zero,
+          borderRadius: BorderRadius.circular(999),
+          onSelected: (value) async {
+            await controller.themeModeChanged(value);
+          },
+          itemBuilder: (context) {
+            return controller.getThemeModeOptions().map((value) {
+              return PopupMenuItem(
+                value: value,
+                child: Text(_themeModeLabel(value)),
+              );
+            }).toList();
+          },
+          child: _popupValueText(_themeModeLabel(current)),
+        ),
       ),
-      items: controller.getThemeModeOptions().map((value) {
-        return DropdownMenuItem(
-          value: value,
-          child: Text(_themeModeLabel(value)),
-        );
-      }).toList(),
-      onChanged: (value) async {
-        if (value == null) return;
-        await controller.themeModeChanged(value);
-      },
     );
   }
 
   // 語言選擇區塊
   Widget _languageSelector() {
-    return DropdownButtonFormField<String>(
-      initialValue: controller.getAppearanceState()['locale'] as String,
-      decoration: InputDecoration(
-        labelText: AppLocalizations.of(context).language,
+    final current =
+        controller.getAppearanceState()['locale'] as String;
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(AppLocalizations.of(context).language),
+      trailing: _popupTheme(
+        child: PopupMenuButton<String>(
+          initialValue: current,
+          tooltip: '',
+          padding: EdgeInsets.zero,
+          borderRadius: BorderRadius.circular(999),
+          onSelected: (value) async {
+            await controller.languageChanged(value);
+          },
+          itemBuilder: (context) {
+            return controller.getLocaleOptions().map((value) {
+              return PopupMenuItem(
+                value: value,
+                child: Text(_localeLabel(value)),
+              );
+            }).toList();
+          },
+          child: _popupValueText(_localeLabel(current)),
+        ),
       ),
-      items: controller.getLocaleOptions().map((value) {
-        return DropdownMenuItem(
-          value: value,
-          child: Text(_localeLabel(value)),
-        );
-      }).toList(),
-      onChanged: (value) async {
-        if (value == null) return;
-        await controller.languageChanged(value);
-      },
+    );
+  }
+
+  Widget _popupTheme({required Widget child}) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Theme(
+      data: Theme.of(context).copyWith(
+        hoverColor: colorScheme.primary.withOpacity(0.08),
+        highlightColor: colorScheme.primary.withOpacity(0.10),
+        splashColor: colorScheme.primary.withOpacity(0.10),
+        focusColor: colorScheme.primary.withOpacity(0.08),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _popupValueText(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 6,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(text),
+          const SizedBox(width: 4),
+          const Icon(Icons.arrow_drop_down),
+        ],
+      ),
     );
   }
 
@@ -154,6 +202,7 @@ class _SettingsViewState extends State<SettingsView> {
     return switch (value) {
       'system' => AppLocalizations.of(context).followSystem,
       'zh_TW' => AppLocalizations.of(context).traditionalChineseTaiwan,
+      'zh_CN' => AppLocalizations.of(context).simplifiedChinese,
       'en' => AppLocalizations.of(context).english,
       _ => value,
     };
@@ -238,7 +287,6 @@ class _SettingsViewState extends State<SettingsView> {
             onPressed: () async {
               controller.customColors[key] = temp;
               await controller.saveCustomTheme();
-
               if (mounted) Navigator.pop(context);
             },
             child: Text(AppLocalizations.of(context).apply),

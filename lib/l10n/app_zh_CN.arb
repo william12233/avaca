@@ -84,5 +84,6 @@
   "confirmCrop": "确定裁切",
   "language": "语言",
   "traditionalChineseTaiwan": "繁体中文（台湾）",
-  "english": "英文"
+  "english": "英文",
+  "simplifiedChinese": "简体中文"
 }

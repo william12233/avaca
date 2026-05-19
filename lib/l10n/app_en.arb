@@ -84,5 +84,6 @@
   "confirmCrop": "Crop",
   "language": "Language",
   "traditionalChineseTaiwan": "Traditional Chinese (Taiwan)",
-  "english": "English"
+  "english": "English",
+  "simplifiedChinese": "Simplified Chinese"
 }

@@ -35,7 +35,7 @@ class SettingsController extends ChangeNotifier {
 
   /// 提供 UI 使用的語言選項（分層用）
   List<String> getLocaleOptions() {
-    return ['system', 'zh_TW', 'en'];
+    return ['system', 'zh_TW', 'zh_CN', 'en'];
   }
 
   Map<String, Color> customColors = {
@@ -150,6 +150,7 @@ class SettingsController extends ChangeNotifier {
   Locale? _localeFromString(String value) {
     return switch (value) {
       'zh_TW' => const Locale('zh', 'TW'),
+      'zh_CN' => const Locale('zh', 'CN'),
       'en' => const Locale('en'),
       _ => null,
     };

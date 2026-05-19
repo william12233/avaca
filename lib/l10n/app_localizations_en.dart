@@ -227,4 +227,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get english => 'English';
+
+  @override
+  String get simplifiedChinese => 'Simplified Chinese';
 }

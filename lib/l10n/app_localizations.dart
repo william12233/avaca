@@ -525,6 +525,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'英文'**
   String get english;
+
+  /// No description provided for @simplifiedChinese.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'簡體中文'**
+  String get simplifiedChinese;
 }
 
 class _AppLocalizationsDelegate

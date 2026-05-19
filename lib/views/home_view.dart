@@ -22,6 +22,7 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   late final HomeController controller;
   late Future<List<Map<String, Object?>>> galleryFuture;
+
   final TextEditingController searchTextController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
 
@@ -54,7 +55,6 @@ class _HomeViewState extends State<HomeView> {
 
     if (state['is_open'] == true) {
       await Future<void>.delayed(const Duration(milliseconds: 50));
-
       if (mounted) {
         searchFocusNode.requestFocus();
       }
@@ -72,7 +72,6 @@ class _HomeViewState extends State<HomeView> {
 
   Future<void> openFilterSheet() async {
     final state = controller.openFilterSheet();
-
     if (state['open'] != true) return;
 
     await showModalBottomSheet<void>(
@@ -84,7 +83,6 @@ class _HomeViewState extends State<HomeView> {
 
   Future<void> goAdd() async {
     await controller.goAdd(context);
-
     if (mounted) {
       refreshGallery();
     }
@@ -92,7 +90,6 @@ class _HomeViewState extends State<HomeView> {
 
   Future<void> goSettings() async {
     await controller.goSettings(context);
-
     if (mounted) {
       refreshGallery();
     }
@@ -100,7 +97,6 @@ class _HomeViewState extends State<HomeView> {
 
   Future<void> goDetail(int actressId) async {
     await controller.goDetail(context, actressId);
-
     if (mounted) {
       refreshGallery();
     }
@@ -195,10 +191,15 @@ class _HomeViewState extends State<HomeView> {
         top: isOpen ? 10 : 0,
         bottom: isOpen ? 10 : 0,
       ),
-      child: ClipRRect(
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(30),
-        child: Material(
-          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: () {
+            searchFocusNode.requestFocus();
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -211,7 +212,17 @@ class _HomeViewState extends State<HomeView> {
                     focusNode: searchFocusNode,
                     decoration: InputDecoration(
                       hintText: AppLocalizations.of(context).searchNameHint,
+                      isDense: true,
+                      filled: false,
+                      fillColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      contentPadding: EdgeInsets.zero,
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      focusedErrorBorder: InputBorder.none,
                     ),
                     onChanged: onSearchChange,
                   ),
@@ -235,8 +246,10 @@ class _HomeViewState extends State<HomeView> {
         final crossAxisCount = (usableWidth / (targetCardWidth + spacing))
             .floor()
             .clamp(2, 6);
+
         final itemWidth =
             (usableWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
+
         final childAspectRatio = _calculateCardAspectRatio(itemWidth);
 
         return GridView.builder(
@@ -274,7 +287,6 @@ class _HomeViewState extends State<HomeView> {
     const double nameHeight = 22;
 
     final height = width + verticalPadding + gap + nameHeight;
-
     return width / height;
   }
 
@@ -327,7 +339,6 @@ class _HomeViewState extends State<HomeView> {
           selected: selected,
           onSelected: (_) {
             controller.selectFilter(text);
-
             // 更新篩選選單內部畫面，讓目前選取的項目立即反映在畫面上。
             sheetSetState(() {});
           },
