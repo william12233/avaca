@@ -162,10 +162,10 @@ class _SettingsViewState extends State<SettingsView> {
 
     return Theme(
       data: Theme.of(context).copyWith(
-        hoverColor: colorScheme.primary.withOpacity(0.08),
-        highlightColor: colorScheme.primary.withOpacity(0.10),
-        splashColor: colorScheme.primary.withOpacity(0.10),
-        focusColor: colorScheme.primary.withOpacity(0.08),
+      hoverColor: colorScheme.primary.withValues(alpha: 0.08),
+      highlightColor: colorScheme.primary.withValues(alpha: 0.10),
+      splashColor: colorScheme.primary.withValues(alpha: 0.10),
+      focusColor: colorScheme.primary.withValues(alpha: 0.08),
       ),
       child: child,
     );
