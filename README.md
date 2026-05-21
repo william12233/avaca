@@ -1,5 +1,6 @@
 # avaca
 (還沒寫)
+先大致說一下，是一個女優收藏app，純本地收藏
 A new Flutter project.
 
 ## Getting Started
