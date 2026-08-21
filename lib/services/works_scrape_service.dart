@@ -1441,7 +1441,7 @@ class WorksScrapeService {
     PrefixExclusion exclusions,
   ) {
     final selected = <_WorkCandidate>[];
-    final selectedKeys = <String>{};
+    final selectedKeys = <String, int>{};
     var preExcluded = 0;
 
     for (final summary in collected.summaries) {
@@ -1460,8 +1460,18 @@ class WorksScrapeService {
       final key = normalizedCode == null || normalizedCode.isEmpty
           ? 'uri:${summary.detailUri}'
           : 'code:${normalizedCode.toLowerCase()}';
-      if (selectedKeys.add(key)) {
+      final existingIndex = selectedKeys[key];
+      if (existingIndex == null) {
+        selectedKeys[key] = selected.length;
         selected.add(candidate);
+      } else if (scrapeWorkCodeIsSpecialEdition(
+            selected[existingIndex].summary.code ??
+                selected[existingIndex].summary.rawCode,
+          ) &&
+          !scrapeWorkCodeIsSpecialEdition(summaryCode)) {
+        // The special edition shares the base identity, but the ordinary
+        // edition is the one that should supply the detail page.
+        selected[existingIndex] = candidate;
       }
     }
     return _SourceCandidateSelection(
@@ -1702,6 +1712,15 @@ class WorksScrapeService {
 
     for (final group in groups.values) {
       group.details.sort((left, right) {
+        final leftSpecial = scrapeWorkCodeIsSpecialEdition(
+          left.rawCode ?? left.code,
+        );
+        final rightSpecial = scrapeWorkCodeIsSpecialEdition(
+          right.rawCode ?? right.code,
+        );
+        if (leftSpecial != rightSpecial) {
+          return leftSpecial ? 1 : -1;
+        }
         final sourceComparison = sourcePriority(
           left.source,
         ).compareTo(sourcePriority(right.source));

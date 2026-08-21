@@ -21,6 +21,15 @@ const workImageDefaultProbeOrder = <WorkImageNormalizationFamily>[
   WorkImageNormalizationFamily.mgstageSeikyouiku,
 ];
 
+/// Prefixes whose DMM digital-video token is known from the product family,
+/// even before a per-prefix route has been learned. Keeping these hints ahead
+/// of the generic probe order prevents a valid-looking generic route from
+/// winning before the family-specific token is tried.
+const workImagePrefixFamilyHints = <String, WorkImageNormalizationFamily>{
+  'START': WorkImageNormalizationFamily.dmmLeadingOne,
+  'STARS': WorkImageNormalizationFamily.dmmLeadingOne,
+};
+
 String workImageNormalizationFamilyName(WorkImageNormalizationFamily family) =>
     family.name;
 

@@ -1913,6 +1913,92 @@ void main() {
     skip:
         'Superseded by JavBus-only works scraping and exact code/URI identity.',
   );
+
+  test(
+    'new scraper collapses V T VT editions and fetches the ordinary page',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'avaca_special_edition_code_test_',
+      );
+      final database = AppDatabase.forTesting(
+        baseDir: directory.path,
+        databaseFactory: databaseFactoryFfi,
+      );
+      addTearDown(() async {
+        await database.close();
+        await directory.delete(recursive: true);
+      });
+      await database.init();
+      await database.addActress(name: '小湊よつ葉');
+      final actressId =
+          (await (await database.database).query('actresses')).single['id']
+              as int;
+      final specialUri = Uri.parse('https://www.javbus.com/START-053-VT');
+      final ordinaryUri = Uri.parse('https://www.javbus.com/START-053');
+      final source = _FakeScrapeSource(
+        id: ScrapeSourceId.javbus,
+        detailBirthDate: '1997-01-01',
+        works: [
+          ScrapeWorkSummary(
+            source: ScrapeSourceId.javbus,
+            code: 'START-053-VT',
+            title: '特典版',
+            detailUri: specialUri,
+          ),
+          ScrapeWorkSummary(
+            source: ScrapeSourceId.javbus,
+            code: 'START-053',
+            title: '一般版',
+            detailUri: ordinaryUri,
+          ),
+        ],
+        detailsByCode: const {},
+        detailsByUri: {
+          specialUri.toString(): const ScrapeWorkDetails(
+            source: ScrapeSourceId.javbus,
+            code: 'START-053-VT',
+            rawCode: 'START-053-VT',
+            title: '特典版',
+            performerCount: 1,
+          ),
+          ordinaryUri.toString(): const ScrapeWorkDetails(
+            source: ScrapeSourceId.javbus,
+            code: 'START-053',
+            rawCode: 'START-053',
+            title: '一般版',
+            performerCount: 1,
+          ),
+        },
+      );
+      final service = WorksScrapeService(
+        db: database,
+        sources: {ScrapeSourceId.javbus: source},
+        workImageDownloader: _FakeWorkImageDownloader(),
+        imageDirectory: directory.path,
+      );
+
+      final result = await service.scrape(
+        actressId: actressId,
+        actressName: '小湊よつ葉',
+        options: const WorkScrapeOptions(syncDetails: false),
+        sourceSettings: const ScrapeSourceSettings(
+          actressDetailsSource: ScrapeSourceId.javbus,
+          worksSource: WorksSourceSelection.javbus,
+        ),
+      );
+
+      expect(result.saved, 1);
+      expect(source.detailUris, [ordinaryUri.toString()]);
+      expect(
+        (await database.getWorksForActress(actressId)).single['code'],
+        'START-053',
+      );
+      expect(
+        (await database.getWorksForActress(actressId)).single['title'],
+        '一般版',
+      );
+    },
+  );
 }
 
 final class _FakeScrapeSource implements ScrapeSource {

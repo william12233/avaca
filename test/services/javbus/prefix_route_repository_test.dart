@@ -15,6 +15,20 @@ void main() {
     validImage = image.encodePng(image.Image(width: 300, height: 450));
   });
 
+  test('prioritizes known leading-one families for START and STARS', () async {
+    final repository = PrefixRouteRepository.inMemory();
+    await repository.ensureLoaded();
+
+    expect(
+      repository.orderedFamiliesFor('START').first,
+      WorkImageNormalizationFamily.dmmLeadingOne,
+    );
+    expect(
+      repository.orderedFamiliesFor('STARS').first,
+      WorkImageNormalizationFamily.dmmLeadingOne,
+    );
+  });
+
   test(
     'unknown Prefix probes deterministically and learns the first success',
     () async {

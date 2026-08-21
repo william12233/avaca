@@ -38,6 +38,47 @@ void main() {
     expect(scrapeWorkCodesEqual('H_346REBD00975', 'REBD-975'), isFalse);
   });
 
+  test(
+    'treats V, T, and VT edition suffixes as the ordinary work identity',
+    () {
+      const specialCodes = {
+        'START-276V': 'START-276',
+        'STARS-859-T': 'STARS-859',
+        'STARS-757-T': 'STARS-757',
+        'START-053-VT': 'START-053',
+        'START-053VT': 'START-053',
+      };
+      for (final entry in specialCodes.entries) {
+        final special = parseScrapeWorkCodeIdentity(entry.key);
+        final ordinary = parseScrapeWorkCodeIdentity(entry.value);
+        expect(special?.key, ordinary?.key);
+        expect(special?.displayCode, entry.value);
+        expect(special?.isSpecialEdition, isTrue);
+        expect(scrapeWorkCodesEqual(entry.key, entry.value), isTrue);
+      }
+
+      final hyphenated = parseScrapeWorkCodeIdentity('START-053-V');
+      expect(hyphenated?.key, 'start053');
+      expect(hyphenated?.displayCode, 'START-053');
+      expect(hyphenated?.isSpecialEdition, isTrue);
+      expect(scrapeWorkCodesEqual('START-053-V', 'START-053'), isTrue);
+
+      for (final suffix in ['V', 'T', 'VT']) {
+        final special = parseScrapeWorkCodeIdentity('START-053-$suffix');
+        expect(special?.key, 'start053');
+        expect(special?.displayCode, 'START-053');
+        expect(special?.isSpecialEdition, isTrue);
+        expect(scrapeWorkCodesEqual('START-053-$suffix', 'START-053'), isTrue);
+      }
+
+      expect(
+        preferredScrapeWorkCode(['START-053-VT', 'START-053-T', 'START-053']),
+        'START-053',
+      );
+      expect(scrapeWorkCodesEqual('START-053-VR', 'START-053'), isFalse);
+    },
+  );
+
   test('requires title plus independent metadata when a code is missing', () {
     const common = '同一作品標題';
     expect(

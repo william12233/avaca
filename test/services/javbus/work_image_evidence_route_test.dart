@@ -46,7 +46,7 @@ void main() {
   test('accepts a second work with the same proven template', () {
     final first = parser.parse(
       evidenceUri: Uri.parse(
-        'https://pics.dmm.co.jp/pics_dig/digital/video/'
+        'https://pics.dmm.co.jp/digital/video/'
         'h_706naac00043b/h_706naac00043bjp-1.jpg',
       ),
       code: 'NAAC-043',
@@ -59,6 +59,69 @@ void main() {
       code: 'NAAC-042',
     );
     expect(first?.canonicalKey, second?.canonicalKey);
+  });
+
+  test('normalizes DMM pics and pics_dig evidence to the approved route', () {
+    const expectedCard =
+        'https://awsimgsrc.dmm.co.jp/pics_dig/digital/video/'
+        'h_706naac00043b/h_706naac00043bps.jpg';
+    const expectedDetail =
+        'https://awsimgsrc.dmm.co.jp/pics_dig/digital/video/'
+        'h_706naac00043b/h_706naac00043bpl.jpg';
+    final evidenceUris = [
+      Uri.parse(
+        'https://pics.dmm.co.jp/digital/video/'
+        'h_706naac00043b/h_706naac00043bjp-1.jpg',
+      ),
+      Uri.parse(
+        'https://awsimgsrc.dmm.co.jp/pics/digital/video/'
+        'h_706naac00043b/h_706naac00043bjp-1.jpg',
+      ),
+      Uri.parse(
+        'https://awsimgsrc.dmm.co.jp/pics_dig/digital/video/'
+        'h_706naac00043b/h_706naac00043bjp-1.jpg',
+      ),
+    ];
+
+    for (final evidenceUri in evidenceUris) {
+      final descriptor = parser.parse(
+        evidenceUri: evidenceUri,
+        code: 'NAAC-043',
+      );
+      expect(descriptor, isNotNull, reason: evidenceUri.toString());
+      final urls = const WorkImagePolicy().urlsForLearnedDescriptor(
+        code: 'NAAC-043',
+        descriptor: descriptor!,
+      );
+      expect(urls.card.toString(), expectedCard);
+      expect(urls.detail.toString(), expectedDetail);
+    }
+  });
+
+  test('preserves source tokens whose visible code has a numeric prefix', () {
+    final descriptor = parser.parse(
+      evidenceUri: Uri.parse(
+        'https://pics.dmm.co.jp/digital/video/'
+        '55t2800621/55t2800621jp-1.jpg',
+      ),
+      code: 'T28-621',
+    );
+
+    expect(descriptor, isNotNull);
+    final urls = const WorkImagePolicy().urlsForLearnedDescriptor(
+      code: 'T28-621',
+      descriptor: descriptor!,
+    );
+    expect(
+      urls.card.toString(),
+      'https://awsimgsrc.dmm.co.jp/pics_dig/digital/video/'
+      '55t2800621/55t2800621ps.jpg',
+    );
+    expect(
+      urls.detail.toString(),
+      'https://awsimgsrc.dmm.co.jp/pics_dig/digital/video/'
+      '55t2800621/55t2800621pl.jpg',
+    );
   });
 
   test('parses paired MGStage pf/pb evidence', () {
@@ -93,6 +156,14 @@ void main() {
         'h_706naac00043b/h_706naac00043bjp-1.jpg',
       ),
       Uri.parse(
+        'https://pics.dmm.co.jp/pics_dig/digital/video/'
+        'h_706naac00043b/h_706naac00043bjp-1.jpg',
+      ),
+      Uri.parse(
+        'https://awsimgsrc.dmm.co.jp/digital/video/'
+        'h_706naac00043b/h_706naac00043bjp-1.jpg',
+      ),
+      Uri.parse(
         'https://awsimgsrc.dmm.co.jp/pics_dig/digital/video/'
         'h_706naac00043b/other00043jp-1.jpg',
       ),
@@ -124,7 +195,7 @@ void main() {
       code: 'NAAC-043',
       originalImageEvidenceUris: [
         Uri.parse(
-          'https://awsimgsrc.dmm.co.jp/pics_dig/digital/video/'
+          'https://pics.dmm.co.jp/digital/video/'
           'h_706naac00043b/h_706naac00043bjp-1.jpg',
         ),
       ],

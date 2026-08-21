@@ -389,6 +389,9 @@ final class PrefixRouteRepository {
     }
 
     add(rule?.manualOverride);
+    if (rule?.manualOverride == null) {
+      add(workImagePrefixFamilyHints[normalizeWorkImagePrefix(prefix)]);
+    }
     add(rule?.preferredFamily);
     final candidates = [...?rule?.candidates]..sort(compareWorkImageCandidates);
     for (final candidate in candidates) {

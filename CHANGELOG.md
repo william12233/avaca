@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.4 - 2026-08-21
+
+- Normalized V, T, and VT edition suffixes across JavBus and multi-source
+  scraping so special editions collapse to the ordinary work identity and the
+  ordinary detail page is fetched.
+- Added deterministic leading-one DMM family hints for START and STARS work
+  images, including numeric-prefix work codes.
+- Broadened approved DMM evidence parsing for `pics.dmm.co.jp`, `pics`, and
+  `pics_dig` route forms while canonicalizing learned downloads safely.
+
 ## 0.9.3 - 2026-08-21
 
 - Fixed AvBase and combined JavBus/AvBase scrape progress so each source

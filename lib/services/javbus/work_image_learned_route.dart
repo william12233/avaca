@@ -294,7 +294,9 @@ final class WorkImageEvidenceRouteParser {
   }) {
     final canonical = canonicalizeWorkCode(code);
     if (canonical == null) return null;
-    final codeMatch = RegExp(r'^([A-Z]+)-([0-9]+)$').firstMatch(canonical);
+    final codeMatch = RegExp(
+      r'^([A-Z][A-Z0-9]*)-([0-9]+)$',
+    ).firstMatch(canonical);
     if (codeMatch == null) return null;
     final prefix = codeMatch.group(1)!.toLowerCase();
     final number = int.tryParse(codeMatch.group(2)!);
@@ -319,14 +321,28 @@ final class WorkImageEvidenceRouteParser {
       return null;
     }
     final segments = uri.pathSegments;
-    if (segments.length != 5 ||
-        segments[0] != 'pics_dig' ||
-        segments[1] != 'digital' ||
-        segments[2] != 'video') {
+    final host = uri.host.toLowerCase();
+    final normalizedSegments = <String>[];
+    if (host == 'pics.dmm.co.jp') {
+      if (segments.length != 4 ||
+          segments[0] != 'digital' ||
+          segments[1] != 'video') {
+        return null;
+      }
+      normalizedSegments.addAll(segments);
+    } else if (host == 'awsimgsrc.dmm.co.jp') {
+      if (segments.length != 5 ||
+          (segments[0] != 'pics' && segments[0] != 'pics_dig') ||
+          segments[1] != 'digital' ||
+          segments[2] != 'video') {
+        return null;
+      }
+      normalizedSegments.addAll(segments.skip(1));
+    } else {
       return null;
     }
-    final token = segments[3].toLowerCase();
-    final filename = segments[4].toLowerCase();
+    final token = normalizedSegments[2].toLowerCase();
+    final filename = normalizedSegments[3].toLowerCase();
     if (!RegExp(r'^[a-z0-9_.-]+$').hasMatch(token) ||
         !RegExp(r'^[a-z0-9_.-]+\.jpg$').hasMatch(filename) ||
         !filename.startsWith(token)) {

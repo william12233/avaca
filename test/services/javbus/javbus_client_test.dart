@@ -72,9 +72,10 @@ void main() {
       'https://www.javbus.com/star/zen': _page(
         pageCount: 2,
         works: const [
-          ('STARS-859-V', 'video edition'),
+          ('STARS-859-T', 'video edition'),
           ('STARS-757-T', 'special edition'),
           ('STARS-715-VT', 'video special edition'),
+          ('START-276V', 'video edition without separator'),
         ],
       ),
       'https://www.javbus.com/star/zen/2': _page(
@@ -83,6 +84,7 @@ void main() {
           ('STARS-859', 'base'),
           ('STARS-757', 'base'),
           ('STARS-715', 'base'),
+          ('START-276', 'base'),
         ],
       ),
     });
@@ -95,6 +97,13 @@ void main() {
       'STARS-859',
       'STARS-757',
       'STARS-715',
+      'START-276',
+    ]);
+    expect(works.map((work) => work.detailUri.toString()), [
+      'https://www.javbus.com/STARS-859',
+      'https://www.javbus.com/STARS-757',
+      'https://www.javbus.com/STARS-715',
+      'https://www.javbus.com/START-276',
     ]);
   });
 

@@ -29,12 +29,14 @@ final class ScrapeWorkCodeIdentity {
     required this.key,
     required this.displayCode,
     required this.isStructured,
+    this.isSpecialEdition = false,
   });
 
   final String surface;
   final String key;
   final String displayCode;
   final bool isStructured;
+  final bool isSpecialEdition;
 }
 
 const _specialEditionMarkers = <String>['【特典版】', '[特典版]'];
@@ -87,6 +89,25 @@ ScrapeWorkCodeIdentity? parseScrapeWorkCodeIdentity(String? raw) {
     return null;
   }
 
+  // Sources use both START-276V and STARS-859-T spellings. Only strip a
+  // terminal edition marker, then require the remaining surface to be a
+  // structured work code before treating it as the ordinary identity.
+  final editionMatch = RegExp(r'^(.+?)-?(VT|T|V)$').firstMatch(surface);
+  final baseSurface = editionMatch?.group(1) ?? surface;
+  final parsed = _parseScrapeWorkCodeIdentitySurface(baseSurface);
+  if (editionMatch != null && parsed.isStructured) {
+    return ScrapeWorkCodeIdentity(
+      surface: surface,
+      key: parsed.key,
+      displayCode: parsed.displayCode,
+      isStructured: true,
+      isSpecialEdition: true,
+    );
+  }
+  return parsed;
+}
+
+ScrapeWorkCodeIdentity _parseScrapeWorkCodeIdentitySurface(String surface) {
   final separated = RegExp(r'^([A-Z0-9][A-Z0-9]*)-(\d+)$').firstMatch(surface);
   if (separated != null) {
     final prefix = separated.group(1)!;
@@ -134,6 +155,9 @@ ScrapeWorkCodeIdentity? parseScrapeWorkCodeIdentity(String? raw) {
 
 String? scrapeWorkCodeIdentityKey(String? raw) =>
     parseScrapeWorkCodeIdentity(raw)?.key;
+
+bool scrapeWorkCodeIsSpecialEdition(String? raw) =>
+    parseScrapeWorkCodeIdentity(raw)?.isSpecialEdition ?? false;
 
 bool scrapeWorkCodesEqual(String? left, String? right) {
   final leftKey = scrapeWorkCodeIdentityKey(left);

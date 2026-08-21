@@ -275,8 +275,35 @@ void main() {
       throwsA(isA<WorkImageDownloadException>()),
     );
     expect(transport.requested, hasLength(5));
-    expect(transport.requested.first.toString(), contains('start00196'));
+    expect(transport.requested.first.toString(), contains('1start00196'));
   });
+
+  test(
+    'uses leading-one tokens for START and STARS without prior rules',
+    () async {
+      final startTransport = _FakeBinaryTransport([
+        BinaryResponse(
+          statusCode: 200,
+          bodyBytes: image.encodePng(image.Image(width: 300, height: 450)),
+        ),
+      ]);
+      await WorkImageDownloader(
+        transport: startTransport,
+      ).fetch(code: 'START-053', variant: WorkImageVariant.card);
+      expect(startTransport.requested.single.path, contains('1start00053'));
+
+      final starsTransport = _FakeBinaryTransport([
+        BinaryResponse(
+          statusCode: 200,
+          bodyBytes: image.encodePng(image.Image(width: 300, height: 450)),
+        ),
+      ]);
+      await WorkImageDownloader(
+        transport: starsTransport,
+      ).fetch(code: 'STARS-715', variant: WorkImageVariant.detail);
+      expect(starsTransport.requested.single.path, contains('1stars00715'));
+    },
+  );
 
   group('verified 0.8.7 DMM-standard metadata routes', () {
     const resolver = WorkImageRouteResolver();

@@ -395,7 +395,7 @@ bool _samePrefix(List<String> left, List<String> right, int length) {
 ({String prefix, String number})? _learnedCodeParts(String code) {
   final canonical = canonicalizeWorkCode(code);
   if (canonical == null) return null;
-  final match = RegExp(r'^([A-Z]+)-(\d+)$').firstMatch(canonical);
+  final match = RegExp(r'^([A-Z][A-Z0-9]*)-(\d+)$').firstMatch(canonical);
   if (match == null) return null;
   return (prefix: match.group(1)!.toLowerCase(), number: match.group(2)!);
 }

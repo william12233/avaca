@@ -8,6 +8,7 @@ import 'javbus_html_parser.dart';
 import 'javbus_models.dart';
 import 'javbus_verification.dart';
 import 'prefix_exclusion.dart';
+import 'work_code.dart';
 import 'work_image_downloader.dart';
 
 abstract interface class JavBusTransport {
@@ -312,16 +313,27 @@ class JavBusClient {
     }
     final result = <JavBusWorkSummary>[];
     final issues = <JavBusPageIssue>[];
-    final codes = <String>{};
+    final codeIndexes = <String, int>{};
 
     void append(Iterable<JavBusWorkSummary> works) {
       for (final work in works) {
         final normalizedCode = work.code.trim().toUpperCase();
-        if ((exclusions?.matches(normalizedCode) ?? false) ||
-            !codes.add(normalizedCode)) {
+        if (exclusions?.matches(normalizedCode) ?? false) {
           continue;
         }
-        result.add(work);
+        final existingIndex = codeIndexes[normalizedCode];
+        if (existingIndex == null) {
+          codeIndexes[normalizedCode] = result.length;
+          result.add(work);
+          continue;
+        }
+        final existing = result[existingIndex];
+        if (isJavBusSpecialEditionCode(existing.rawCode) &&
+            !isJavBusSpecialEditionCode(work.rawCode)) {
+          // Keep the ordinary detail page when a special-edition page was
+          // encountered earlier in pagination.
+          result[existingIndex] = work;
+        }
       }
     }
 
