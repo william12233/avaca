@@ -1,15 +1,12 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../core/database.dart';
-import '../library/library_media_locator.dart';
 import '../models/data_health.dart';
 
 class DataHealthService {
-  DataHealthService({required this.db, LibraryMediaLocator? locator})
-    : locator = locator ?? LibraryMediaLocator();
+  DataHealthService({required this.db});
 
   final AppDatabase db;
-  final LibraryMediaLocator locator;
 
   Future<DataHealthSnapshot> load() async {
     final database = await db.database;
@@ -88,60 +85,27 @@ class DataHealthService {
         ''');
       return _number(rows.firstOrNull?['count']);
     });
-    final libraryWorkCount = await safe(
-      'library',
-      0,
-      () => _count(database, 'works', where: 'library_managed = 1'),
-    );
-    final importRepairCount = await safe('library', 0, () async {
-      final rows = await database.rawQuery('''
-        SELECT COUNT(*) AS count
-        FROM import_operations
-        WHERE state IN ('repair_required', 'source_cleanup_pending')
-      ''');
-      return _number(rows.firstOrNull?['count']);
-    });
-    final libraryMediaIssueCount = await safe('library', 0, () async {
-      final rootRows = await database.query(
-        'library_roots',
-        columns: const ['path'],
-        where: 'is_active = 1',
-        orderBy: 'modified_at DESC',
-        limit: 1,
+    final jobCounts = await safe('jobStates', const <String, int>{}, () async {
+      final rows = await database.rawQuery(
+        'SELECT state, COUNT(*) AS count FROM scrape_jobs GROUP BY state ORDER BY state',
       );
-      final root = rootRows.firstOrNull?['path']?.toString().trim();
-      if (root == null || root.isEmpty) return 0;
-      final rows = await database.rawQuery('''
-        SELECT w.library_relative_path, m.relative_path, m.portable_id
-        FROM media_files m INNER JOIN works w ON w.id = m.work_id
-        WHERE w.library_managed = 1
-      ''');
-      var missing = 0;
-      for (final row in rows) {
-        if (row['portable_id']?.toString().trim().isEmpty ?? true) {
-          missing++;
-          continue;
-        }
-        try {
-          await locator.resolveMedia(
-            libraryRoot: root,
-            workRelativePath: row['library_relative_path']?.toString() ?? '',
-            mediaRelativePath: row['relative_path']?.toString() ?? '',
-            mediaPortableId: row['portable_id']?.toString(),
-          );
-        } on Object {
-          missing++;
-        }
-      }
-      return missing;
+      return _countsBy(rows, 'state');
     });
-    final libraryLinkIssueCount = await safe('library', 0, () async {
-      final rows = await database.rawQuery('''
-        SELECT COUNT(*) AS count FROM library_link_artifacts
-        WHERE state <> 'ready'
-      ''');
-      return _number(rows.firstOrNull?['count']);
-    });
+    final sourceErrorCounts = await safe(
+      'sourceErrors',
+      const <String, int>{},
+      () async {
+        final rows = await database.rawQuery('''
+          SELECT COALESCE(source, 'unknown') AS source, COUNT(*) AS count
+          FROM scrape_job_events
+          WHERE severity IN ('warning', 'error')
+            AND created_at >= datetime('now', '-7 day')
+          GROUP BY source
+          ORDER BY count DESC, source ASC
+        ''');
+        return _countsBy(rows, 'source');
+      },
+    );
     return DataHealthSnapshot(
       generatedAt: DateTime.now().toUtc(),
       actressCount: actressCount,
@@ -156,12 +120,18 @@ class DataHealthService {
       missingDetailImageCount: missingDetailImageCount,
       missingProvenanceCount: missingProvenanceCount,
       pendingDeletionCount: pendingDeletionCount,
-      libraryWorkCount: libraryWorkCount,
-      libraryMediaIssueCount: libraryMediaIssueCount,
-      importRepairCount: importRepairCount,
-      libraryLinkIssueCount: libraryLinkIssueCount,
+      jobCounts: Map.unmodifiable(jobCounts),
+      sourceErrorCounts: Map.unmodifiable(sourceErrorCounts),
       warnings: List.unmodifiable(warnings),
     );
+  }
+
+  Map<String, int> _countsBy(List<Map<String, Object?>> rows, String key) {
+    final counts = <String, int>{};
+    for (final row in rows) {
+      counts[row[key]?.toString() ?? 'unknown'] = _number(row['count']);
+    }
+    return counts;
   }
 
   Future<int> _count(

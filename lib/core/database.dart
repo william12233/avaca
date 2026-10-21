@@ -6,7 +6,8 @@ import 'dart:math';
 import 'package:path/path.dart' as path;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../models/work_field_provenance.dart';
+import '../models/scraped_actress_details.dart';
+import '../models/scrape_job.dart';
 import '../models/work.dart';
 import '../models/work_storage.dart';
 import 'platform_adapter.dart';
@@ -302,7 +303,6 @@ class WorkDeletionReport {
 
 class AppDatabase {
   static const int _sqliteBindBatchSize = 500;
-  static final Random _portableIdRandom = Random.secure();
 
   AppDatabase()
     : _baseDirOverride = null,
@@ -384,7 +384,7 @@ class AppDatabase {
     await Directory(imgDir).create(recursive: true);
 
     final options = OpenDatabaseOptions(
-      version: 2,
+      version: 1,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -393,19 +393,12 @@ class AppDatabase {
         await _createSettingsTable(db);
         await _createWorksTables(db);
         await _createOperationalTables(db);
-        await _createLibraryTables(db);
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await _createLibraryTables(db);
-        }
       },
       onOpen: (db) async {
         await _migrateActressesTable(db);
         await _createSettingsTable(db);
         await _createWorksTables(db);
         await _createOperationalTables(db);
-        await _createLibraryTables(db);
       },
     );
     final factory = _databaseFactoryOverride;
@@ -415,7 +408,6 @@ class AppDatabase {
             version: options.version,
             onConfigure: options.onConfigure,
             onCreate: options.onCreate,
-            onUpgrade: options.onUpgrade,
             onOpen: options.onOpen,
           )
         : await factory.openDatabase(dbPath, options: options);
@@ -633,214 +625,8 @@ class AppDatabase {
     ''');
   }
 
-  /// Creates the portable-library schema without rewriting legacy rows.
-  ///
-  /// Version 2 deliberately keeps the existing Work storage columns and
-  /// image lifecycle intact.  Library media is a separate one-to-many
-  /// record, and import side effects have their own durable journal because a
-  /// SQLite transaction cannot roll back a filesystem rename.
-  Future<void> _createLibraryTables(Database db) async {
-    final actressColumns = await _getTableColumns(db, 'actresses');
-    if (!actressColumns.contains('portable_id')) {
-      await db.execute('ALTER TABLE actresses ADD COLUMN portable_id TEXT');
-    }
-
-    final workColumns = await _getTableColumns(db, 'works');
-    for (final column in const {
-      'portable_id': 'TEXT',
-      'primary_actress_id': 'INTEGER',
-      'library_managed': 'INTEGER NOT NULL DEFAULT 0',
-      'library_relative_path': 'TEXT',
-    }.entries) {
-      if (!workColumns.contains(column.key)) {
-        await db.execute(
-          'ALTER TABLE works ADD COLUMN ${column.key} ${column.value}',
-        );
-      }
-    }
-    await _backfillLibraryPortableIds(db);
-    await db.execute(
-      'CREATE UNIQUE INDEX IF NOT EXISTS idx_actresses_portable_id '
-      'ON actresses(portable_id) WHERE portable_id IS NOT NULL',
-    );
-    await db.execute(
-      'CREATE UNIQUE INDEX IF NOT EXISTS idx_works_portable_id '
-      'ON works(portable_id) WHERE portable_id IS NOT NULL',
-    );
-
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS library_roots (
-        id TEXT PRIMARY KEY,
-        path TEXT NOT NULL UNIQUE,
-        is_active INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        modified_at TEXT NOT NULL
-      )
-    ''');
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS import_operations (
-        id TEXT PRIMARY KEY,
-        state TEXT NOT NULL,
-        library_root TEXT NOT NULL,
-        plan_fingerprint TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        committed_at TEXT,
-        last_error TEXT
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_import_operations_state_updated '
-      'ON import_operations(state, updated_at DESC)',
-    );
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS import_operation_items (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        operation_id TEXT NOT NULL,
-        source_path TEXT NOT NULL,
-        source_file_name TEXT NOT NULL,
-        destination_relative_path TEXT NOT NULL,
-        source_file_size INTEGER NOT NULL DEFAULT 0,
-        source_file_modified_at TEXT,
-        source_file_created_at TEXT,
-        source_sha256 TEXT,
-        work_portable_id TEXT,
-        media_portable_id TEXT,
-        state TEXT NOT NULL,
-        step TEXT NOT NULL,
-        plan_json TEXT NOT NULL DEFAULT '{}',
-        last_error TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        UNIQUE(operation_id, source_path),
-        FOREIGN KEY (operation_id) REFERENCES import_operations(id)
-          ON DELETE CASCADE
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_import_operation_items_state '
-      'ON import_operation_items(operation_id, state, updated_at DESC)',
-    );
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS media_files (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        portable_id TEXT NOT NULL UNIQUE,
-        work_id INTEGER NOT NULL,
-        relative_path TEXT NOT NULL,
-        file_name TEXT NOT NULL,
-        original_file_name TEXT NOT NULL,
-        variant TEXT,
-        variant_type TEXT,
-        has_chinese_subtitles INTEGER,
-        part_number INTEGER,
-        part_label TEXT,
-        width INTEGER,
-        height INTEGER,
-        resolution_label TEXT,
-        frame_rate_numerator INTEGER,
-        frame_rate_denominator INTEGER,
-        frame_rate_decimal REAL,
-        duration_ms INTEGER,
-        container TEXT,
-        codec TEXT,
-        file_size_bytes INTEGER NOT NULL DEFAULT 0,
-        sha256 TEXT NOT NULL DEFAULT '',
-        source_file_created_at TEXT,
-        imported_at TEXT NOT NULL,
-        probe_backend TEXT,
-        probe_version TEXT,
-        parser_version INTEGER,
-        import_operation_id TEXT,
-        created_at TEXT NOT NULL,
-        modified_at TEXT NOT NULL,
-        UNIQUE(work_id, relative_path),
-        FOREIGN KEY (work_id) REFERENCES works(id) ON DELETE CASCADE,
-        FOREIGN KEY (import_operation_id) REFERENCES import_operations(id)
-          ON DELETE SET NULL
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_media_files_work '
-      'ON media_files(work_id, part_number, relative_path)',
-    );
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_media_files_sha256 '
-      'ON media_files(sha256)',
-    );
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS library_link_artifacts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        work_id INTEGER NOT NULL,
-        actress_id INTEGER NOT NULL,
-        relative_path TEXT NOT NULL,
-        target_relative_path TEXT NOT NULL,
-        kind TEXT NOT NULL,
-        state TEXT NOT NULL,
-        last_error TEXT,
-        created_at TEXT NOT NULL,
-        modified_at TEXT NOT NULL,
-        UNIQUE(work_id, actress_id),
-        FOREIGN KEY (work_id) REFERENCES works(id) ON DELETE CASCADE,
-        FOREIGN KEY (actress_id) REFERENCES actresses(id) ON DELETE CASCADE
-      )
-    ''');
-    await db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_library_link_artifacts_actress '
-      'ON library_link_artifacts(actress_id, state)',
-    );
-  }
-
-  Future<void> _backfillLibraryPortableIds(Database db) async {
-    final actressRows = await db.query(
-      'actresses',
-      columns: ['id'],
-      where: 'portable_id IS NULL OR TRIM(portable_id) = ?',
-      whereArgs: [''],
-    );
-    for (final row in actressRows) {
-      await db.update(
-        'actresses',
-        {'portable_id': _newPortableId()},
-        where: 'id = ?',
-        whereArgs: [row['id']],
-      );
-    }
-
-    final workRows = await db.query(
-      'works',
-      columns: ['id'],
-      where: 'portable_id IS NULL OR TRIM(portable_id) = ?',
-      whereArgs: [''],
-    );
-    for (final row in workRows) {
-      await db.update(
-        'works',
-        {'portable_id': _newPortableId()},
-        where: 'id = ?',
-        whereArgs: [row['id']],
-      );
-    }
-  }
-
-  String _newPortableId() {
-    final bytes = List<int>.generate(
-      16,
-      (_) => _portableIdRandom.nextInt(256),
-      growable: false,
-    );
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    final hex = bytes.map((value) => value.toRadixString(16).padLeft(2, '0'));
-    final joined = hex.join();
-    return '${joined.substring(0, 8)}-'
-        '${joined.substring(8, 12)}-'
-        '${joined.substring(12, 16)}-'
-        '${joined.substring(16, 20)}-'
-        '${joined.substring(20)}';
-  }
-
-  // Provenance tables are additive and idempotent so existing databases keep
-  // their field-source history without recreating the removed scrape queue.
+  // Operational tables are additive and idempotent so existing version-1
+  // databases receive the same schema on open without rewriting user data.
   Future<void> _createOperationalTables(Database db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS work_field_provenance (
@@ -857,6 +643,140 @@ class AppDatabase {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_work_field_provenance_source '
       'ON work_field_provenance(source, field)',
+    );
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS scrape_jobs (
+        id TEXT PRIMARY KEY,
+        actress_id INTEGER NOT NULL,
+        actress_name_snapshot TEXT NOT NULL,
+        state TEXT NOT NULL,
+        phase TEXT NOT NULL,
+        options_snapshot TEXT NOT NULL,
+        source_settings_snapshot TEXT NOT NULL,
+        rules_version_snapshot TEXT NOT NULL,
+        rules_snapshot TEXT NOT NULL,
+        retry_target_codes TEXT NOT NULL DEFAULT '[]',
+        discovered_count INTEGER NOT NULL DEFAULT 0,
+        raw_discovered_count INTEGER NOT NULL DEFAULT 0,
+        duplicate_count INTEGER NOT NULL DEFAULT 0,
+        detail_completed_count INTEGER NOT NULL DEFAULT 0,
+        detail_total_count INTEGER NOT NULL DEFAULT 0,
+        processed_count INTEGER NOT NULL DEFAULT 0,
+        saved_count INTEGER NOT NULL DEFAULT 0,
+        excluded_count INTEGER NOT NULL DEFAULT 0,
+        failed_count INTEGER NOT NULL DEFAULT 0,
+        review_count INTEGER NOT NULL DEFAULT 0,
+        supplemental_evidence_completed_count INTEGER NOT NULL DEFAULT 0,
+        supplemental_evidence_total_count INTEGER NOT NULL DEFAULT 0,
+        image_failure_count INTEGER NOT NULL DEFAULT 0,
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        started_at TEXT,
+        updated_at TEXT NOT NULL,
+        finished_at TEXT,
+        last_error TEXT,
+        FOREIGN KEY (actress_id) REFERENCES actresses(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_scrape_jobs_actress_state '
+      'ON scrape_jobs(actress_id, state, updated_at DESC)',
+    );
+    final scrapeJobColumns = await _getTableColumns(db, 'scrape_jobs');
+    for (final column in const {
+      'raw_discovered_count': 'INTEGER NOT NULL DEFAULT 0',
+      'duplicate_count': 'INTEGER NOT NULL DEFAULT 0',
+      'detail_completed_count': 'INTEGER NOT NULL DEFAULT 0',
+      'detail_total_count': 'INTEGER NOT NULL DEFAULT 0',
+      'review_count': 'INTEGER NOT NULL DEFAULT 0',
+      'supplemental_evidence_completed_count': 'INTEGER NOT NULL DEFAULT 0',
+      'supplemental_evidence_total_count': 'INTEGER NOT NULL DEFAULT 0',
+    }.entries) {
+      if (!scrapeJobColumns.contains(column.key)) {
+        await db.execute(
+          'ALTER TABLE scrape_jobs ADD COLUMN ${column.key} ${column.value}',
+        );
+      }
+    }
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_scrape_jobs_state_updated '
+      'ON scrape_jobs(state, updated_at DESC)',
+    );
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_scrape_jobs_one_active_per_actress
+      ON scrape_jobs(actress_id)
+      WHERE state IN ('queued', 'running', 'paused', 'waiting_for_verification')
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS scrape_job_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id TEXT NOT NULL,
+        canonical_code TEXT NOT NULL,
+        observed_raw_code TEXT,
+        state TEXT NOT NULL,
+        stage TEXT,
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE(job_id, canonical_code),
+        FOREIGN KEY (job_id) REFERENCES scrape_jobs(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_scrape_job_items_job_state '
+      'ON scrape_job_items(job_id, state, updated_at DESC)',
+    );
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS scrape_job_source_progress (
+        job_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        phase TEXT NOT NULL,
+        current_value INTEGER NOT NULL DEFAULT 0,
+        total_value INTEGER NOT NULL DEFAULT 0,
+        total_known INTEGER NOT NULL DEFAULT 0,
+        work_code TEXT,
+        discovered_count INTEGER NOT NULL DEFAULT 0,
+        state TEXT,
+        last_error TEXT,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (job_id, source),
+        FOREIGN KEY (job_id) REFERENCES scrape_jobs(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS scrape_job_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id TEXT NOT NULL,
+        item_id INTEGER,
+        canonical_code TEXT,
+        source TEXT,
+        severity TEXT NOT NULL,
+        stage TEXT NOT NULL,
+        message TEXT NOT NULL,
+        metadata_json TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (job_id) REFERENCES scrape_jobs(id) ON DELETE CASCADE,
+        FOREIGN KEY (item_id) REFERENCES scrape_job_items(id) ON DELETE SET NULL
+      )
+    ''');
+    final sourceProgressColumns = await _getTableColumns(
+      db,
+      'scrape_job_source_progress',
+    );
+    if (!sourceProgressColumns.contains('discovered_count')) {
+      await db.execute(
+        'ALTER TABLE scrape_job_source_progress '
+        'ADD COLUMN discovered_count INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_scrape_job_events_job_time '
+      'ON scrape_job_events(job_id, created_at DESC, id DESC)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_scrape_job_events_source_severity '
+      'ON scrape_job_events(source, severity, created_at DESC)',
     );
   }
 
@@ -1024,26 +944,6 @@ class AppDatabase {
     'is_stored',
     'storage_quality',
     'storage_frame_rate',
-    'portable_id',
-    'primary_actress_id',
-    'library_managed',
-    'library_relative_path',
-  ];
-
-  static const _legacyWorkColumns = <String>[
-    'id',
-    'code',
-    'title',
-    'release_date',
-    'duration_minutes',
-    'studio',
-    'publisher',
-    'series',
-    'card_image_path',
-    'detail_image_path',
-    'is_stored',
-    'storage_quality',
-    'storage_frame_rate',
   ];
 
   // 取得指定女優的本機作品，最新發行日期優先。
@@ -1051,7 +951,7 @@ class AppDatabase {
     final db = await database;
     return db.rawQuery(
       '''
-      SELECT ${_legacyWorkColumns.map((column) => 'w.$column').join(', ')}
+      SELECT ${_workColumns.map((column) => 'w.$column').join(', ')}
       FROM works w
       INNER JOIN actress_works aw ON aw.work_id = w.id
       WHERE aw.actress_id = ?
@@ -1107,12 +1007,6 @@ class AppDatabase {
           };
         })
         .toList(growable: false);
-    work['library_media'] = await db.query(
-      'media_files',
-      where: 'work_id = ?',
-      whereArgs: [workId],
-      orderBy: 'part_number IS NULL, part_number ASC, relative_path ASC',
-    );
     return work;
   }
 
@@ -1125,16 +1019,6 @@ class AppDatabase {
       throw ArgumentError('Unsupported work storage settings.');
     }
     final db = await database;
-    final managedRows = await db.query(
-      'works',
-      columns: const ['library_managed'],
-      where: 'id = ?',
-      whereArgs: [workId],
-      limit: 1,
-    );
-    if ((managedRows.firstOrNull?['library_managed'] as num?)?.toInt() == 1) {
-      throw StateError('Library-managed media storage is read-only here.');
-    }
     final updated = await db.update(
       'works',
       {
@@ -1278,15 +1162,12 @@ class AppDatabase {
           whereArgs: [work.code.trim().toUpperCase()],
           limit: 1,
         );
-        final libraryManaged =
-            (existingRows.firstOrNull?['library_managed'] as num?)?.toInt() ==
-            1;
         final workId = await _upsertWork(
           transaction,
           work,
           missingOnly: missingOnly,
         );
-        if (!libraryManaged && provenance != null) {
+        if (provenance != null) {
           await _upsertWorkProvenance(
             transaction,
             workId: workId,
@@ -1300,7 +1181,7 @@ class AppDatabase {
           'actress_id': actressId,
           'work_id': workId,
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
-        if (!libraryManaged && performerSource != null && performers != null) {
+        if (performerSource != null && performers != null) {
           await _replaceWorkPerformers(
             transaction,
             workId: workId,
@@ -1403,7 +1284,7 @@ class AppDatabase {
       final merged = await db.transaction<int>((transaction) async {
         final canonicalRows = await transaction.query(
           'works',
-          columns: ['id', 'library_managed'],
+          columns: ['id'],
           where: 'code = ? COLLATE NOCASE',
           whereArgs: [canonical],
           limit: 1,
@@ -1411,21 +1292,12 @@ class AppDatabase {
         var canonicalId = canonicalRows.isEmpty
             ? null
             : canonicalRows.single['id'] as int;
-        if ((canonicalRows.firstOrNull?['library_managed'] as num?)?.toInt() ==
-            1) {
-          return 0;
-        }
         var count = 0;
 
         for (final alias in aliases) {
           final aliasRows = await transaction.query(
             'works',
-            columns: [
-              'id',
-              'card_image_path',
-              'detail_image_path',
-              'library_managed',
-            ],
+            columns: ['id', 'card_image_path', 'detail_image_path'],
             where: 'code = ? COLLATE NOCASE',
             whereArgs: [alias],
             limit: 1,
@@ -1434,9 +1306,6 @@ class AppDatabase {
             continue;
           }
           final aliasRow = aliasRows.single;
-          if ((aliasRow['library_managed'] as num?)?.toInt() == 1) {
-            continue;
-          }
           final aliasId = aliasRow['id'] as int;
           if (canonicalId == aliasId) {
             continue;
@@ -1521,7 +1390,7 @@ class AppDatabase {
 
     final existing = await executor.query(
       'works',
-      columns: ['id', 'library_managed'],
+      columns: ['id'],
       where: 'code = ? COLLATE NOCASE',
       whereArgs: [code],
       limit: 1,
@@ -1531,9 +1400,6 @@ class AppDatabase {
     }
 
     final workId = existing.single['id'] as int;
-    if ((existing.single['library_managed'] as num?)?.toInt() == 1) {
-      return workId;
-    }
     const updatable = <String>[
       'title',
       'release_date',
@@ -1563,6 +1429,94 @@ class AppDatabase {
       [...updatable.map((column) => values[column]), workId],
     );
     return workId;
+  }
+
+  // 合併刮削到的女優詳細資料，體重永遠不由刮削流程修改。
+  Future<bool> syncActressDetails({
+    required int actressId,
+    required ScrapedActressDetails details,
+    bool missingOnly = false,
+    bool replaceImage = false,
+  }) {
+    return runManagedImageLifecycle(
+      () => _syncActressDetails(
+        actressId: actressId,
+        details: details,
+        missingOnly: missingOnly,
+        replaceImage: replaceImage,
+      ),
+    );
+  }
+
+  Future<bool> _syncActressDetails({
+    required int actressId,
+    required ScrapedActressDetails details,
+    required bool missingOnly,
+    required bool replaceImage,
+  }) async {
+    final normalizedBirthDate = _normalizeBirthDate(details.birthDate);
+    final db = await database;
+    final rows = await db.query(
+      'actresses',
+      columns: ['name', 'img_path', 'height', 'bwh', 'cup', 'birth_date'],
+      where: 'id = ?',
+      whereArgs: [actressId],
+      limit: 1,
+    );
+    if (rows.isEmpty) {
+      return false;
+    }
+    final current = rows.single;
+
+    Object? merged(String column, String? incoming) {
+      final value = incoming?.trim();
+      if (value == null || value.isEmpty) {
+        return current[column];
+      }
+      if (!missingOnly) {
+        return value;
+      }
+      final existing = current[column]?.toString().trim() ?? '';
+      return existing.isEmpty ? value : current[column];
+    }
+
+    final imageValue = details.imagePath?.trim();
+    final mergedName = merged('name', details.name);
+    try {
+      await db.transaction((transaction) async {
+        await transaction.update(
+          'actresses',
+          {
+            'name': mergedName,
+            'img_path':
+                replaceImage && imageValue != null && imageValue.isNotEmpty
+                ? imageValue
+                : current['img_path'],
+            'height': merged('height', details.height),
+            'bwh': merged('bwh', details.bwh),
+            'cup': merged('cup', details.cup),
+            'birth_date': merged(
+              'birth_date',
+              normalizedBirthDate.valid ? normalizedBirthDate.value : null,
+            ),
+            'modified_at': DateTime.now().toIso8601String(),
+          },
+          where: 'id = ?',
+          whereArgs: [actressId],
+        );
+        final canonical = mergedName?.toString().trim() ?? '';
+        if (canonical.isNotEmpty) {
+          await transaction.delete(
+            'actress_aliases',
+            where: 'actress_id = ? AND alias = ? COLLATE NOCASE',
+            whereArgs: [actressId, canonical],
+          );
+        }
+      });
+      return true;
+    } on DatabaseException {
+      return false;
+    }
   }
 
   // 新增一筆收藏資料，若資料庫拒絕寫入則回傳失敗。
@@ -1605,12 +1559,11 @@ class AppDatabase {
       await db.rawInsert(
         '''
         INSERT INTO actresses (
-          name, img_path, main_type, tags, memo, birth_date, portable_id,
-          modified_at
+          name, img_path, main_type, tags, memo, birth_date, modified_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ''',
-        [name, imgPath, mainType, tags, memo, birthDate, _newPortableId()],
+        [name, imgPath, mainType, tags, memo, birthDate],
       );
 
       return true;

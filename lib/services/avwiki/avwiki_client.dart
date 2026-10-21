@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../http_safety.dart';
+import '../scrape/scrape_models.dart';
 import '../scrape/work_identity.dart';
 import 'avwiki_html_parser.dart';
 import 'avwiki_models.dart';
@@ -11,19 +12,65 @@ final class AvWikiClient {
     required AvWikiTransport transport,
     AvWikiHtmlParser? parser,
     Uri? baseUri,
+    this.maxPages = 100,
     this.requestDelay = const Duration(milliseconds: 250),
   }) : _transport = transport,
        _parser = parser ?? AvWikiHtmlParser(),
        _baseUri = baseUri ?? Uri.parse('https://av-wiki.net/') {
+    if (maxPages < 1) {
+      throw ArgumentError.value(maxPages, 'maxPages', 'Must be positive.');
+    }
     _validateNavigationUri(_baseUri);
   }
 
   final AvWikiTransport _transport;
   final AvWikiHtmlParser _parser;
   final Uri _baseUri;
+  final int maxPages;
   final Duration requestDelay;
   Future<void> _requestTail = Future<void>.value();
   DateTime? _lastRequestAt;
+  List<AvWikiPageIssue> _lastWorkCollectionIssues = const [];
+
+  List<AvWikiPageIssue> get lastWorkCollectionIssues =>
+      List.unmodifiable(_lastWorkCollectionIssues);
+
+  Future<void> checkConnection() async {
+    final source = await _get(_baseUri);
+    if (!_parser.hasConnectionMarker(source)) {
+      throw AvWikiRequestException(
+        _baseUri,
+        null,
+        kind: AvWikiFailureKind.parserInvalid,
+      );
+    }
+  }
+
+  Future<List<ScrapeActressSearchResult>> searchActresses(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return const [];
+    final uri = _baseUri.replace(queryParameters: {'s': trimmed});
+    final source = await _get(uri);
+    return _parser.parseActressSearchResults(
+      source,
+      pageUri: uri,
+      query: trimmed,
+    );
+  }
+
+  Future<AvWikiActressPage> fetchActressPage(Uri uri) async {
+    _validateNavigationUri(uri);
+    final source = await _get(uri);
+    final page = _parser.parseActressPage(source, pageUri: uri);
+    if (page.details.name == null || page.details.name!.trim().isEmpty) {
+      throw AvWikiRequestException(
+        uri,
+        null,
+        kind: AvWikiFailureKind.parserInvalid,
+      );
+    }
+    return page;
+  }
 
   Future<AvWikiWorkDetails> fetchWorkDetails(Uri uri) async {
     _validateNavigationUri(uri);
@@ -86,6 +133,56 @@ final class AvWikiClient {
     return details;
   }
 
+  Future<AvWikiWorkCollectionResult> fetchAllActressWorks(
+    Uri actressUri, {
+    required AvWikiActressPage firstPage,
+    bool Function()? isCancelled,
+    void Function(int currentPage, int totalPages, int discovered)? onProgress,
+  }) async {
+    _lastWorkCollectionIssues = const [];
+    _validateNavigationUri(actressUri);
+    if (isCancelled?.call() ?? false) {
+      return const AvWikiWorkCollectionResult(works: []);
+    }
+    if (firstPage.pageCount > maxPages) {
+      throw AvWikiPageLimitException(firstPage.pageCount, maxPages);
+    }
+    final result = <AvWikiWorkSummary>[];
+    final issues = <AvWikiPageIssue>[];
+    final seenUris = <String>{};
+
+    void append(Iterable<AvWikiWorkSummary> works) {
+      for (final work in works) {
+        if (seenUris.add(work.detailUri.toString())) result.add(work);
+      }
+    }
+
+    append(firstPage.works);
+    onProgress?.call(1, firstPage.pageCount, result.length);
+    for (var page = 2; page <= firstPage.pageCount; page++) {
+      if (isCancelled?.call() ?? false) break;
+      final pageUri = actressUri.resolve('page/$page/');
+      try {
+        append((await fetchActressPage(pageUri)).works);
+      } catch (error) {
+        issues.add(
+          AvWikiPageIssue(
+            uri: pageUri,
+            kind: _pageIssueKind(error),
+            error: error,
+          ),
+        );
+      }
+      onProgress?.call(page, firstPage.pageCount, result.length);
+    }
+    final collection = AvWikiWorkCollectionResult(
+      works: List.unmodifiable(result),
+      issues: List.unmodifiable(issues),
+    );
+    _lastWorkCollectionIssues = collection.issues;
+    return collection;
+  }
+
   void close() => _transport.close();
 
   bool _codesMatch(String expected, AvWikiWorkDetails details) {
@@ -124,6 +221,12 @@ final class AvWikiClient {
   Uri _directWorkUri(String code) {
     final safe = code.toLowerCase().replaceAll(RegExp(r'[^a-z0-9-]+'), '-');
     return _baseUri.resolve('${safe.replaceAll(RegExp(r'-+'), '-')}/');
+  }
+
+  AvWikiFailureKind _pageIssueKind(Object error) {
+    if (error is AvWikiRequestException) return error.kind;
+    if (error is UnsafeHttpUriException) return AvWikiFailureKind.transport;
+    return AvWikiFailureKind.parserInvalid;
   }
 
   Future<String> _get(Uri uri) {

@@ -15,21 +15,10 @@ class SettingsController extends ChangeNotifier {
   static const String _customThemeKey = 'custom_theme';
   static const String _localeKey = 'app_locale';
   static const String _worksPageSizeKey = 'works_page_size';
-  static const String _playerSeekSecondsKey = 'player_seek_seconds';
-  static const String _playerHoldSpeedKey = 'player_hold_speed';
-
-  static const int _defaultPlayerSeekSeconds = 5;
-  static const int _minPlayerSeekSeconds = 1;
-  static const int _maxPlayerSeekSeconds = 60;
-  static const double _defaultPlayerHoldSpeed = 2;
-  static const double _minPlayerHoldSpeed = 1.25;
-  static const double _maxPlayerHoldSpeed = 4;
 
   ThemeMode themeMode = ThemeMode.system;
   bool isPureBlack = false;
   WorksPageSize _worksPageSize = WorksPageSize.small;
-  int _playerSeekSeconds = _defaultPlayerSeekSeconds;
-  double _playerHoldSpeed = _defaultPlayerHoldSpeed;
   bool _disposed = false;
 
   String _themeModeString = 'system';
@@ -43,10 +32,6 @@ class SettingsController extends ChangeNotifier {
   Locale? get appLocale => _localeFromString(_localeString);
 
   WorksPageSize get worksPageSize => _worksPageSize;
-
-  int get playerSeekSeconds => _playerSeekSeconds;
-
-  double get playerHoldSpeed => _playerHoldSpeed;
 
   /// 提供 UI 使用的語言選項（分層用）
   List<String> getLocaleOptions() {
@@ -72,20 +57,12 @@ class SettingsController extends ChangeNotifier {
     final pure = prefs.getBool(_pureBlackKey) ?? false;
     final locale = prefs.getString(_localeKey) ?? 'system';
     final worksPageSize = prefs.getString(_worksPageSizeKey);
-    final playerSeekSeconds = prefs.getInt(_playerSeekSecondsKey);
-    final playerHoldSpeed = switch (prefs.get(_playerHoldSpeedKey)) {
-      double value => value,
-      int value => value.toDouble(),
-      _ => null,
-    };
 
     _themeModeString = mode;
     themeMode = _themeModeFromString(mode);
     isPureBlack = pure;
     _localeString = locale;
     _worksPageSize = _worksPageSizeFromString(worksPageSize);
-    _playerSeekSeconds = _clampPlayerSeekSeconds(playerSeekSeconds);
-    _playerHoldSpeed = _clampPlayerHoldSpeed(playerHoldSpeed);
 
     _notifyIfActive();
   }
@@ -131,30 +108,6 @@ class SettingsController extends ChangeNotifier {
     await prefs.setString(_worksPageSizeKey, _worksPageSizeToString(value));
 
     _worksPageSize = value;
-
-    _notifyIfActive();
-  }
-
-  // 更新播放器單次跳轉秒數，並將選擇結果寫入裝置儲存。
-  Future<void> playerSeekSecondsChanged(int value) async {
-    final prefs = await SharedPreferences.getInstance();
-    final normalized = _clampPlayerSeekSeconds(value);
-
-    await prefs.setInt(_playerSeekSecondsKey, normalized);
-
-    _playerSeekSeconds = normalized;
-
-    _notifyIfActive();
-  }
-
-  // 更新播放器長按播放速度，並將選擇結果寫入裝置儲存。
-  Future<void> playerHoldSpeedChanged(double value) async {
-    final prefs = await SharedPreferences.getInstance();
-    final normalized = _clampPlayerHoldSpeed(value);
-
-    await prefs.setDouble(_playerHoldSpeedKey, normalized);
-
-    _playerHoldSpeed = normalized;
 
     _notifyIfActive();
   }
@@ -246,19 +199,5 @@ class SettingsController extends ChangeNotifier {
       WorksPageSize.small => 'small',
       WorksPageSize.large => 'large',
     };
-  }
-
-  int _clampPlayerSeekSeconds(int? value) {
-    return (value ?? _defaultPlayerSeekSeconds).clamp(
-      _minPlayerSeekSeconds,
-      _maxPlayerSeekSeconds,
-    );
-  }
-
-  double _clampPlayerHoldSpeed(double? value) {
-    return (value ?? _defaultPlayerHoldSpeed).clamp(
-      _minPlayerHoldSpeed,
-      _maxPlayerHoldSpeed,
-    );
   }
 }

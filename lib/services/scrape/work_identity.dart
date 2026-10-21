@@ -1,13 +1,26 @@
-// Identity rules shared by filename parsing and exact work lookup.
+// Identity rules used only by the new works scrape pipeline.
 //
 // This file intentionally does not depend on work_code_canonicalizer.dart.
 // The legacy canonicalizer contains alias reconciliation that is still needed
 // by a few presentation/image consumers, but it must not decide whether two
-// a filename or source response is the same work.
+// newly scraped works are the same work.
 
+import '../../models/scrape_source_settings.dart';
 import 'scrape_models.dart';
 
-/// The conservative work identity used by the folder-import lookup path.
+final class ScrapeTitleIdentity {
+  const ScrapeTitleIdentity({
+    required this.key,
+    required this.isUsable,
+    required this.isSpecialEdition,
+  });
+
+  final String key;
+  final bool isUsable;
+  final bool isSpecialEdition;
+}
+
+/// The conservative work identity used by the new multi-source scrape path.
 ///
 /// This is intentionally separate from work_code_canonicalizer.dart. A
 /// source image token can look code-like (for example ssis00875 or
@@ -64,6 +77,32 @@ final class ScrapeWorkIdentityEvidence {
   }
 }
 
+const _specialEditionMarkers = <String>['【特典版】', '[特典版]'];
+
+ScrapeTitleIdentity scrapeTitleIdentity(String? title) {
+  var value = _normalizeTitleSurface(title);
+  var isSpecialEdition = false;
+
+  for (final marker in _specialEditionMarkers) {
+    if (value.startsWith(marker)) {
+      value = value.substring(marker.length).trim();
+      isSpecialEdition = true;
+      break;
+    }
+    if (value.endsWith(marker)) {
+      value = value.substring(0, value.length - marker.length).trim();
+      isSpecialEdition = true;
+      break;
+    }
+  }
+
+  return ScrapeTitleIdentity(
+    key: value.toLowerCase(),
+    isUsable: value.isNotEmpty,
+    isSpecialEdition: isSpecialEdition,
+  );
+}
+
 /// Normalizes only code surface differences for new cross-source matching.
 ///
 /// In particular, this deliberately preserves numeric prefixes, number
@@ -77,7 +116,7 @@ String? normalizeScrapeWorkCodeSurface(String? raw) {
   return value.toUpperCase();
 }
 
-/// Parses only the safe work-code forms supported by the current lookup
+/// Parses only the safe work-code forms supported by the current scrape
 /// contract. Numeric padding is preserved for identity comparison. The only
 /// source-specific padding rule is the observed START separatorless
 /// representation (START00023 == START-023). It is deliberately not a
@@ -228,6 +267,18 @@ ScrapeWorkCodeIdentity _parseScrapeWorkCodeIdentitySurface(String surface) {
   );
 }
 
+String? scrapeWorkCodeIdentityKey(
+  String? raw, {
+  ScrapeWorkIdentityEvidence? evidence,
+}) => parseScrapeWorkCodeIdentity(raw, evidence: evidence)?.key;
+
+bool scrapeWorkCodeIsSpecialEdition(
+  String? raw, {
+  ScrapeWorkIdentityEvidence? evidence,
+}) =>
+    parseScrapeWorkCodeIdentity(raw, evidence: evidence)?.isSpecialEdition ??
+    false;
+
 bool scrapeWorkCodesEqual(
   String? left,
   String? right, {
@@ -236,6 +287,31 @@ bool scrapeWorkCodesEqual(
   final leftKey = parseScrapeWorkCodeIdentity(left, evidence: evidence)?.key;
   final rightKey = parseScrapeWorkCodeIdentity(right, evidence: evidence)?.key;
   return leftKey != null && leftKey == rightKey;
+}
+
+/// Resolves one summary to a grouping key for the aggregate pipeline.
+///
+/// A typed external identity may explicitly bridge a maker code and platform
+/// aliases. The START/107START/1start bridge is therefore applied only when
+/// those aliases are declared on the same source record; the bare code parser
+/// never performs that collapse.
+String? scrapeWorkIdentityKeyForSummary(ScrapeWorkSummary summary) {
+  return scrapeWorkResolvedIdentityKey(
+    rawCode: summary.rawCode ?? summary.code,
+    externalIdentity: summary.externalIdentity,
+    identityEvidence: scrapeWorkIdentityEvidenceForSummary(summary),
+    fallback: 'uri:${summary.source.storageValue}:${summary.detailUri}',
+  );
+}
+
+String? scrapeWorkIdentityKeyForDetails(ScrapeWorkDetails details) {
+  return scrapeWorkResolvedIdentityKey(
+    rawCode: details.rawCode ?? details.code,
+    externalIdentity: details.externalIdentity,
+    identityEvidence: scrapeWorkIdentityEvidenceForDetails(details),
+    fallback:
+        'uri:${details.source.storageValue}:${details.sourceUri ?? details.code}',
+  );
 }
 
 String? scrapeWorkResolvedIdentityKey({
@@ -277,6 +353,111 @@ ScrapeWorkIdentityEvidence? _identityEvidence(
   );
 }
 
+ScrapeWorkIdentityEvidence? scrapeWorkIdentityEvidenceForSummary(
+  ScrapeWorkSummary summary,
+) {
+  return _identityEvidenceForSource(
+    identity: summary.externalIdentity,
+    rawCode: summary.rawCode ?? summary.code,
+    source: summary.source,
+    catalogEvidence: summary.catalogEvidence,
+  );
+}
+
+ScrapeWorkIdentityEvidence? scrapeWorkIdentityEvidenceForDetails(
+  ScrapeWorkDetails details,
+) {
+  return _identityEvidenceForSource(
+    identity: details.externalIdentity,
+    rawCode: details.rawCode ?? details.code,
+    source: details.source,
+    manufacturer: details.studio,
+    label: details.publisher,
+    series: details.series,
+    catalogEvidence: details.catalogEvidence,
+  );
+}
+
+ScrapeWorkIdentityEvidence? _identityEvidenceForSource({
+  required ScrapeExternalWorkIdentity? identity,
+  required String? rawCode,
+  required ScrapeSourceId source,
+  String? manufacturer,
+  String? label,
+  String? series,
+  Iterable<ScrapeCatalogWorkEvidence> catalogEvidence = const [],
+}) {
+  final base = _identityEvidence(identity);
+  final sourceCatalog = catalogEvidence.where(
+    (evidence) => evidence.source == source,
+  );
+
+  String? firstValue(Iterable<String?> values) {
+    for (final value in values) {
+      final trimmed = value?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+    }
+    return null;
+  }
+
+  final resolvedManufacturer = firstValue([
+    base?.manufacturer,
+    manufacturer,
+    ...sourceCatalog.map((evidence) => evidence.manufacturer),
+  ]);
+  final resolvedLabel = firstValue([
+    base?.label,
+    label,
+    ...sourceCatalog.map((evidence) => evidence.label),
+  ]);
+  final resolvedSeries = firstValue([
+    base?.series,
+    series,
+    ...sourceCatalog.map((evidence) => evidence.series),
+  ]);
+
+  var effectiveManufacturer = resolvedManufacturer;
+  if (source == ScrapeSourceId.javbus &&
+      _looksLikeSodCode(rawCode) &&
+      effectiveManufacturer == null &&
+      resolvedLabel == null &&
+      resolvedSeries == null) {
+    // JavBus often exposes only the SOD-shaped code. This is a source-local
+    // identity hint, not a global prefix rule and not product classification.
+    effectiveManufacturer = 'SOD';
+  }
+
+  if (base == null &&
+      effectiveManufacturer == null &&
+      resolvedLabel == null &&
+      resolvedSeries == null) {
+    return null;
+  }
+
+  if (base != null &&
+      effectiveManufacturer == base.manufacturer &&
+      resolvedLabel == base.label &&
+      resolvedSeries == base.series) {
+    return base;
+  }
+
+  return ScrapeWorkIdentityEvidence(
+    canonicalCode: base?.canonicalCode,
+    makerCode: base?.makerCode,
+    manufacturer: effectiveManufacturer,
+    label: resolvedLabel,
+    series: resolvedSeries,
+    aliases: base?.aliases ?? const [],
+    platformIds: base?.platformIds ?? const {},
+  );
+}
+
+bool _looksLikeSodCode(String? raw) {
+  final surface = normalizeScrapeWorkCodeSurface(raw);
+  return surface != null &&
+      RegExp(r'^(?:START|STARS)(?:BD)?(?:-|\d)').hasMatch(surface);
+}
+
 String? _declaredScopedBridgeKey(
   ScrapeExternalWorkIdentity? identity, {
   ScrapeWorkIdentityEvidence? evidence,
@@ -303,6 +484,154 @@ String? _declaredScopedBridgeKey(
     return 'stars${starsNumbers.single}';
   }
   return null;
+}
+
+/// Returns the canonical display spelling without using the legacy alias
+/// table. The selected spelling is for storage/UI only; surface remains
+/// available to source-specific image lookup when needed.
+String? preferredScrapeWorkCode(
+  Iterable<String?> rawCodes, {
+  ScrapeWorkIdentityEvidence? evidence,
+}) {
+  final identities = rawCodes
+      .map((raw) => parseScrapeWorkCodeIdentity(raw, evidence: evidence))
+      .whereType<ScrapeWorkCodeIdentity>()
+      .toList(growable: false);
+  if (identities.isEmpty) {
+    return null;
+  }
+
+  final structured = identities.where((item) => item.isStructured).toList();
+  if (structured.isNotEmpty) {
+    structured.sort((left, right) {
+      final leftHyphen = left.displayCode.contains('-') ? 0 : 1;
+      final rightHyphen = right.displayCode.contains('-') ? 0 : 1;
+      final hyphenComparison = leftHyphen.compareTo(rightHyphen);
+      if (hyphenComparison != 0) {
+        return hyphenComparison;
+      }
+      return left.displayCode.compareTo(right.displayCode);
+    });
+    return structured.first.displayCode;
+  }
+  return identities.first.displayCode;
+}
+
+/// Storage spelling for one chosen source record. Unlike
+/// [preferredScrapeWorkCode], this preserves a real V/T/VT edition suffix
+/// when no ordinary candidate was selected for that identity.
+String? scrapeWorkStorageCode(String? rawCode) {
+  final identity = parseScrapeWorkCodeIdentity(rawCode);
+  if (identity == null) return null;
+  return identity.isSpecialEdition ? identity.surface : identity.displayCode;
+}
+
+/// Returns the clean canonical storage spelling for the new works pipeline.
+///
+/// Unlike the legacy storage helper above, a trusted SOD edition context is
+/// allowed to collapse a V/T/VT/EC/BD surface even when that edition is the
+/// only catalog record. Cross-platform aliases are considered only when the
+/// source declared them on the same record.
+String? scrapeWorkCanonicalStorageCode(
+  String? rawCode, {
+  ScrapeExternalWorkIdentity? externalIdentity,
+  ScrapeWorkIdentityEvidence? identityEvidence,
+}) {
+  final evidence = identityEvidence ?? _identityEvidence(externalIdentity);
+  final declared = <String?>[
+    externalIdentity?.canonicalCode,
+    externalIdentity?.makerCode,
+    ...?externalIdentity?.aliases,
+    ...?externalIdentity?.platformIds.values,
+    rawCode,
+  ];
+  final bridgeKey = _declaredScopedBridgeKey(
+    externalIdentity,
+    evidence: evidence,
+  );
+  if (bridgeKey != null) {
+    final prefix = bridgeKey.startsWith('start') ? 'START' : 'STARS';
+    return '$prefix-${_formatSodDigits(bridgeKey.substring(prefix.toLowerCase().length))}';
+  }
+  for (final candidate in declared) {
+    final identity = parseScrapeWorkCodeIdentity(candidate, evidence: evidence);
+    if (identity == null || !identity.isStructured) continue;
+    return identity.displayCode;
+  }
+  return scrapeWorkStorageCode(rawCode);
+}
+
+/// Compares metadata only when one side lacks a code. The actress is already
+/// the operation's common subject, so title plus one independent source
+/// attribute (release date, publisher, or studio) is the minimum evidence.
+bool scrapeWorkMetadataLikelySame({
+  required String? firstTitle,
+  required String? firstReleaseDate,
+  required String? firstPublisher,
+  required String? firstStudio,
+  required String? secondTitle,
+  required String? secondReleaseDate,
+  required String? secondPublisher,
+  required String? secondStudio,
+}) {
+  final firstTitleKey = scrapeTitleIdentity(firstTitle);
+  final secondTitleKey = scrapeTitleIdentity(secondTitle);
+  if (!firstTitleKey.isUsable ||
+      !secondTitleKey.isUsable ||
+      firstTitleKey.key != secondTitleKey.key) {
+    return false;
+  }
+
+  var corroboration = 0;
+  final firstDate = _normalizeMetadataValue(firstReleaseDate);
+  final secondDate = _normalizeMetadataValue(secondReleaseDate);
+  if (firstDate != null && secondDate != null && firstDate == secondDate) {
+    corroboration++;
+  }
+  final firstPublisherKey = _normalizeMetadataValue(firstPublisher);
+  final secondPublisherKey = _normalizeMetadataValue(secondPublisher);
+  if (firstPublisherKey != null &&
+      secondPublisherKey != null &&
+      firstPublisherKey == secondPublisherKey) {
+    corroboration++;
+  }
+  final firstStudioKey = _normalizeMetadataValue(firstStudio);
+  final secondStudioKey = _normalizeMetadataValue(secondStudio);
+  if (firstStudioKey != null &&
+      secondStudioKey != null &&
+      firstStudioKey == secondStudioKey) {
+    corroboration++;
+  }
+  return corroboration > 0;
+}
+
+/// Returns true only for the publisher spelling supported by the current
+/// parser fixtures/first-party samples. Do not infer this from a work code.
+bool isRebeccaPublisher(String? publisher) {
+  final normalized = _normalizePublisherSurface(publisher).toLowerCase();
+  return normalized
+      .split(RegExp(r'[/／,，、|&]'))
+      .map((part) => part.trim())
+      .any((part) => part == 'rebecca');
+}
+
+String _normalizeTitleSurface(String? raw) {
+  if (raw == null) {
+    return '';
+  }
+  return raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+}
+
+String _normalizePublisherSurface(String? raw) {
+  if (raw == null) {
+    return '';
+  }
+  return raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+}
+
+String? _normalizeMetadataValue(String? raw) {
+  final value = raw?.replaceAll(RegExp(r'\s+'), ' ').trim().toLowerCase();
+  return value == null || value.isEmpty ? null : value;
 }
 
 String _normalizeCodeSurface(String? raw) {

@@ -9,13 +9,6 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
-analyzer:
-  # Local Flutter engine/source checkouts used for native release work live
-  # under the ignored build directory and are not part of this app's Dart
-  # analysis target.
-  exclude:
-    - build/**
-
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

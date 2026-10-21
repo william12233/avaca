@@ -1,6 +1,0 @@
-name: avaca_domain
-description: Shared opaque identities and catalog contracts for AVACA apps.
-publish_to: none
-
-environment:
-  sdk: ^3.11.5

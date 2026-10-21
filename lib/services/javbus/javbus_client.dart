@@ -7,6 +7,7 @@ import '../http_safety.dart';
 import 'javbus_html_parser.dart';
 import 'javbus_models.dart';
 import 'javbus_verification.dart';
+import 'work_code.dart';
 import 'work_image_downloader.dart';
 
 abstract interface class JavBusTransport {
@@ -230,15 +231,46 @@ class JavBusClient {
     required JavBusTransport transport,
     JavBusHtmlParser? parser,
     Uri? baseUri,
+    this.maxPages = 100,
   }) : _transport = transport,
        _parser = parser ?? JavBusHtmlParser(),
        _baseUri = baseUri ?? Uri.parse('https://www.javbus.com/') {
+    if (maxPages < 1) {
+      throw ArgumentError.value(maxPages, 'maxPages', 'Must be positive.');
+    }
     _validateNavigationUri(_baseUri);
   }
 
   final JavBusTransport _transport;
   final JavBusHtmlParser _parser;
   final Uri _baseUri;
+  final int maxPages;
+  List<JavBusPageIssue> _lastWorkCollectionIssues = const [];
+
+  List<JavBusPageIssue> get lastWorkCollectionIssues =>
+      List.unmodifiable(_lastWorkCollectionIssues);
+
+  Future<void> checkConnection() async {
+    await _transport.get(_baseUri);
+  }
+
+  Future<List<JavBusActressSearchResult>> searchActresses(String name) async {
+    final uri = _baseUri.replace(
+      pathSegments: [
+        ..._baseUri.pathSegments.where((part) => part.isNotEmpty),
+        'searchstar',
+        name.trim(),
+      ],
+    );
+    final source = await _transport.get(uri);
+    return _parser.parseActressSearchResults(source, pageUri: uri);
+  }
+
+  Future<JavBusActressPage> fetchActressPage(Uri uri) async {
+    _validateNavigationUri(uri);
+    final source = await _transport.get(uri);
+    return _parser.parseActressPage(source, pageUri: uri);
+  }
 
   Future<JavBusWorkDetails> fetchWorkDetails(Uri uri) async {
     _validateNavigationUri(uri);
@@ -260,6 +292,119 @@ class JavBusClient {
     return fetchWorkDetails(uri);
   }
 
+  Future<List<JavBusWorkSummary>> fetchAllActressWorks(
+    Uri actressUri, {
+    bool Function()? isCancelled,
+    JavBusActressPage? firstPage,
+    void Function(int currentPage, int totalPages, int discovered)? onProgress,
+  }) async {
+    return (await fetchAllActressWorksResult(
+      actressUri,
+      isCancelled: isCancelled,
+      firstPage: firstPage,
+      onProgress: onProgress,
+    )).works;
+  }
+
+  Future<JavBusWorkCollectionResult> fetchAllActressWorksResult(
+    Uri actressUri, {
+    bool Function()? isCancelled,
+    JavBusActressPage? firstPage,
+    void Function(int currentPage, int totalPages, int discovered)? onProgress,
+  }) async {
+    _lastWorkCollectionIssues = const [];
+    _validateNavigationUri(actressUri);
+    if (isCancelled?.call() ?? false) {
+      return const JavBusWorkCollectionResult(works: []);
+    }
+    final resolvedFirstPage = firstPage ?? await fetchActressPage(actressUri);
+    if (resolvedFirstPage.pageCount > maxPages) {
+      throw JavBusPageLimitException(resolvedFirstPage.pageCount, maxPages);
+    }
+    final result = <JavBusWorkSummary>[];
+    final issues = <JavBusPageIssue>[];
+    final codeIndexes = <String, int>{};
+
+    void append(Iterable<JavBusWorkSummary> works) {
+      for (final work in works) {
+        final normalizedCode = work.code.trim().toUpperCase();
+        final existingIndex = codeIndexes[normalizedCode];
+        if (existingIndex == null) {
+          codeIndexes[normalizedCode] = result.length;
+          result.add(work);
+          continue;
+        }
+        final existing = result[existingIndex];
+        if (isJavBusSpecialEditionCode(existing.rawCode) &&
+            !isJavBusSpecialEditionCode(work.rawCode)) {
+          // Keep the ordinary detail page when a special-edition page was
+          // encountered earlier in pagination.
+          result[existingIndex] = work;
+        }
+      }
+    }
+
+    append(resolvedFirstPage.works);
+    onProgress?.call(1, resolvedFirstPage.pageCount, result.length);
+    for (var page = 2; page <= resolvedFirstPage.pageCount; page++) {
+      if (isCancelled?.call() ?? false) {
+        break;
+      }
+      final pageUri = Uri.parse(
+        '${actressUri.toString().replaceFirst(RegExp(r'/$'), '')}/$page',
+      );
+      try {
+        append((await fetchActressPage(pageUri)).works);
+      } catch (error) {
+        // A verification challenge is a session-level control flow event,
+        // not a missing page. Let the caller pause or cancel the job instead
+        // of silently continuing with later pagination pages.
+        if (error is JavBusVerificationRequiredException ||
+            error is JavBusVerificationCancelledException) {
+          rethrow;
+        }
+        issues.add(
+          JavBusPageIssue(
+            uri: pageUri,
+            kind: _pageIssueKind(error),
+            error: error,
+          ),
+        );
+      }
+      onProgress?.call(page, resolvedFirstPage.pageCount, result.length);
+    }
+    final collection = JavBusWorkCollectionResult(
+      works: List.unmodifiable(result),
+      issues: List.unmodifiable(issues),
+    );
+    _lastWorkCollectionIssues = collection.issues;
+    return collection;
+  }
+
+  JavBusPageIssueKind _pageIssueKind(Object error) {
+    if (error is JavBusVerificationRequiredException) {
+      return JavBusPageIssueKind.verificationRequired;
+    }
+    if (error is JavBusVerificationCancelledException) {
+      return JavBusPageIssueKind.cancelled;
+    }
+    if (error is JavBusRequestException) {
+      return switch (error.kind) {
+        JavBusFailureKind.verificationRequired =>
+          JavBusPageIssueKind.verificationRequired,
+        JavBusFailureKind.blocked => JavBusPageIssueKind.blocked,
+        JavBusFailureKind.rateLimited => JavBusPageIssueKind.rateLimited,
+        JavBusFailureKind.timeout => JavBusPageIssueKind.timeout,
+        JavBusFailureKind.notFound => JavBusPageIssueKind.notFound,
+        JavBusFailureKind.parserInvalid => JavBusPageIssueKind.parserInvalid,
+        JavBusFailureKind.cancelled => JavBusPageIssueKind.cancelled,
+        JavBusFailureKind.transport ||
+        JavBusFailureKind.transientTransport => JavBusPageIssueKind.transport,
+      };
+    }
+    return JavBusPageIssueKind.parserInvalid;
+  }
+
   void close() {
     final transport = _transport;
     if (transport is HttpJavBusTransport) {
@@ -278,4 +423,14 @@ class JavBusClient {
       throw UnsafeHttpUriException(uri);
     }
   }
+}
+
+class JavBusPageLimitException implements Exception {
+  const JavBusPageLimitException(this.actual, this.maximum);
+
+  final int actual;
+  final int maximum;
+
+  @override
+  String toString() => 'JavBus page count $actual exceeds limit $maximum.';
 }

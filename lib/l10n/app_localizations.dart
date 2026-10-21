@@ -805,12 +805,6 @@ abstract class AppLocalizations {
   /// **'選取的作品會從資料庫中全域移除，也會移除其他女優的作品連結。'**
   String get deleteWorksWarning;
 
-  /// No description provided for @libraryCollectionDeleteUnavailable.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'Library 收藏項目不提供刪除功能。'**
-  String get libraryCollectionDeleteUnavailable;
-
   /// No description provided for @worksDeleted.
   ///
   /// In zh_TW, this message translates to:
@@ -847,6 +841,114 @@ abstract class AppLocalizations {
   /// **'找不到符合的作品'**
   String get noMatchingWorks;
 
+  /// No description provided for @scrapeWorks.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削作品'**
+  String get scrapeWorks;
+
+  /// No description provided for @scrapeSettings.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削設定'**
+  String get scrapeSettings;
+
+  /// No description provided for @scrapeExistingData.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已有資料處理方式'**
+  String get scrapeExistingData;
+
+  /// No description provided for @scrapeUpdateAll.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'更新已有資料'**
+  String get scrapeUpdateAll;
+
+  /// No description provided for @scrapeAutomaticDerivedFilter.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'自動排除重製／合集作品'**
+  String get scrapeAutomaticDerivedFilter;
+
+  /// No description provided for @scrapeAutomaticDerivedFilterDescription.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'只依來源 lineage 與作品語義判定；未知作品保留，不用前綴直接排除。'**
+  String get scrapeAutomaticDerivedFilterDescription;
+
+  /// No description provided for @scrapeAdvancedRules.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'進階規則'**
+  String get scrapeAdvancedRules;
+
+  /// No description provided for @scrapeAdvancedRulesDescription.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'可輸入完整番號或前綴，例如 KCKC 或 KCKC-212。'**
+  String get scrapeAdvancedRulesDescription;
+
+  /// No description provided for @scrapeExactAllows.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'番號／前綴允許'**
+  String get scrapeExactAllows;
+
+  /// No description provided for @scrapeExactDenies.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'番號／前綴排除'**
+  String get scrapeExactDenies;
+
+  /// No description provided for @scrapeRuleHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'輸入番號或前綴'**
+  String get scrapeRuleHint;
+
+  /// No description provided for @scrapeNoRules.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚未設定規則'**
+  String get scrapeNoRules;
+
+  /// No description provided for @syncActressDetails.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'同步詳細資料'**
+  String get syncActressDetails;
+
+  /// No description provided for @replaceActressImage.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'更換女優頭像'**
+  String get replaceActressImage;
+
+  /// No description provided for @scrapeAvatarUnavailable.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'找不到可用的女優頭像。'**
+  String get scrapeAvatarUnavailable;
+
+  /// No description provided for @scrapeAvatarFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'女優頭像替換失敗，已保留原頭像。'**
+  String get scrapeAvatarFailed;
+
+  /// No description provided for @fillMissingOnly.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'二次刮削只補齊缺少的資訊'**
+  String get fillMissingOnly;
+
+  /// No description provided for @startScrape.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'開始刮削'**
+  String get startScrape;
+
   /// No description provided for @noWorks.
   ///
   /// In zh_TW, this message translates to:
@@ -876,6 +978,276 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'系列'**
   String get series;
+
+  /// No description provided for @scrapeComplete.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削完成：儲存 {saved}、排除 {excluded}、失敗 {failed}'**
+  String scrapeComplete(int saved, int excluded, int failed);
+
+  /// No description provided for @scrapeCancelled.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已取消刮削：儲存 {saved}、排除 {excluded}、失敗 {failed}'**
+  String scrapeCancelled(int saved, int excluded, int failed);
+
+  /// No description provided for @scrapeFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削失敗，請稍後再試。'**
+  String get scrapeFailed;
+
+  /// No description provided for @scrapePhaseCollecting.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'正在取得作品清單'**
+  String get scrapePhaseCollecting;
+
+  /// No description provided for @scrapePhaseSyncingActress.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'正在同步女優資料'**
+  String get scrapePhaseSyncingActress;
+
+  /// No description provided for @scrapePhaseFetchingDetails.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'正在取得作品詳情'**
+  String get scrapePhaseFetchingDetails;
+
+  /// No description provided for @scrapePhaseResolvingWorks.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'正在整理去重後作品'**
+  String get scrapePhaseResolvingWorks;
+
+  /// No description provided for @scrapePhaseSavingWorks.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'正在儲存作品與下載圖片'**
+  String get scrapePhaseSavingWorks;
+
+  /// No description provided for @scrapePhaseCompleted.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削完成'**
+  String get scrapePhaseCompleted;
+
+  /// No description provided for @scrapeSyncingTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削中'**
+  String get scrapeSyncingTitle;
+
+  /// No description provided for @scrapeSyncCompleted.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削完成'**
+  String get scrapeSyncCompleted;
+
+  /// No description provided for @scrapeSyncPartial.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削完成，但有部分項目失敗'**
+  String get scrapeSyncPartial;
+
+  /// No description provided for @scrapeSyncFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削失敗'**
+  String get scrapeSyncFailed;
+
+  /// No description provided for @scrapeSyncStopped.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已停止刮削'**
+  String get scrapeSyncStopped;
+
+  /// No description provided for @scrapeDetailsSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'詳細資料'**
+  String get scrapeDetailsSection;
+
+  /// No description provided for @scrapeWorksSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'作品'**
+  String get scrapeWorksSection;
+
+  /// No description provided for @scrapeDownloadSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下載'**
+  String get scrapeDownloadSection;
+
+  /// No description provided for @scrapeCurrentWork.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'目前處理：{code}'**
+  String scrapeCurrentWork(String code);
+
+  /// No description provided for @scrapeImagesLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'作品圖片'**
+  String get scrapeImagesLabel;
+
+  /// No description provided for @scrapeSavedCount.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已儲存'**
+  String get scrapeSavedCount;
+
+  /// No description provided for @scrapeExcludedCount.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'排除'**
+  String get scrapeExcludedCount;
+
+  /// No description provided for @scrapeFailedCount.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'失敗'**
+  String get scrapeFailedCount;
+
+  /// No description provided for @scrapeStatusWaiting.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'等待中'**
+  String get scrapeStatusWaiting;
+
+  /// No description provided for @scrapeStatusSyncing.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削中'**
+  String get scrapeStatusSyncing;
+
+  /// No description provided for @scrapeStatusCompleted.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'完成'**
+  String get scrapeStatusCompleted;
+
+  /// No description provided for @scrapeStatusPartial.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'部分完成'**
+  String get scrapeStatusPartial;
+
+  /// No description provided for @scrapeStatusFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'失敗'**
+  String get scrapeStatusFailed;
+
+  /// No description provided for @scrapeStatusCancelled.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已停止'**
+  String get scrapeStatusCancelled;
+
+  /// No description provided for @scrapeStatusNoNewWorks.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'完成，無新增作品'**
+  String get scrapeStatusNoNewWorks;
+
+  /// No description provided for @scrapeStatusUnavailable.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'無法使用'**
+  String get scrapeStatusUnavailable;
+
+  /// No description provided for @scrapeStatusBlocked.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'頁面被阻擋'**
+  String get scrapeStatusBlocked;
+
+  /// No description provided for @scrapeStatusRateLimited.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'被限流'**
+  String get scrapeStatusRateLimited;
+
+  /// No description provided for @scrapeStatusTimedOut.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'逾時'**
+  String get scrapeStatusTimedOut;
+
+  /// No description provided for @stopScrape.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'停止'**
+  String get stopScrape;
+
+  /// No description provided for @scrapeProgressSummary.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'儲存 {saved}、排除 {excluded}、失敗 {failed}'**
+  String scrapeProgressSummary(int saved, int excluded, int failed);
+
+  /// No description provided for @scrapeFailedWorksTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'失敗作品（{count}）'**
+  String scrapeFailedWorksTitle(int count);
+
+  /// No description provided for @scrapeImageFailuresTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'圖片下載失敗（{count}）'**
+  String scrapeImageFailuresTitle(int count);
+
+  /// No description provided for @scrapeFailureDetailsUnavailable.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'所有來源都無法取得作品詳情'**
+  String get scrapeFailureDetailsUnavailable;
+
+  /// No description provided for @scrapeFailureDetailCodeMismatch.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'作品詳情番號與作品不一致'**
+  String get scrapeFailureDetailCodeMismatch;
+
+  /// No description provided for @scrapeFailureInvalidCode.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'番號無法正規化'**
+  String get scrapeFailureInvalidCode;
+
+  /// No description provided for @scrapeFailurePerformerCountUnavailable.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'無法取得演員人數'**
+  String get scrapeFailurePerformerCountUnavailable;
+
+  /// No description provided for @scrapeFailureDatabaseSave.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'作品資料儲存失敗'**
+  String get scrapeFailureDatabaseSave;
+
+  /// No description provided for @scrapeImageFailureCard.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'封面圖片'**
+  String get scrapeImageFailureCard;
+
+  /// No description provided for @scrapeImageFailureDetail.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'詳細圖片'**
+  String get scrapeImageFailureDetail;
+
+  /// No description provided for @scrapeImageFailureBoth.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'封面與詳細圖片'**
+  String get scrapeImageFailureBoth;
 
   /// No description provided for @javBusVerificationTitle.
   ///
@@ -1068,6 +1440,144 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'回饋建議'**
   String get feedbackSuggestions;
+
+  /// No description provided for @scrapeSources.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削來源'**
+  String get scrapeSources;
+
+  /// No description provided for @scrapeSourceDetailsTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'女優詳細資料來源'**
+  String get scrapeSourceDetailsTitle;
+
+  /// No description provided for @scrapeSourceWorksTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'作品來源'**
+  String get scrapeSourceWorksTitle;
+
+  /// No description provided for @scrapeSourcePriorityHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'勾選來源並拖曳調整優先順序'**
+  String get scrapeSourcePriorityHint;
+
+  /// No description provided for @scrapeSourceAliasTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'女優別名來源'**
+  String get scrapeSourceAliasTitle;
+
+  /// No description provided for @scrapeSourceMinnanoAv.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'Minnano AV'**
+  String get scrapeSourceMinnanoAv;
+
+  /// No description provided for @scrapeSourceJavBus.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'JavBus'**
+  String get scrapeSourceJavBus;
+
+  /// No description provided for @scrapeSourceAvBase.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'AvBase'**
+  String get scrapeSourceAvBase;
+
+  /// No description provided for @scrapeSourceAvWiki.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'AV-Wiki'**
+  String get scrapeSourceAvWiki;
+
+  /// No description provided for @scrapeSourceAll.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'所有來源（依番號整合並去重複）'**
+  String get scrapeSourceAll;
+
+  /// No description provided for @scrapeSourceSaveFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'無法儲存刮削來源設定。'**
+  String get scrapeSourceSaveFailed;
+
+  /// No description provided for @scrapeSourceConnectionTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'網站連線狀態'**
+  String get scrapeSourceConnectionTitle;
+
+  /// No description provided for @scrapeSourceConnectionSubtitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'查看已加入的刮削網站，並在這裡測試連線與完成驗證。'**
+  String get scrapeSourceConnectionSubtitle;
+
+  /// No description provided for @scrapeSourceRetest.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重新測試連線'**
+  String get scrapeSourceRetest;
+
+  /// No description provided for @scrapeSourceTesting.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'測試中…'**
+  String get scrapeSourceTesting;
+
+  /// No description provided for @scrapeSourceNotTested.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚未測試'**
+  String get scrapeSourceNotTested;
+
+  /// No description provided for @scrapeSourceConnected.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'連線成功'**
+  String get scrapeSourceConnected;
+
+  /// No description provided for @scrapeSourceConnectionFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'連線失敗'**
+  String get scrapeSourceConnectionFailed;
+
+  /// No description provided for @scrapeSourceVerificationRequired.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'需要驗證'**
+  String get scrapeSourceVerificationRequired;
+
+  /// No description provided for @scrapeAliases.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削別名'**
+  String get scrapeAliases;
+
+  /// No description provided for @scrapeAliasesDescription.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'將別名來源找到的名稱寫入女優別名，不包含目前名稱。'**
+  String get scrapeAliasesDescription;
+
+  /// No description provided for @scrapePartial.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'部分來源或作品無法處理。'**
+  String get scrapePartial;
+
+  /// No description provided for @scrapeZeroResults.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'找不到新作品。'**
+  String get scrapeZeroResults;
 
   /// No description provided for @softwareUpdate.
   ///
@@ -1552,7 +2062,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataHealthSubtitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'檢查數量、作品欄位與圖片缺漏、欄位來源及待清理檔案。'**
+  /// **'檢查數量、作品欄位與圖片缺漏、欄位來源、待清理檔案及刮削來源錯誤。'**
   String get dataHealthSubtitle;
 
   /// No description provided for @dataHealthSectionUnavailable.
@@ -1615,6 +2125,283 @@ abstract class AppLocalizations {
   /// **'待清理檔案'**
   String get dataHealthPendingDeletions;
 
+  /// No description provided for @dataHealthJobStates.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削工作狀態'**
+  String get dataHealthJobStates;
+
+  /// No description provided for @dataHealthSourceErrors.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'近 7 日來源錯誤'**
+  String get dataHealthSourceErrors;
+
+  /// No description provided for @scrapeJobsTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削工作'**
+  String get scrapeJobsTitle;
+
+  /// No description provided for @scrapeJobsEmpty.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'目前沒有刮削工作。'**
+  String get scrapeJobsEmpty;
+
+  /// No description provided for @scrapeJobsSelectedCount.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已選取 {count} 項'**
+  String scrapeJobsSelectedCount(int count);
+
+  /// No description provided for @scrapeJobsDelete.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刪除'**
+  String get scrapeJobsDelete;
+
+  /// No description provided for @scrapeJobsDeleteTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刪除選取的刮削工作？'**
+  String get scrapeJobsDeleteTitle;
+
+  /// No description provided for @scrapeJobsDeleteMessage.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刪除 {count} 筆已結束的刮削紀錄？不會刪除作品、女優或設定。'**
+  String scrapeJobsDeleteMessage(int count);
+
+  /// No description provided for @scrapeJobsDeleteActive.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'進行中的刮削工作不能刪除，請只選取已結束的工作。'**
+  String get scrapeJobsDeleteActive;
+
+  /// No description provided for @scrapeJobsDeleted.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已刪除 {count} 筆刮削紀錄。'**
+  String scrapeJobsDeleted(int count);
+
+  /// No description provided for @scrapeJobsDeleteFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刪除刮削紀錄失敗。'**
+  String get scrapeJobsDeleteFailed;
+
+  /// No description provided for @scrapeJobDetailTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削工作詳情'**
+  String get scrapeJobDetailTitle;
+
+  /// No description provided for @scrapeJobPause.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'暫停'**
+  String get scrapeJobPause;
+
+  /// No description provided for @scrapeJobResume.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'繼續'**
+  String get scrapeJobResume;
+
+  /// No description provided for @scrapeJobCancel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'取消'**
+  String get scrapeJobCancel;
+
+  /// No description provided for @scrapeJobRetryFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'只重試失敗作品'**
+  String get scrapeJobRetryFailed;
+
+  /// No description provided for @scrapeJobEvents.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'事件紀錄'**
+  String get scrapeJobEvents;
+
+  /// No description provided for @scrapeJobDiagnostics.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削診斷'**
+  String get scrapeJobDiagnostics;
+
+  /// No description provided for @scrapeJobItems.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'作品檢查點'**
+  String get scrapeJobItems;
+
+  /// No description provided for @scrapeJobNoEvents.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚無事件紀錄。'**
+  String get scrapeJobNoEvents;
+
+  /// No description provided for @scrapeJobNoItems.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚無作品檢查點。'**
+  String get scrapeJobNoItems;
+
+  /// No description provided for @scrapeJobFilterAll.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'全部'**
+  String get scrapeJobFilterAll;
+
+  /// No description provided for @scrapeJobFilterReview.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'待檢視'**
+  String get scrapeJobFilterReview;
+
+  /// No description provided for @scrapeJobFilterKeep.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'保留'**
+  String get scrapeJobFilterKeep;
+
+  /// No description provided for @scrapeJobFilterExclude.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'排除'**
+  String get scrapeJobFilterExclude;
+
+  /// No description provided for @scrapeJobFilterFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'失敗'**
+  String get scrapeJobFilterFailed;
+
+  /// No description provided for @scrapeJobNoFilteredItems.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'沒有符合此篩選條件的檢查點。'**
+  String get scrapeJobNoFilteredItems;
+
+  /// No description provided for @scrapeJobStateReview.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'待檢視'**
+  String get scrapeJobStateReview;
+
+  /// No description provided for @scrapeJobStateQueued.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'排隊中'**
+  String get scrapeJobStateQueued;
+
+  /// No description provided for @scrapeJobStateRunning.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'執行中'**
+  String get scrapeJobStateRunning;
+
+  /// No description provided for @scrapeJobStatePaused.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已暫停'**
+  String get scrapeJobStatePaused;
+
+  /// No description provided for @scrapeJobStateWaiting.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'等待驗證'**
+  String get scrapeJobStateWaiting;
+
+  /// No description provided for @scrapeJobStateSucceeded.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'成功'**
+  String get scrapeJobStateSucceeded;
+
+  /// No description provided for @scrapeJobStatePartial.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'部分完成'**
+  String get scrapeJobStatePartial;
+
+  /// No description provided for @scrapeJobStateFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'失敗'**
+  String get scrapeJobStateFailed;
+
+  /// No description provided for @scrapeJobStateCancelled.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已取消'**
+  String get scrapeJobStateCancelled;
+
+  /// No description provided for @scrapeJobStateExcluded.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已排除'**
+  String get scrapeJobStateExcluded;
+
+  /// No description provided for @scrapeJobCollectionSummary.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'取得 {raw} 筆，去重後 {unique} 筆，重複 {duplicates} 筆'**
+  String scrapeJobCollectionSummary(int raw, int unique, int duplicates);
+
+  /// No description provided for @scrapeJobDetailProgress.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'作品詳細 {current}/{total}'**
+  String scrapeJobDetailProgress(int current, int total);
+
+  /// No description provided for @scrapeJobTerminalProgress.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已處理 {processed}/{total}，保存 {saved}，排除 {excluded}，失敗 {failed}'**
+  String scrapeJobTerminalProgress(
+    int processed,
+    int total,
+    int saved,
+    int excluded,
+    int failed,
+  );
+
+  /// No description provided for @scrapeJobCandidateSummary.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'候選作品 {count}，集合重複 {duplicates}'**
+  String scrapeJobCandidateSummary(int count, int duplicates);
+
+  /// No description provided for @scrapeJobSupplementalEvidence.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'補充證據 {current}/{total}'**
+  String scrapeJobSupplementalEvidence(int current, int total);
+
+  /// No description provided for @scrapeJobOutcomeSummary.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已處理 {processed}/{total}，保留 {keep}，待檢視 {review}，排除 {excluded}，失敗 {failed}'**
+  String scrapeJobOutcomeSummary(
+    int processed,
+    int total,
+    int keep,
+    int review,
+    int excluded,
+    int failed,
+  );
+
+  /// No description provided for @scrapeJobRulesVersion.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'規則版本：{version}'**
+  String scrapeJobRulesVersion(String version);
+
   /// No description provided for @settingsDataHealthTitle.
   ///
   /// In zh_TW, this message translates to:
@@ -1624,380 +2411,20 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDataHealthSubtitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'查看資料完整性與欄位來源。'**
+  /// **'查看資料完整性與刮削可觀測性。'**
   String get settingsDataHealthSubtitle;
 
-  /// No description provided for @libraryImportTitle.
+  /// No description provided for @settingsScrapeJobsTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'資料夾刮削與媒體入庫'**
-  String get libraryImportTitle;
+  /// **'刮削工作'**
+  String get settingsScrapeJobsTitle;
 
-  /// No description provided for @libraryImportOpen.
+  /// No description provided for @settingsScrapeJobsSubtitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'匯入影片'**
-  String get libraryImportOpen;
-
-  /// No description provided for @libraryImportSelectFolder.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'選擇刮削資料夾'**
-  String get libraryImportSelectFolder;
-
-  /// No description provided for @libraryImportSelectRoot.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'選擇收藏資料夾'**
-  String get libraryImportSelectRoot;
-
-  /// No description provided for @libraryImportScan.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'掃描資料夾'**
-  String get libraryImportScan;
-
-  /// No description provided for @libraryImportConfirm.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'確認並開始刮削'**
-  String get libraryImportConfirm;
-
-  /// No description provided for @libraryImportPhase1ReadOnly.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'目前階段只讀取檔名與檔案資訊，不會修改來源影片。'**
-  String get libraryImportPhase1ReadOnly;
-
-  /// No description provided for @libraryImportNoFolder.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'請先選擇刮削資料夾。'**
-  String get libraryImportNoFolder;
-
-  /// No description provided for @libraryImportNoRoot.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'請先選擇收藏資料夾。'**
-  String get libraryImportNoRoot;
-
-  /// No description provided for @libraryImportMediaAccessRequired.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'請允許 AVACA 讀取所選資料夾中的影片，再重新掃描。'**
-  String get libraryImportMediaAccessRequired;
-
-  /// No description provided for @libraryImportManualCode.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'手動修正番號'**
-  String get libraryImportManualCode;
-
-  /// No description provided for @libraryImportStatusReady.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'可處理'**
-  String get libraryImportStatusReady;
-
-  /// No description provided for @libraryImportStatusNeedsCorrection.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'需要修正番號'**
-  String get libraryImportStatusNeedsCorrection;
-
-  /// No description provided for @libraryImportSelected.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'已選取 {count} 個檔案'**
-  String libraryImportSelected(int count);
-
-  /// No description provided for @libraryImportResult.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'匯入結果：成功 {succeeded}、重複 {duplicate}、失敗 {failed}'**
-  String libraryImportResult(int succeeded, int duplicate, int failed);
-
-  /// No description provided for @libraryImportProgress.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'項目 {index}/{total} · {code} · {filename} · {phase}'**
-  String libraryImportProgress(
-    int index,
-    int total,
-    String code,
-    String filename,
-    String phase,
-  );
-
-  /// No description provided for @libraryImportProgressPhase.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'{phase, select, resolving {解析中} hashing {計算雜湊} probing {讀取媒體資訊} preflight {預檢查} staging {建立暫存} copying {複製中} verifying {驗證中} portableCommit {建立 Library 媒體} indexing {寫入索引} linking {建立連結} sourceCleanup {清理來源} succeeded {成功} duplicate {重複} failed {失敗} cancelled {已取消} repairRequired {需要修復} other {處理中}}'**
-  String libraryImportProgressPhase(String phase);
-
-  /// No description provided for @libraryImportNoPending.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'目前沒有待處理的匯入項目。'**
-  String get libraryImportNoPending;
-
-  /// No description provided for @libraryImportSource.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'來源資料夾'**
-  String get libraryImportSource;
-
-  /// No description provided for @libraryImportDestination.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'目的地 LibraryRoot'**
-  String get libraryImportDestination;
-
-  /// No description provided for @libraryImportSelectAll.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'選取所有可辨識檔案'**
-  String get libraryImportSelectAll;
-
-  /// No description provided for @libraryImportClearAll.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'清除全部'**
-  String get libraryImportClearAll;
-
-  /// No description provided for @libraryImportReview.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'檢查已選取項目'**
-  String get libraryImportReview;
-
-  /// No description provided for @libraryImportBackToScan.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'返回掃描'**
-  String get libraryImportBackToScan;
-
-  /// No description provided for @libraryImportCommit.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'正式匯入 Library'**
-  String get libraryImportCommit;
-
-  /// No description provided for @libraryImportReviewTitle.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'檢查匯入內容'**
-  String get libraryImportReviewTitle;
-
-  /// No description provided for @libraryImportPrimaryPerformer.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'主女優'**
-  String get libraryImportPrimaryPerformer;
-
-  /// No description provided for @libraryImportChoosePrimary.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'選擇主女優'**
-  String get libraryImportChoosePrimary;
-
-  /// No description provided for @libraryImportPrimaryRequired.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'正式匯入前必須選擇主女優。'**
-  String get libraryImportPrimaryRequired;
-
-  /// No description provided for @libraryImportReviewNoItems.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'沒有可供檢查的已選取媒體。'**
-  String get libraryImportReviewNoItems;
-
-  /// No description provided for @libraryImportReviewWork.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'作品'**
-  String get libraryImportReviewWork;
-
-  /// No description provided for @libraryImportReviewMedia.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'媒體'**
-  String get libraryImportReviewMedia;
-
-  /// No description provided for @libraryImportReviewDestination.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'目的地'**
-  String get libraryImportReviewDestination;
-
-  /// No description provided for @libraryImportReviewIssues.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'檢查問題'**
-  String get libraryImportReviewIssues;
-
-  /// No description provided for @libraryImportCommitBlocked.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'所有已選取項目準備完成前，不能正式匯入。'**
-  String get libraryImportCommitBlocked;
-
-  /// No description provided for @libraryImportNoRecognizable.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'找不到可辨識的影片檔案。'**
-  String get libraryImportNoRecognizable;
-
-  /// No description provided for @libraryMediaTitle.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'媒體檔案'**
-  String get libraryMediaTitle;
-
-  /// No description provided for @libraryMediaPlay.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'播放媒體'**
-  String get libraryMediaPlay;
-
-  /// No description provided for @libraryMediaUnavailable.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'媒體檔案無法使用，請修復 Library 項目。'**
-  String get libraryMediaUnavailable;
-
-  /// No description provided for @libraryMediaPart.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'分段'**
-  String get libraryMediaPart;
-
-  /// No description provided for @libraryMediaResolution.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'解析度'**
-  String get libraryMediaResolution;
-
-  /// No description provided for @libraryMediaFrameRate.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'影格率'**
-  String get libraryMediaFrameRate;
-
-  /// No description provided for @dataHealthLibraryWorks.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'Library 作品'**
-  String get dataHealthLibraryWorks;
-
-  /// No description provided for @dataHealthLibraryMediaIssues.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'Library 媒體問題'**
-  String get dataHealthLibraryMediaIssues;
-
-  /// No description provided for @dataHealthImportRepairs.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'匯入待修復'**
-  String get dataHealthImportRepairs;
-
-  /// No description provided for @dataHealthLibraryLinks.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'女優連結問題'**
-  String get dataHealthLibraryLinks;
-
-  /// No description provided for @playbackSettings.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'播放設定'**
-  String get playbackSettings;
-
-  /// No description provided for @playbackSeekSeconds.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'跳轉間隔'**
-  String get playbackSeekSeconds;
-
-  /// No description provided for @playbackHoldSpeed.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'長按播放速度'**
-  String get playbackHoldSpeed;
-
-  /// No description provided for @seconds.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'秒'**
-  String get seconds;
-
-  /// No description provided for @playerBack.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'返回'**
-  String get playerBack;
-
-  /// No description provided for @playerPlay.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'播放'**
-  String get playerPlay;
-
-  /// No description provided for @playerPause.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'暫停'**
-  String get playerPause;
-
-  /// No description provided for @playerSpeed.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'速度'**
-  String get playerSpeed;
-
-  /// No description provided for @playerSubtitles.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'字幕'**
-  String get playerSubtitles;
-
-  /// No description provided for @playerFullscreen.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'全螢幕'**
-  String get playerFullscreen;
-
-  /// No description provided for @playerExitFullscreen.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'退出全螢幕'**
-  String get playerExitFullscreen;
-
-  /// No description provided for @playerSubtitleOff.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'關閉'**
-  String get playerSubtitleOff;
-
-  /// No description provided for @playerHoldSpeed.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'長按速度'**
-  String get playerHoldSpeed;
-
-  /// No description provided for @playerPosition.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'播放進度'**
-  String get playerPosition;
-
-  /// No description provided for @playerPlaybackError.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'無法播放這部影片'**
-  String get playerPlaybackError;
+  /// **'查看佇列、恢復、暫停與失敗重試。'**
+  String get settingsScrapeJobsSubtitle;
 }
 
 class _AppLocalizationsDelegate

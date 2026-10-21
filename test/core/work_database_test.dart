@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:avaca/controllers/detail_controller.dart';
 import 'package:avaca/core/database.dart';
+import 'package:avaca/models/scraped_actress_details.dart';
 import 'package:avaca/models/work.dart';
 import 'package:avaca/models/work_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -526,6 +527,59 @@ void main() {
     );
 
     test(
+      'scraped actress sync never changes weight and gates image replacement',
+      () async {
+        final sqlite = await database.database;
+        await sqlite.update(
+          'actresses',
+          {
+            'img_path': 'old.jpg',
+            'height': '',
+            'weight': '48',
+            'bwh': 'B80 / W55 / H82',
+            'cup': 'C',
+          },
+          where: 'id = ?',
+          whereArgs: [actressId],
+        );
+
+        await database.syncActressDetails(
+          actressId: actressId,
+          missingOnly: true,
+          details: const ScrapedActressDetails(
+            name: '新名稱',
+            imagePath: 'new.jpg',
+            birthDate: '1997-12-03',
+            height: '160',
+            cup: 'D',
+            bust: '87',
+            waist: '58',
+            hip: '85',
+          ),
+        );
+
+        var actress = await database.getActressById(actressId);
+        expect(actress?['name'], '涼森れむ');
+        expect(actress?['img_path'], 'old.jpg');
+        expect(actress?['height'], '160');
+        expect(actress?['weight'], '48');
+        expect(actress?['bwh'], 'B80 / W55 / H82');
+        expect(actress?['cup'], 'C');
+        expect(actress?['birth_date'], '1997-12-03');
+
+        await database.syncActressDetails(
+          actressId: actressId,
+          missingOnly: true,
+          replaceImage: true,
+          details: const ScrapedActressDetails(imagePath: 'new.jpg'),
+        );
+        actress = await database.getActressById(actressId);
+        expect(actress?['img_path'], 'new.jpg');
+        expect(actress?['weight'], '48');
+      },
+    );
+
+    test(
       'standalone work upsert does not create an actress relation',
       () async {
         final workId = await database.upsertWork(
@@ -534,6 +588,65 @@ void main() {
 
         expect(await database.getWorkById(workId), isNotNull);
         expect(await database.getWorkCountForActress(actressId), 0);
+      },
+    );
+
+    test(
+      'normal actress sync updates provided fields but not weight',
+      () async {
+        final sqlite = await database.database;
+        await sqlite.update(
+          'actresses',
+          {'weight': '48', 'img_path': 'old.jpg'},
+          where: 'id = ?',
+          whereArgs: [actressId],
+        );
+
+        expect(
+          await database.syncActressDetails(
+            actressId: actressId,
+            details: const ScrapedActressDetails(
+              name: '涼森れむ（更新）',
+              imagePath: 'ignored.jpg',
+              height: '161',
+              cup: 'E',
+              bust: '88',
+              waist: '59',
+              hip: '86',
+            ),
+          ),
+          isTrue,
+        );
+
+        final actress = await database.getActressById(actressId);
+        expect(actress?['name'], '涼森れむ（更新）');
+        expect(actress?['img_path'], 'old.jpg');
+        expect(actress?['height'], '161');
+        expect(actress?['weight'], '48');
+        expect(actress?['bwh'], 'B88 / W59 / H86');
+        expect(actress?['cup'], 'E');
+      },
+    );
+
+    test(
+      'invalid scraped birthday does not discard other profile fields',
+      () async {
+        expect(
+          await database.syncActressDetails(
+            actressId: actressId,
+            details: const ScrapedActressDetails(
+              birthDate: '未知',
+              height: '162',
+              cup: 'F',
+            ),
+          ),
+          isTrue,
+        );
+
+        final actress = await database.getActressById(actressId);
+        expect(actress?['birth_date'], isNull);
+        expect(actress?['height'], '162');
+        expect(actress?['cup'], 'F');
       },
     );
 
@@ -1429,6 +1542,13 @@ void main() {
         });
         await started.future;
 
+        final synced = database.syncActressDetails(
+          actressId: actressId,
+          details: ScrapedActressDetails(
+            imagePath: path.join(database.imgDir, 'scraped', 'synced.jpg'),
+          ),
+          replaceImage: true,
+        );
         final updated = database.updateActress(
           actressId: actressId,
           name: '涼森れむ',
@@ -1447,6 +1567,7 @@ void main() {
           imgPath: path.join(database.imgDir, 'scraped', 'added.jpg'),
         );
         var completed = 0;
+        synced.then((_) => completed++);
         updated.then((_) => completed++);
         upserted.then((_) => completed++);
         added.then((_) => completed++);
@@ -1455,7 +1576,7 @@ void main() {
         expect(completed, 0);
 
         release.complete();
-        await Future.wait([updated, upserted, added]);
+        await Future.wait([synced, updated, upserted, added]);
         await lifecycle;
       },
     );

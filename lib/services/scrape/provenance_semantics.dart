@@ -1,5 +1,5 @@
 /// Shared, deliberately narrow semantic propositions used by source parsers
-/// and portable library provenance.
+/// and the provenance evaluator.
 ///
 /// These helpers only return a positive proposition when the surrounding
 /// wording is strong enough to support a derived-work decision.  A bare
@@ -56,6 +56,11 @@ final class ScrapeProvenanceSemantics {
 
   static final RegExp _explicitPriorWorkStatementPattern = RegExp(
     r'(?:過去|既存|旧)(?:の)?作(?:品)?\s*(?:\d+\s*(?:本|作品|タイトル))?\s*(?:を|が)?\s*(?:再\s*)?(?:(?:完全|厳選|まとめて|すべて|全て)(?:\s*して)?\s*)*(?:収録|収録する|収録済み)|(?:old|previous)\s+(?:works?|titles?)\s+(?:included|collected|reissued|re-released)',
+    caseSensitive: false,
+  );
+
+  static final RegExp _targetBestSuffixPattern = RegExp(
+    r'^\s*(?:[・･\-–—:：/／]\s*)?(?:\d+\s*(?:時間|分|hours?|minutes?|h|min)\s*)?(?:best(?!\s*(?:friend|partner|condition)\b)(?![a-z0-9])|ベスト(?![\s・･]*(?:フレンド|パートナー|コンディション))(?![ぁ-んァ-ン一-龯a-z0-9]))',
     caseSensitive: false,
   );
 
@@ -236,6 +241,50 @@ final class ScrapeProvenanceSemantics {
       }
     }
     return null;
+  }
+
+  static ScrapeSemanticProposition? targetActressBestProposition(
+    String value,
+    Iterable<String> normalizedTargetNames,
+  ) {
+    final text = normalize(value);
+    for (final name in normalizedTargetNames) {
+      final normalizedName = normalize(name);
+      if (normalizedName.isEmpty) continue;
+      var searchStart = 0;
+      while (searchStart < text.length) {
+        final nameIndex = text.indexOf(normalizedName, searchStart);
+        if (nameIndex < 0) break;
+        final nameEnd = nameIndex + normalizedName.length;
+        final before = nameIndex == 0
+            ? null
+            : text.substring(0, nameIndex).runes.last;
+        final suffix = text.substring(nameEnd);
+        if (!_isNameAdjacentRune(before)) {
+          final match = _targetBestSuffixPattern.firstMatch(suffix);
+          if (match != null) {
+            return ScrapeSemanticProposition(
+              ruleId: 'semantic_target_actress_best',
+              observedText: text.substring(nameIndex, nameEnd + match.end),
+            );
+          }
+        }
+        searchStart = nameEnd;
+      }
+    }
+    return null;
+  }
+
+  static bool _isNameAdjacentRune(int? rune) {
+    if (rune == null) return false;
+    return rune >= 0x30 && rune <= 0x39 ||
+        rune >= 0x41 && rune <= 0x5A ||
+        rune >= 0x61 && rune <= 0x7A ||
+        rune >= 0x3040 && rune <= 0x30FF ||
+        rune >= 0x3400 && rune <= 0x4DBF ||
+        rune >= 0x4E00 && rune <= 0x9FFF ||
+        rune >= 0xF900 && rune <= 0xFAFF ||
+        rune >= 0xFF66 && rune <= 0xFF9D;
   }
 
   static bool containsReliableOriginal(String value) {

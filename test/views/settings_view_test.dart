@@ -1,7 +1,10 @@
 import 'package:avaca/core/config.dart';
 import 'package:avaca/core/database.dart';
 import 'package:avaca/l10n/app_localizations.dart';
+import 'package:avaca/models/scrape_source_settings.dart';
+import 'package:avaca/models/work_scrape_options.dart';
 import 'package:avaca/services/javbus/prefix_route_repository.dart';
+import 'package:avaca/services/javbus/javbus_verification.dart';
 import 'package:avaca/services/javbus/work_image_route_resolver.dart';
 import 'package:avaca/views/settings_view.dart';
 import 'package:flutter/material.dart';
@@ -152,6 +155,257 @@ void main() {
           )
           .successCount,
       1,
+    );
+  });
+
+  testWidgets('scrape sources persist detail and supported work selections', (
+    tester,
+  ) async {
+    await _pumpSettings(tester);
+
+    await tester.tap(find.text('Scrape settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Scrape sources'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Actress details source'), findsOneWidget);
+    expect(find.text('Works source'), findsOneWidget);
+    expect(find.text('Actress aliases source'), findsOneWidget);
+    _expectBorderlessExpansionTile(
+      tester,
+      'Actress details source',
+      expectedShape: const Border(),
+      expectAnimationStyle: false,
+    );
+    _expectBorderlessExpansionTile(
+      tester,
+      'Works source',
+      expectedShape: const Border(),
+      expectAnimationStyle: false,
+    );
+
+    await tester.tap(find.byKey(const PageStorageKey('scrape-actress-source')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.widgetWithText(RadioListTile<ScrapeSourceId>, 'JavBus'),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const PageStorageKey('scrape-works-source')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<CheckboxListTile>(
+            find.widgetWithText(CheckboxListTile, 'JavBus'),
+          )
+          .value,
+      isTrue,
+    );
+    final availableAvBase = find.byKey(
+      const ValueKey('scrape-works-source-available-avbase'),
+    );
+    await tester.ensureVisible(availableAvBase);
+    await tester.pumpAndSettle();
+    await tester.tap(availableAvBase);
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.drag_handle), findsNWidgets(2));
+    final selectedAvBase = find.byKey(
+      const ValueKey('scrape-works-source-selected-avbase'),
+    );
+    await tester.ensureVisible(selectedAvBase);
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byIcon(Icons.drag_handle).last,
+      const Offset(0, -180),
+    );
+    await tester.pumpAndSettle();
+    final availableAvWiki = find.byKey(
+      const ValueKey('scrape-works-source-available-avwiki'),
+    );
+    await tester.ensureVisible(availableAvWiki);
+    await tester.pumpAndSettle();
+    await tester.tap(availableAvWiki);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('scrape-works-source-selected-avwiki')),
+      findsOneWidget,
+    );
+
+    final database = tester
+        .state<_SettingsHarnessState>(find.byType(_SettingsHarness))
+        .database;
+    final settings = ScrapeSourceSettings.decode(
+      await database.getSetting(scrapeSourceSettingsKey),
+    );
+    expect(settings.actressDetailsSource, ScrapeSourceId.javbus);
+    expect(settings.worksSources, [
+      ScrapeSourceId.avbase,
+      ScrapeSourceId.javbus,
+      ScrapeSourceId.avwiki,
+    ]);
+    expect(settings.aliasSource, ScrapeSourceId.avbase);
+
+    // Reopening the category must read the latest persisted pair rather than
+    // restoring either source's default.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Scrape settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Scrape sources'));
+    await tester.pumpAndSettle();
+    if (find.widgetWithText(CheckboxListTile, 'JavBus').evaluate().isEmpty) {
+      await tester.tap(find.byKey(const PageStorageKey('scrape-works-source')));
+      await tester.pumpAndSettle();
+    }
+    expect(find.widgetWithText(CheckboxListTile, 'JavBus'), findsOneWidget);
+
+    final reopenedSettings = ScrapeSourceSettings.decode(
+      await database.getSetting(scrapeSourceSettingsKey),
+    );
+    expect(reopenedSettings.actressDetailsSource, ScrapeSourceId.javbus);
+    expect(reopenedSettings.worksSources, [
+      ScrapeSourceId.avbase,
+      ScrapeSourceId.javbus,
+      ScrapeSourceId.avwiki,
+    ]);
+    expect(reopenedSettings.aliasSource, ScrapeSourceId.avbase);
+  });
+
+  testWidgets('scrape source connections can be retested and verified', (
+    tester,
+  ) async {
+    final testedSources = <ScrapeSourceId>[];
+
+    await _pumpSettings(
+      tester,
+      scrapeSourceConnectionTester: (source) async {
+        testedSources.add(source);
+        if (source == ScrapeSourceId.javbus) {
+          throw const JavBusVerificationCancelledException();
+        }
+      },
+    );
+
+    await tester.tap(find.text('Scrape settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Scrape sources'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const PageStorageKey('scrape-source-connection-status')),
+    );
+    await tester.pumpAndSettle();
+    _expectBorderlessExpansionTile(
+      tester,
+      'Scrape source connections',
+      expectedShape: const Border(),
+      expectAnimationStyle: false,
+    );
+
+    expect(
+      find.byKey(const ValueKey('scrape-source-status-minnanoAv')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('scrape-source-status-javbus')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('scrape-source-status-avbase')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('scrape-source-status-avwiki')),
+      findsOneWidget,
+    );
+    expect(find.text('Not tested'), findsNWidgets(4));
+
+    await tester.tap(find.byKey(const ValueKey('scrape-source-retest-button')));
+    await tester.pumpAndSettle();
+
+    expect(testedSources, [
+      ScrapeSourceId.minnanoAv,
+      ScrapeSourceId.javbus,
+      ScrapeSourceId.avbase,
+      ScrapeSourceId.avwiki,
+    ]);
+    expect(find.text('Connected'), findsNWidgets(3));
+    expect(find.text('Verification required'), findsOneWidget);
+  });
+
+  testWidgets('global scrape preferences persist outside the Works action', (
+    tester,
+  ) async {
+    await _pumpSettings(tester);
+
+    await tester.tap(find.text('Scrape settings'));
+    await tester.pumpAndSettle();
+
+    final preferences = find.byKey(const Key('settings-scrape-preferences'));
+    await tester.ensureVisible(preferences);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('scrape-existing-data-policy')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('scrape-auto-exclude-derived-switch')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('scrape-auto-exclude-derived-switch')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('scrape-advanced-rules')));
+    await tester.pumpAndSettle();
+    final denyInput = find.byKey(const Key('scrape-exact-deny-input'));
+    await tester.ensureVisible(denyInput);
+    await tester.enterText(denyInput, 'manual-001');
+    await tester.tap(find.byKey(const Key('scrape-exact-deny-add')));
+    await tester.pumpAndSettle();
+
+    final database = tester
+        .state<_SettingsHarnessState>(find.byType(_SettingsHarness))
+        .database;
+    final options = WorkScrapeOptions.decode(
+      await database.getSetting('works_scrape_options'),
+    );
+    expect(options.autoExcludeDerivedWorks, isFalse);
+    expect(options.exactDenies.single.normalizedCode, 'MANUAL-001');
+  });
+
+  testWidgets('scrape advanced rules only expose exact overrides', (
+    tester,
+  ) async {
+    await _pumpSettings(tester);
+
+    await tester.tap(find.text('Scrape settings'));
+    await tester.pumpAndSettle();
+
+    final padding = tester.widget<Padding>(
+      find.byKey(const Key('scrape-preferences-padding')),
+    );
+    expect(padding.padding, const EdgeInsets.fromLTRB(8, 7, 8, 8));
+
+    final tileFinder = find.byKey(const Key('scrape-advanced-rules'));
+    final collapsed = tester.widget<ExpansionTile>(tileFinder);
+    expect(collapsed.shape, const Border());
+    expect(collapsed.collapsedShape, const Border());
+    expect(find.byKey(const Key('scrape-prefix-input')), findsNothing);
+    expect(find.byKey(const Key('scrape-ofje-policy-dropdown')), findsNothing);
+
+    await tester.tap(tileFinder);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('scrape-exact-allow-input')), findsOneWidget);
+    expect(find.byKey(const Key('scrape-exact-deny-input')), findsOneWidget);
+    expect(find.byKey(const Key('scrape-prefix-input')), findsNothing);
+    expect(find.byKey(const Key('scrape-ofje-policy-dropdown')), findsNothing);
+    expect(find.text('Compatibility prefixes'), findsNothing);
+    expect(
+      find.text('Enter a full work code or prefix, e.g. KCKC or KCKC-212.'),
+      findsOneWidget,
     );
   });
 
@@ -788,11 +1042,13 @@ Future<void> _pumpSettings(
   WidgetTester tester, {
   TextScaler textScaler = TextScaler.noScaling,
   ExternalUrlLauncher? externalUrlLauncher,
+  ScrapeSourceConnectionTester? scrapeSourceConnectionTester,
 }) async {
   await tester.pumpWidget(
     _SettingsHarness(
       textScaler: textScaler,
       externalUrlLauncher: externalUrlLauncher,
+      scrapeSourceConnectionTester: scrapeSourceConnectionTester,
     ),
   );
   await tester.pumpAndSettle();
@@ -802,10 +1058,12 @@ class _SettingsHarness extends StatefulWidget {
   const _SettingsHarness({
     this.textScaler = TextScaler.noScaling,
     this.externalUrlLauncher,
+    this.scrapeSourceConnectionTester,
   });
 
   final TextScaler textScaler;
   final ExternalUrlLauncher? externalUrlLauncher;
+  final ScrapeSourceConnectionTester? scrapeSourceConnectionTester;
 
   @override
   State<_SettingsHarness> createState() => _SettingsHarnessState();
@@ -840,6 +1098,7 @@ class _SettingsHarnessState extends State<_SettingsHarness> {
           setState(() => _locale = locale);
         },
         externalUrlLauncher: widget.externalUrlLauncher ?? (_) async => true,
+        scrapeSourceConnectionTester: widget.scrapeSourceConnectionTester,
       ),
     );
   }

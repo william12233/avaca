@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:avaca/views/add_view.dart';
 import 'package:avaca/views/detail_view.dart';
 import 'package:avaca/views/home_view.dart';
 import 'package:avaca/views/settings_view.dart';
 import 'package:avaca/views/work_detail_view.dart';
 import 'package:avaca/views/works_view.dart';
+import 'package:avaca/models/scrape_source_settings.dart';
+import 'package:avaca/services/works_scrape_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -91,6 +95,46 @@ void main() {
       await expectLater(
         find.byType(Scaffold).first,
         matchesGoldenFile('goldens/expanded/settings.png'),
+      );
+    });
+
+    testWidgets('Scrape settings compact golden', (tester) async {
+      await pumpGoldenApp(
+        tester,
+        SettingsView(
+          db: GoldenFixtureDatabase(),
+          onThemeChanged: (_, _, _) {},
+          onLocaleChanged: (_) {},
+        ),
+        size: _compactViewport,
+      );
+      await tester.tap(find.text('刮削設定'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('scrape-advanced-rules')));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(Scaffold).last,
+        matchesGoldenFile('goldens/compact/scrape-settings.png'),
+      );
+    });
+
+    testWidgets('Scrape settings expanded golden', (tester) async {
+      await pumpGoldenApp(
+        tester,
+        SettingsView(
+          db: GoldenFixtureDatabase(),
+          onThemeChanged: (_, _, _) {},
+          onLocaleChanged: (_) {},
+        ),
+        size: _expandedViewport,
+      );
+      await tester.tap(find.text('刮削設定'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('scrape-advanced-rules')));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(Scaffold).last,
+        matchesGoldenFile('goldens/expanded/scrape-settings.png'),
       );
     });
 
@@ -262,6 +306,78 @@ void main() {
         find.byType(Scaffold).last,
         matchesGoldenFile('goldens/compact/settings-theme-expanded.png'),
       );
+    });
+
+    testWidgets('Works scrape progress overlay golden', (tester) async {
+      final result = Completer<WorksScrapeResult>();
+      await pumpGoldenApp(
+        tester,
+        WorksView(
+          db: GoldenFixtureDatabase(),
+          actressId: 1,
+          scrapeExecutor: (options, token, onProgress) async {
+            onProgress(
+              const WorksScrapeProgress(
+                phase: WorksScrapePhase.fetchingDetails,
+                current: 1,
+                total: 3,
+                saved: 0,
+                excluded: 0,
+                failed: 0,
+                totalKnown: true,
+                source: ScrapeSourceId.javbus,
+                detailsSource: ScrapeSourceId.javbus,
+                worksSources: [ScrapeSourceId.javbus],
+                sourceProgress: {
+                  ScrapeSourceId.javbus: WorksScrapeSourceProgress(
+                    phase: WorksScrapePhase.fetchingDetails,
+                    current: 1,
+                    total: 3,
+                    totalKnown: true,
+                  ),
+                },
+              ),
+            );
+            return result.future;
+          },
+        ),
+        size: _compactViewport,
+      );
+      await tester.tap(find.byKey(const Key('works-overflow-menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('works-scrape-menu-item')));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+
+      expect(find.byKey(const Key('scrape-progress-dialog')), findsOneWidget);
+      expect(find.byKey(const Key('scrape-progress-sources')), findsOneWidget);
+      expect(find.byKey(const Key('scrape-progress-summary')), findsOneWidget);
+      expect(find.byKey(const Key('scrape-progress-count')), findsOneWidget);
+      expect(find.byKey(const Key('scrape-progress-circular')), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      await tester.pump(const Duration(milliseconds: 100));
+      await expectLater(
+        find.byKey(const Key('scrape-progress-dialog')),
+        matchesGoldenFile('goldens/compact/works-scrape.png'),
+      );
+
+      result.complete(
+        const WorksScrapeResult(
+          saved: 0,
+          excluded: 0,
+          failed: 0,
+          cancelled: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await expectLater(
+        find.byKey(const Key('scrape-result-dialog')),
+        matchesGoldenFile('goldens/compact/works-scrape-result.png'),
+      );
+      await tester.tap(find.byKey(const Key('scrape-result-done')));
+      await tester.pumpAndSettle();
     });
   });
 }

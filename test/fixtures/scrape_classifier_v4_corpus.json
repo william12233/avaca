@@ -1,0 +1,2391 @@
+{
+  "classifierVersion": "semantic-v4",
+  "actresses": [
+    "未歩なな",
+    "永野いち夏",
+    "輝星きら",
+    "小湊よつ葉",
+    "新井リマ",
+    "鳳みゆ",
+    "坂道みる",
+    "八掛うみ",
+    "河北彩花"
+  ],
+  "identityFamilies": [
+    "SOD-START-STARS",
+    "S1-OFJE",
+    "MOODYZ-MIZD",
+    "KAWAII-KWBD",
+    "ROOKIE-RBB",
+    "ATTACKERS-ATKD",
+    "IDEAPOCKET-IDBD",
+    "MADONNA-JUSD",
+    "OPPAI-PPBD",
+    "PRESTIGE-THN",
+    "START-cross-platform",
+    "107START-cross-platform",
+    "1START-cross-platform",
+    "SIVR-padded-distinct",
+    "FOO-EC-distinct",
+    "SOD-VT",
+    "SOD-VT2-EC",
+    "SOD-STARSBD",
+    "opaque-code"
+  ],
+  "expectedCounts": {
+    "decisive": 162,
+    "ambiguous": 1
+  },
+  "cases": [
+    {
+      "id": "1-keep-1",
+      "actress": "未歩なな",
+      "identityFamily": "SOD-START-STARS",
+      "code": "CORPUS-0001",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-keep-2",
+      "actress": "未歩なな",
+      "identityFamily": "S1-OFJE",
+      "code": "CORPUS-0002",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-keep-3",
+      "actress": "未歩なな",
+      "identityFamily": "MOODYZ-MIZD",
+      "code": "CORPUS-0003",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "マルチアングル編集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-keep-4",
+      "actress": "未歩なな",
+      "identityFamily": "KAWAII-KWBD",
+      "code": "CORPUS-0004",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "4K作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-keep-5",
+      "actress": "未歩なな",
+      "identityFamily": "ROOKIE-RBB",
+      "code": "CORPUS-0005",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "長時間作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-keep-6",
+      "actress": "未歩なな",
+      "identityFamily": "ATTACKERS-ATKD",
+      "code": "CORPUS-0006",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "30人の新作",
+          "performerCount": 30,
+          "facts": {
+            "coPerformance": "independentSegments"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1-keep-7",
+      "actress": "未歩なな",
+      "identityFamily": "IDEAPOCKET-IDBD",
+      "code": "CORPUS-0007",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全4本番",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-keep-8",
+      "actress": "未歩なな",
+      "identityFamily": "MADONNA-JUSD",
+      "code": "CORPUS-0008",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "BEST FRIEND",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-keep-9",
+      "actress": "未歩なな",
+      "identityFamily": "OPPAI-PPBD",
+      "code": "CORPUS-0009",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "周年記念コラボ新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-exclude-1",
+      "actress": "未歩なな",
+      "identityFamily": "PRESTIGE-THN",
+      "code": "CORPUS-0010",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-exclude-2",
+      "actress": "未歩なな",
+      "identityFamily": "START-cross-platform",
+      "code": "CORPUS-0011",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "作品集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-exclude-3",
+      "actress": "未歩なな",
+      "identityFamily": "107START-cross-platform",
+      "code": "CORPUS-0012",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全出演作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-exclude-4",
+      "actress": "未歩なな",
+      "identityFamily": "1START-cross-platform",
+      "code": "CORPUS-0013",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "過去作品を厳選収録",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-exclude-5",
+      "actress": "未歩なな",
+      "identityFamily": "SIVR-padded-distinct",
+      "code": "CORPUS-0014",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再編集版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-exclude-6",
+      "actress": "未歩なな",
+      "identityFamily": "FOO-EC-distinct",
+      "code": "CORPUS-0015",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再発売",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-exclude-7",
+      "actress": "未歩なな",
+      "identityFamily": "SOD-VT",
+      "code": "CORPUS-0016",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "リマスター",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-exclude-8",
+      "actress": "未歩なな",
+      "identityFamily": "SOD-VT2-EC",
+      "code": "CORPUS-0017",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "元作品から分割版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "1-exclude-9",
+      "actress": "未歩なな",
+      "identityFamily": "SOD-STARSBD",
+      "code": "CORPUS-0018",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編＋新撮ボーナス映像",
+          "facts": {
+            "includedWorks": [
+              "OLD-001"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "2-keep-1",
+      "actress": "永野いち夏",
+      "identityFamily": "opaque-code",
+      "code": "CORPUS-0019",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-keep-2",
+      "actress": "永野いち夏",
+      "identityFamily": "SOD-START-STARS",
+      "code": "CORPUS-0020",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-keep-3",
+      "actress": "永野いち夏",
+      "identityFamily": "S1-OFJE",
+      "code": "CORPUS-0021",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "マルチアングル編集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-keep-4",
+      "actress": "永野いち夏",
+      "identityFamily": "MOODYZ-MIZD",
+      "code": "CORPUS-0022",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "4K作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-keep-5",
+      "actress": "永野いち夏",
+      "identityFamily": "KAWAII-KWBD",
+      "code": "CORPUS-0023",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "長時間作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-keep-6",
+      "actress": "永野いち夏",
+      "identityFamily": "ROOKIE-RBB",
+      "code": "CORPUS-0024",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "30人の新作",
+          "performerCount": 30,
+          "facts": {
+            "coPerformance": "independentSegments"
+          }
+        }
+      ]
+    },
+    {
+      "id": "2-keep-7",
+      "actress": "永野いち夏",
+      "identityFamily": "ATTACKERS-ATKD",
+      "code": "CORPUS-0025",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全4本番",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-keep-8",
+      "actress": "永野いち夏",
+      "identityFamily": "IDEAPOCKET-IDBD",
+      "code": "CORPUS-0026",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "BEST FRIEND",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-keep-9",
+      "actress": "永野いち夏",
+      "identityFamily": "MADONNA-JUSD",
+      "code": "CORPUS-0027",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "周年記念コラボ新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-exclude-1",
+      "actress": "永野いち夏",
+      "identityFamily": "OPPAI-PPBD",
+      "code": "CORPUS-0028",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-exclude-2",
+      "actress": "永野いち夏",
+      "identityFamily": "PRESTIGE-THN",
+      "code": "CORPUS-0029",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "作品集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-exclude-3",
+      "actress": "永野いち夏",
+      "identityFamily": "START-cross-platform",
+      "code": "CORPUS-0030",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全出演作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-exclude-4",
+      "actress": "永野いち夏",
+      "identityFamily": "107START-cross-platform",
+      "code": "CORPUS-0031",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "過去作品を厳選収録",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-exclude-5",
+      "actress": "永野いち夏",
+      "identityFamily": "1START-cross-platform",
+      "code": "CORPUS-0032",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再編集版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-exclude-6",
+      "actress": "永野いち夏",
+      "identityFamily": "SIVR-padded-distinct",
+      "code": "CORPUS-0033",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再発売",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-exclude-7",
+      "actress": "永野いち夏",
+      "identityFamily": "FOO-EC-distinct",
+      "code": "CORPUS-0034",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "リマスター",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-exclude-8",
+      "actress": "永野いち夏",
+      "identityFamily": "SOD-VT",
+      "code": "CORPUS-0035",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "元作品から分割版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "2-exclude-9",
+      "actress": "永野いち夏",
+      "identityFamily": "SOD-VT2-EC",
+      "code": "CORPUS-0036",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編＋新撮ボーナス映像",
+          "facts": {
+            "includedWorks": [
+              "OLD-001"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "3-keep-1",
+      "actress": "輝星きら",
+      "identityFamily": "SOD-STARSBD",
+      "code": "CORPUS-0037",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-keep-2",
+      "actress": "輝星きら",
+      "identityFamily": "opaque-code",
+      "code": "CORPUS-0038",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-keep-3",
+      "actress": "輝星きら",
+      "identityFamily": "SOD-START-STARS",
+      "code": "CORPUS-0039",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "マルチアングル編集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-keep-4",
+      "actress": "輝星きら",
+      "identityFamily": "S1-OFJE",
+      "code": "CORPUS-0040",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "4K作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-keep-5",
+      "actress": "輝星きら",
+      "identityFamily": "MOODYZ-MIZD",
+      "code": "CORPUS-0041",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "長時間作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-keep-6",
+      "actress": "輝星きら",
+      "identityFamily": "KAWAII-KWBD",
+      "code": "CORPUS-0042",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "30人の新作",
+          "performerCount": 30,
+          "facts": {
+            "coPerformance": "independentSegments"
+          }
+        }
+      ]
+    },
+    {
+      "id": "3-keep-7",
+      "actress": "輝星きら",
+      "identityFamily": "ROOKIE-RBB",
+      "code": "CORPUS-0043",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全4本番",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-keep-8",
+      "actress": "輝星きら",
+      "identityFamily": "ATTACKERS-ATKD",
+      "code": "CORPUS-0044",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "BEST FRIEND",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-keep-9",
+      "actress": "輝星きら",
+      "identityFamily": "IDEAPOCKET-IDBD",
+      "code": "CORPUS-0045",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "周年記念コラボ新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-exclude-1",
+      "actress": "輝星きら",
+      "identityFamily": "MADONNA-JUSD",
+      "code": "CORPUS-0046",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-exclude-2",
+      "actress": "輝星きら",
+      "identityFamily": "OPPAI-PPBD",
+      "code": "CORPUS-0047",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "作品集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-exclude-3",
+      "actress": "輝星きら",
+      "identityFamily": "PRESTIGE-THN",
+      "code": "CORPUS-0048",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全出演作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-exclude-4",
+      "actress": "輝星きら",
+      "identityFamily": "START-cross-platform",
+      "code": "CORPUS-0049",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "過去作品を厳選収録",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-exclude-5",
+      "actress": "輝星きら",
+      "identityFamily": "107START-cross-platform",
+      "code": "CORPUS-0050",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再編集版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-exclude-6",
+      "actress": "輝星きら",
+      "identityFamily": "1START-cross-platform",
+      "code": "CORPUS-0051",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再発売",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-exclude-7",
+      "actress": "輝星きら",
+      "identityFamily": "SIVR-padded-distinct",
+      "code": "CORPUS-0052",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "リマスター",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-exclude-8",
+      "actress": "輝星きら",
+      "identityFamily": "FOO-EC-distinct",
+      "code": "CORPUS-0053",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "元作品から分割版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "3-exclude-9",
+      "actress": "輝星きら",
+      "identityFamily": "SOD-VT",
+      "code": "CORPUS-0054",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編＋新撮ボーナス映像",
+          "facts": {
+            "includedWorks": [
+              "OLD-001"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "4-keep-1",
+      "actress": "小湊よつ葉",
+      "identityFamily": "SOD-VT2-EC",
+      "code": "CORPUS-0055",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-keep-2",
+      "actress": "小湊よつ葉",
+      "identityFamily": "SOD-STARSBD",
+      "code": "CORPUS-0056",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-keep-3",
+      "actress": "小湊よつ葉",
+      "identityFamily": "opaque-code",
+      "code": "CORPUS-0057",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "マルチアングル編集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-keep-4",
+      "actress": "小湊よつ葉",
+      "identityFamily": "SOD-START-STARS",
+      "code": "CORPUS-0058",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "4K作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-keep-5",
+      "actress": "小湊よつ葉",
+      "identityFamily": "S1-OFJE",
+      "code": "CORPUS-0059",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "長時間作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-keep-6",
+      "actress": "小湊よつ葉",
+      "identityFamily": "MOODYZ-MIZD",
+      "code": "CORPUS-0060",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "30人の新作",
+          "performerCount": 30,
+          "facts": {
+            "coPerformance": "independentSegments"
+          }
+        }
+      ]
+    },
+    {
+      "id": "4-keep-7",
+      "actress": "小湊よつ葉",
+      "identityFamily": "KAWAII-KWBD",
+      "code": "CORPUS-0061",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全4本番",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-keep-8",
+      "actress": "小湊よつ葉",
+      "identityFamily": "ROOKIE-RBB",
+      "code": "CORPUS-0062",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "BEST FRIEND",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-keep-9",
+      "actress": "小湊よつ葉",
+      "identityFamily": "ATTACKERS-ATKD",
+      "code": "CORPUS-0063",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "周年記念コラボ新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-exclude-1",
+      "actress": "小湊よつ葉",
+      "identityFamily": "IDEAPOCKET-IDBD",
+      "code": "CORPUS-0064",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-exclude-2",
+      "actress": "小湊よつ葉",
+      "identityFamily": "MADONNA-JUSD",
+      "code": "CORPUS-0065",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "作品集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-exclude-3",
+      "actress": "小湊よつ葉",
+      "identityFamily": "OPPAI-PPBD",
+      "code": "CORPUS-0066",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全出演作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-exclude-4",
+      "actress": "小湊よつ葉",
+      "identityFamily": "PRESTIGE-THN",
+      "code": "CORPUS-0067",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "過去作品を厳選収録",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-exclude-5",
+      "actress": "小湊よつ葉",
+      "identityFamily": "START-cross-platform",
+      "code": "CORPUS-0068",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再編集版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-exclude-6",
+      "actress": "小湊よつ葉",
+      "identityFamily": "107START-cross-platform",
+      "code": "CORPUS-0069",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再発売",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-exclude-7",
+      "actress": "小湊よつ葉",
+      "identityFamily": "1START-cross-platform",
+      "code": "CORPUS-0070",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "リマスター",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-exclude-8",
+      "actress": "小湊よつ葉",
+      "identityFamily": "SIVR-padded-distinct",
+      "code": "CORPUS-0071",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "元作品から分割版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "4-exclude-9",
+      "actress": "小湊よつ葉",
+      "identityFamily": "FOO-EC-distinct",
+      "code": "CORPUS-0072",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編＋新撮ボーナス映像",
+          "facts": {
+            "includedWorks": [
+              "OLD-001"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "5-keep-1",
+      "actress": "新井リマ",
+      "identityFamily": "SOD-VT",
+      "code": "CORPUS-0073",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-keep-2",
+      "actress": "新井リマ",
+      "identityFamily": "SOD-VT2-EC",
+      "code": "CORPUS-0074",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-keep-3",
+      "actress": "新井リマ",
+      "identityFamily": "SOD-STARSBD",
+      "code": "CORPUS-0075",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "マルチアングル編集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-keep-4",
+      "actress": "新井リマ",
+      "identityFamily": "opaque-code",
+      "code": "CORPUS-0076",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "4K作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-keep-5",
+      "actress": "新井リマ",
+      "identityFamily": "SOD-START-STARS",
+      "code": "CORPUS-0077",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "長時間作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-keep-6",
+      "actress": "新井リマ",
+      "identityFamily": "S1-OFJE",
+      "code": "CORPUS-0078",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "30人の新作",
+          "performerCount": 30,
+          "facts": {
+            "coPerformance": "independentSegments"
+          }
+        }
+      ]
+    },
+    {
+      "id": "5-keep-7",
+      "actress": "新井リマ",
+      "identityFamily": "MOODYZ-MIZD",
+      "code": "CORPUS-0079",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全4本番",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-keep-8",
+      "actress": "新井リマ",
+      "identityFamily": "KAWAII-KWBD",
+      "code": "CORPUS-0080",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "BEST FRIEND",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-keep-9",
+      "actress": "新井リマ",
+      "identityFamily": "ROOKIE-RBB",
+      "code": "CORPUS-0081",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "周年記念コラボ新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-exclude-1",
+      "actress": "新井リマ",
+      "identityFamily": "ATTACKERS-ATKD",
+      "code": "CORPUS-0082",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-exclude-2",
+      "actress": "新井リマ",
+      "identityFamily": "IDEAPOCKET-IDBD",
+      "code": "CORPUS-0083",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "作品集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-exclude-3",
+      "actress": "新井リマ",
+      "identityFamily": "MADONNA-JUSD",
+      "code": "CORPUS-0084",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全出演作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-exclude-4",
+      "actress": "新井リマ",
+      "identityFamily": "OPPAI-PPBD",
+      "code": "CORPUS-0085",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "過去作品を厳選収録",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-exclude-5",
+      "actress": "新井リマ",
+      "identityFamily": "PRESTIGE-THN",
+      "code": "CORPUS-0086",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再編集版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-exclude-6",
+      "actress": "新井リマ",
+      "identityFamily": "START-cross-platform",
+      "code": "CORPUS-0087",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再発売",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-exclude-7",
+      "actress": "新井リマ",
+      "identityFamily": "107START-cross-platform",
+      "code": "CORPUS-0088",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "リマスター",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-exclude-8",
+      "actress": "新井リマ",
+      "identityFamily": "1START-cross-platform",
+      "code": "CORPUS-0089",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "元作品から分割版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "5-exclude-9",
+      "actress": "新井リマ",
+      "identityFamily": "SIVR-padded-distinct",
+      "code": "CORPUS-0090",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編＋新撮ボーナス映像",
+          "facts": {
+            "includedWorks": [
+              "OLD-001"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "6-keep-1",
+      "actress": "鳳みゆ",
+      "identityFamily": "FOO-EC-distinct",
+      "code": "CORPUS-0091",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-keep-2",
+      "actress": "鳳みゆ",
+      "identityFamily": "SOD-VT",
+      "code": "CORPUS-0092",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-keep-3",
+      "actress": "鳳みゆ",
+      "identityFamily": "SOD-VT2-EC",
+      "code": "CORPUS-0093",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "マルチアングル編集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-keep-4",
+      "actress": "鳳みゆ",
+      "identityFamily": "SOD-STARSBD",
+      "code": "CORPUS-0094",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "4K作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-keep-5",
+      "actress": "鳳みゆ",
+      "identityFamily": "opaque-code",
+      "code": "CORPUS-0095",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "長時間作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-keep-6",
+      "actress": "鳳みゆ",
+      "identityFamily": "SOD-START-STARS",
+      "code": "CORPUS-0096",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "30人の新作",
+          "performerCount": 30,
+          "facts": {
+            "coPerformance": "independentSegments"
+          }
+        }
+      ]
+    },
+    {
+      "id": "6-keep-7",
+      "actress": "鳳みゆ",
+      "identityFamily": "S1-OFJE",
+      "code": "CORPUS-0097",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全4本番",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-keep-8",
+      "actress": "鳳みゆ",
+      "identityFamily": "MOODYZ-MIZD",
+      "code": "CORPUS-0098",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "BEST FRIEND",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-keep-9",
+      "actress": "鳳みゆ",
+      "identityFamily": "KAWAII-KWBD",
+      "code": "CORPUS-0099",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "周年記念コラボ新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-exclude-1",
+      "actress": "鳳みゆ",
+      "identityFamily": "ROOKIE-RBB",
+      "code": "CORPUS-0100",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-exclude-2",
+      "actress": "鳳みゆ",
+      "identityFamily": "ATTACKERS-ATKD",
+      "code": "CORPUS-0101",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "作品集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-exclude-3",
+      "actress": "鳳みゆ",
+      "identityFamily": "IDEAPOCKET-IDBD",
+      "code": "CORPUS-0102",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全出演作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-exclude-4",
+      "actress": "鳳みゆ",
+      "identityFamily": "MADONNA-JUSD",
+      "code": "CORPUS-0103",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "過去作品を厳選収録",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-exclude-5",
+      "actress": "鳳みゆ",
+      "identityFamily": "OPPAI-PPBD",
+      "code": "CORPUS-0104",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再編集版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-exclude-6",
+      "actress": "鳳みゆ",
+      "identityFamily": "PRESTIGE-THN",
+      "code": "CORPUS-0105",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再発売",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-exclude-7",
+      "actress": "鳳みゆ",
+      "identityFamily": "START-cross-platform",
+      "code": "CORPUS-0106",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "リマスター",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-exclude-8",
+      "actress": "鳳みゆ",
+      "identityFamily": "107START-cross-platform",
+      "code": "CORPUS-0107",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "元作品から分割版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "6-exclude-9",
+      "actress": "鳳みゆ",
+      "identityFamily": "1START-cross-platform",
+      "code": "CORPUS-0108",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編＋新撮ボーナス映像",
+          "facts": {
+            "includedWorks": [
+              "OLD-001"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "7-keep-1",
+      "actress": "坂道みる",
+      "identityFamily": "SIVR-padded-distinct",
+      "code": "CORPUS-0109",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-keep-2",
+      "actress": "坂道みる",
+      "identityFamily": "FOO-EC-distinct",
+      "code": "CORPUS-0110",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-keep-3",
+      "actress": "坂道みる",
+      "identityFamily": "SOD-VT",
+      "code": "CORPUS-0111",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "マルチアングル編集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-keep-4",
+      "actress": "坂道みる",
+      "identityFamily": "SOD-VT2-EC",
+      "code": "CORPUS-0112",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "4K作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-keep-5",
+      "actress": "坂道みる",
+      "identityFamily": "SOD-STARSBD",
+      "code": "CORPUS-0113",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "長時間作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-keep-6",
+      "actress": "坂道みる",
+      "identityFamily": "opaque-code",
+      "code": "CORPUS-0114",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "30人の新作",
+          "performerCount": 30,
+          "facts": {
+            "coPerformance": "independentSegments"
+          }
+        }
+      ]
+    },
+    {
+      "id": "7-keep-7",
+      "actress": "坂道みる",
+      "identityFamily": "SOD-START-STARS",
+      "code": "CORPUS-0115",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全4本番",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-keep-8",
+      "actress": "坂道みる",
+      "identityFamily": "S1-OFJE",
+      "code": "CORPUS-0116",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "BEST FRIEND",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-keep-9",
+      "actress": "坂道みる",
+      "identityFamily": "MOODYZ-MIZD",
+      "code": "CORPUS-0117",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "周年記念コラボ新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-exclude-1",
+      "actress": "坂道みる",
+      "identityFamily": "KAWAII-KWBD",
+      "code": "CORPUS-0118",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-exclude-2",
+      "actress": "坂道みる",
+      "identityFamily": "ROOKIE-RBB",
+      "code": "CORPUS-0119",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "作品集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-exclude-3",
+      "actress": "坂道みる",
+      "identityFamily": "ATTACKERS-ATKD",
+      "code": "CORPUS-0120",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全出演作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-exclude-4",
+      "actress": "坂道みる",
+      "identityFamily": "IDEAPOCKET-IDBD",
+      "code": "CORPUS-0121",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "過去作品を厳選収録",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-exclude-5",
+      "actress": "坂道みる",
+      "identityFamily": "MADONNA-JUSD",
+      "code": "CORPUS-0122",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再編集版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-exclude-6",
+      "actress": "坂道みる",
+      "identityFamily": "OPPAI-PPBD",
+      "code": "CORPUS-0123",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再発売",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-exclude-7",
+      "actress": "坂道みる",
+      "identityFamily": "PRESTIGE-THN",
+      "code": "CORPUS-0124",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "リマスター",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-exclude-8",
+      "actress": "坂道みる",
+      "identityFamily": "START-cross-platform",
+      "code": "CORPUS-0125",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "元作品から分割版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "7-exclude-9",
+      "actress": "坂道みる",
+      "identityFamily": "107START-cross-platform",
+      "code": "CORPUS-0126",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編＋新撮ボーナス映像",
+          "facts": {
+            "includedWorks": [
+              "OLD-001"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "8-keep-1",
+      "actress": "八掛うみ",
+      "identityFamily": "1START-cross-platform",
+      "code": "CORPUS-0127",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-keep-2",
+      "actress": "八掛うみ",
+      "identityFamily": "SIVR-padded-distinct",
+      "code": "CORPUS-0128",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-keep-3",
+      "actress": "八掛うみ",
+      "identityFamily": "FOO-EC-distinct",
+      "code": "CORPUS-0129",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "マルチアングル編集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-keep-4",
+      "actress": "八掛うみ",
+      "identityFamily": "SOD-VT",
+      "code": "CORPUS-0130",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "4K作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-keep-5",
+      "actress": "八掛うみ",
+      "identityFamily": "SOD-VT2-EC",
+      "code": "CORPUS-0131",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "長時間作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-keep-6",
+      "actress": "八掛うみ",
+      "identityFamily": "SOD-STARSBD",
+      "code": "CORPUS-0132",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "30人の新作",
+          "performerCount": 30,
+          "facts": {
+            "coPerformance": "independentSegments"
+          }
+        }
+      ]
+    },
+    {
+      "id": "8-keep-7",
+      "actress": "八掛うみ",
+      "identityFamily": "opaque-code",
+      "code": "CORPUS-0133",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全4本番",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-keep-8",
+      "actress": "八掛うみ",
+      "identityFamily": "SOD-START-STARS",
+      "code": "CORPUS-0134",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "BEST FRIEND",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-keep-9",
+      "actress": "八掛うみ",
+      "identityFamily": "S1-OFJE",
+      "code": "CORPUS-0135",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "周年記念コラボ新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-exclude-1",
+      "actress": "八掛うみ",
+      "identityFamily": "MOODYZ-MIZD",
+      "code": "CORPUS-0136",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-exclude-2",
+      "actress": "八掛うみ",
+      "identityFamily": "KAWAII-KWBD",
+      "code": "CORPUS-0137",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "作品集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-exclude-3",
+      "actress": "八掛うみ",
+      "identityFamily": "ROOKIE-RBB",
+      "code": "CORPUS-0138",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全出演作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-exclude-4",
+      "actress": "八掛うみ",
+      "identityFamily": "ATTACKERS-ATKD",
+      "code": "CORPUS-0139",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "過去作品を厳選収録",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-exclude-5",
+      "actress": "八掛うみ",
+      "identityFamily": "IDEAPOCKET-IDBD",
+      "code": "CORPUS-0140",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再編集版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-exclude-6",
+      "actress": "八掛うみ",
+      "identityFamily": "MADONNA-JUSD",
+      "code": "CORPUS-0141",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再発売",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-exclude-7",
+      "actress": "八掛うみ",
+      "identityFamily": "OPPAI-PPBD",
+      "code": "CORPUS-0142",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "リマスター",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-exclude-8",
+      "actress": "八掛うみ",
+      "identityFamily": "PRESTIGE-THN",
+      "code": "CORPUS-0143",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "元作品から分割版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "8-exclude-9",
+      "actress": "八掛うみ",
+      "identityFamily": "START-cross-platform",
+      "code": "CORPUS-0144",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編＋新撮ボーナス映像",
+          "facts": {
+            "includedWorks": [
+              "OLD-001"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "9-keep-1",
+      "actress": "河北彩花",
+      "identityFamily": "107START-cross-platform",
+      "code": "CORPUS-0145",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-keep-2",
+      "actress": "河北彩花",
+      "identityFamily": "1START-cross-platform",
+      "code": "CORPUS-0146",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-keep-3",
+      "actress": "河北彩花",
+      "identityFamily": "SIVR-padded-distinct",
+      "code": "CORPUS-0147",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "マルチアングル編集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-keep-4",
+      "actress": "河北彩花",
+      "identityFamily": "FOO-EC-distinct",
+      "code": "CORPUS-0148",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "4K作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-keep-5",
+      "actress": "河北彩花",
+      "identityFamily": "SOD-VT",
+      "code": "CORPUS-0149",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "長時間作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-keep-6",
+      "actress": "河北彩花",
+      "identityFamily": "SOD-VT2-EC",
+      "code": "CORPUS-0150",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "30人の新作",
+          "performerCount": 30,
+          "facts": {
+            "coPerformance": "independentSegments"
+          }
+        }
+      ]
+    },
+    {
+      "id": "9-keep-7",
+      "actress": "河北彩花",
+      "identityFamily": "SOD-STARSBD",
+      "code": "CORPUS-0151",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全4本番",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-keep-8",
+      "actress": "河北彩花",
+      "identityFamily": "opaque-code",
+      "code": "CORPUS-0152",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "BEST FRIEND",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-keep-9",
+      "actress": "河北彩花",
+      "identityFamily": "SOD-START-STARS",
+      "code": "CORPUS-0153",
+      "expected": "keep",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "周年記念コラボ新作",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-exclude-1",
+      "actress": "河北彩花",
+      "identityFamily": "S1-OFJE",
+      "code": "CORPUS-0154",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-exclude-2",
+      "actress": "河北彩花",
+      "identityFamily": "MOODYZ-MIZD",
+      "code": "CORPUS-0155",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "作品集",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-exclude-3",
+      "actress": "河北彩花",
+      "identityFamily": "KAWAII-KWBD",
+      "code": "CORPUS-0156",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "全出演作品",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-exclude-4",
+      "actress": "河北彩花",
+      "identityFamily": "ROOKIE-RBB",
+      "code": "CORPUS-0157",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "過去作品を厳選収録",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-exclude-5",
+      "actress": "河北彩花",
+      "identityFamily": "ATTACKERS-ATKD",
+      "code": "CORPUS-0158",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再編集版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-exclude-6",
+      "actress": "河北彩花",
+      "identityFamily": "IDEAPOCKET-IDBD",
+      "code": "CORPUS-0159",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "再発売",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-exclude-7",
+      "actress": "河北彩花",
+      "identityFamily": "MADONNA-JUSD",
+      "code": "CORPUS-0160",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "リマスター",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-exclude-8",
+      "actress": "河北彩花",
+      "identityFamily": "OPPAI-PPBD",
+      "code": "CORPUS-0161",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "元作品から分割版",
+          "facts": {}
+        }
+      ]
+    },
+    {
+      "id": "9-exclude-9",
+      "actress": "河北彩花",
+      "identityFamily": "PRESTIGE-THN",
+      "code": "CORPUS-0162",
+      "expected": "exclude",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "総集編＋新撮ボーナス映像",
+          "facts": {
+            "includedWorks": [
+              "OLD-001"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ambiguity-conflicting-source-evidence",
+      "actress": "河北彩花",
+      "identityFamily": "conflicting-source-evidence",
+      "code": "CORPUS-AMBIGUOUS",
+      "expected": "review",
+      "details": [
+        {
+          "source": "javbus",
+          "title": "完全ノーカット撮り下ろし",
+          "facts": {}
+        },
+        {
+          "source": "avwiki",
+          "title": "総集編",
+          "facts": {}
+        }
+      ]
+    }
+  ]
+}

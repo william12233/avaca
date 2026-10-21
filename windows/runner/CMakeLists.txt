@@ -49,17 +49,3 @@ target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
-
-if(AVACA_REMOTE_QUIC_ENABLED)
-  # The native bridge is owned by avaca_remote_core.  The runner only copies
-  # the role-neutral target into the bundle and never compiles a second copy.
-  add_dependencies(${BINARY_NAME} avaca_remote_quic_core)
-  add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "$<TARGET_FILE:avaca_remote_quic_core>"
-      "$<TARGET_FILE_DIR:${BINARY_NAME}>/avaca_remote_quic.dll"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "${AVACA_MSQUIC_DLL}"
-      "$<TARGET_FILE_DIR:${BINARY_NAME}>/msquic.dll"
-  )
-endif()

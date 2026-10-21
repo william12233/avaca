@@ -84,23 +84,6 @@ void main() {
     );
     expect(find.text('2K/30'), findsOneWidget);
   });
-
-  testWidgets('library-managed Work with no resolvable media is hidden', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('zh', 'TW'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: WorkDetailView(db: _MissingLibraryMediaDatabase(), workId: 7),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('找不到資料'), findsOneWidget);
-    expect(find.byKey(const Key('library-media-section')), findsNothing);
-  });
 }
 
 class _WorkDetailDatabase extends AppDatabase {
@@ -138,24 +121,6 @@ class _WorkDetailDatabase extends AppDatabase {
         {'name': '別名女優', 'actress_id': 3, 'source': 'javbus'},
         {'name': '未建立頁面', 'actress_id': null, 'source': 'javbus'},
       ],
-    };
-  }
-}
-
-class _MissingLibraryMediaDatabase extends AppDatabase {
-  @override
-  Future<Map<String, Object?>?> getWorkById(
-    int workId, {
-    int? currentActressId,
-  }) async {
-    return {
-      'id': workId,
-      'code': 'META-001',
-      'title': 'Metadata-only work',
-      'library_managed': 1,
-      'library_relative_path': 'Actress A/META-001',
-      'library_media': const [],
-      'related_performers': const [],
     };
   }
 }

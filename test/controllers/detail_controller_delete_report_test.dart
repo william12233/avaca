@@ -1,7 +1,6 @@
 import 'package:avaca/controllers/detail_controller.dart';
 import 'package:avaca/core/database.dart';
 import 'package:avaca/l10n/app_localizations.dart';
-import 'package:avaca/library/library_collection_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -39,49 +38,11 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     expect(find.text('已刪除 0 個圖片檔，共釋放 0.00 MB'), findsOneWidget);
   });
-
-  testWidgets('normal Collection deletion is fail closed', (tester) async {
-    final database = _DeleteReportDatabase();
-    final controller = DetailController(
-      db: database,
-      actressId: 1,
-      collectionService: LibraryCollectionService(db: database),
-    );
-    Future<void>? deletion;
-
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('zh', 'TW'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: ElevatedButton(
-              onPressed: () {
-                deletion = controller.executeDelete(context);
-              },
-              child: const Text('delete'),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('delete'));
-    await tester.pumpAndSettle();
-    await deletion;
-
-    expect(database.deleteCalls, 0);
-    expect(find.text('Library 收藏項目不提供刪除功能。'), findsOneWidget);
-  });
 }
 
 class _DeleteReportDatabase extends AppDatabase {
-  var deleteCalls = 0;
-
   @override
   Future<ActressDeletionReport> deleteActressWithReport(int actressId) async {
-    deleteCalls++;
     return ActressDeletionReport(
       databaseCommitted: true,
       beforeTableCounts: const {

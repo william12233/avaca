@@ -7,7 +7,6 @@ import 'package:avaca/l10n/app_localizations.dart';
 import '../components/app_snackbar.dart';
 import '../components/image_cropper.dart';
 import '../core/database.dart';
-import '../library/library_collection_service.dart';
 
 final class DetailActressData {
   DetailActressData({
@@ -136,18 +135,12 @@ final class DetailEditState {
 }
 
 class DetailController extends ChangeNotifier {
-  DetailController({
-    required this.db,
-    required this.actressId,
-    this.collectionService,
-  });
+  DetailController({required this.db, required this.actressId});
 
   final AppDatabase db;
   final int actressId;
-  final LibraryCollectionService? collectionService;
 
   bool isEditing = false;
-  bool isAvailable = true;
   int workCount = 0;
   DetailActressData actressData = const DetailActressData.empty();
   List<String> currentAttrs = [];
@@ -158,17 +151,6 @@ class DetailController extends ChangeNotifier {
 
   // 初始化頁面資料，並同步目前的分類屬性。
   Future<void> init() async {
-    if (collectionService != null &&
-        await collectionService!.getActressById(actressId) == null) {
-      isAvailable = false;
-      actressData = const DetailActressData.empty();
-      currentAttrs = [];
-      actressAliases = const [];
-      workCount = 0;
-      _notifyIfActive();
-      return;
-    }
-    isAvailable = true;
     actressData = await _loadActressData();
     currentAttrs = _parseAttrs(actressData.mainType);
     await refreshWorkCount(notify: false);
@@ -180,17 +162,6 @@ class DetailController extends ChangeNotifier {
     if (isEditing) {
       return;
     }
-    if (collectionService != null &&
-        await collectionService!.getActressById(actressId) == null) {
-      isAvailable = false;
-      actressData = const DetailActressData.empty();
-      currentAttrs = [];
-      actressAliases = const [];
-      workCount = 0;
-      _notifyIfActive();
-      return;
-    }
-    isAvailable = true;
     actressData = await _loadActressData();
     currentAttrs = _parseAttrs(actressData.mainType);
     actressAliases = actressData.aliases;
@@ -218,9 +189,7 @@ class DetailController extends ChangeNotifier {
 
   Future<void> refreshWorkCount({bool notify = true}) async {
     try {
-      workCount =
-          await (collectionService?.getWorkCountForActress(actressId) ??
-              db.getWorkCountForActress(actressId));
+      workCount = await db.getWorkCountForActress(actressId);
     } catch (_) {
       workCount = 0;
     }
@@ -241,15 +210,6 @@ class DetailController extends ChangeNotifier {
 
   // 刪除資料與相關圖片，成功後回到首頁。
   Future<void> executeDelete(BuildContext context) async {
-    if (collectionService != null) {
-      if (context.mounted) {
-        AppSnackBar.showError(
-          context,
-          AppLocalizations.of(context).libraryCollectionDeleteUnavailable,
-        );
-      }
-      return;
-    }
     final report = await db.deleteActressWithReport(actressId);
 
     if (report.databaseCommitted) {

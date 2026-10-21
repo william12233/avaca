@@ -8,7 +8,6 @@ import '../components/adaptive_page_layout.dart';
 import '../components/app_snackbar.dart';
 import '../controllers/detail_controller.dart';
 import '../core/database.dart';
-import '../library/library_collection_service.dart';
 import '../core/layout.dart';
 
 const double _detailControlRadius = 6.0;
@@ -31,16 +30,10 @@ ButtonStyle _detailOutlinedButtonStyle({Color? foregroundColor}) {
 }
 
 class DetailView extends StatefulWidget {
-  const DetailView({
-    super.key,
-    required this.db,
-    required this.actressId,
-    this.collectionService,
-  });
+  const DetailView({super.key, required this.db, required this.actressId});
 
   final AppDatabase db;
   final int actressId;
-  final LibraryCollectionService? collectionService;
 
   @override
   State<DetailView> createState() => _DetailViewState();
@@ -289,11 +282,7 @@ class _DetailViewState extends State<DetailView> {
   void initState() {
     super.initState();
 
-    controller = DetailController(
-      db: widget.db,
-      actressId: widget.actressId,
-      collectionService: widget.collectionService,
-    );
+    controller = DetailController(db: widget.db, actressId: widget.actressId);
     controller.addListener(_handleControllerChanged);
 
     initFuture = _initialize();
@@ -427,15 +416,6 @@ class _DetailViewState extends State<DetailView> {
                   ),
                 ],
               ),
-            ),
-          );
-        }
-
-        if (!controller.isAvailable) {
-          return Scaffold(
-            appBar: AppBar(leading: const AlignedAppBarBackButton()),
-            body: Center(
-              child: Text(AppLocalizations.of(context).dataNotFound),
             ),
           );
         }
@@ -701,22 +681,21 @@ class _DetailViewState extends State<DetailView> {
             ],
           ),
         ),
-        if (widget.collectionService == null)
-          PopupMenuItem<_DetailMenuAction>(
-            key: const Key('detail-delete-menu-item'),
-            value: _DetailMenuAction.delete,
-            child: Row(
-              children: [
-                Icon(Icons.delete_forever, color: colorScheme.error),
-                const SizedBox(width: 12),
-                Text(
-                  l10n.delete,
-                  key: const Key('detail-delete-menu-label'),
-                  style: TextStyle(color: colorScheme.error),
-                ),
-              ],
-            ),
+        PopupMenuItem<_DetailMenuAction>(
+          key: const Key('detail-delete-menu-item'),
+          value: _DetailMenuAction.delete,
+          child: Row(
+            children: [
+              Icon(Icons.delete_forever, color: colorScheme.error),
+              const SizedBox(width: 12),
+              Text(
+                l10n.delete,
+                key: const Key('detail-delete-menu-label'),
+                style: TextStyle(color: colorScheme.error),
+              ),
+            ],
           ),
+        ),
       ],
     );
   }
@@ -1464,9 +1443,6 @@ class _DetailViewState extends State<DetailView> {
 
   // 開啟刪除確認視窗，實際刪除流程交給 controller 處理。
   Future<void> _openDeleteDialog() async {
-    if (widget.collectionService != null) {
-      return;
-    }
     _dismissKeyboard();
     await showDialog<void>(
       context: context,

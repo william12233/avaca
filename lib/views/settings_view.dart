@@ -8,6 +8,7 @@ import 'package:avaca/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
+import '../components/javbus_verification_dialog.dart';
 import '../controllers/data_transfer_controller.dart';
 import '../controllers/prefix_route_file_transfer.dart';
 import '../controllers/settings_controller.dart';
@@ -15,13 +16,37 @@ import '../controllers/software_update_controller.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../models/data_transfer_models.dart';
+import '../models/scrape_exclusion_policy.dart';
+import '../models/scrape_source_settings.dart';
+import '../models/work_scrape_options.dart';
 import '../services/data_transfer_service.dart';
+import '../services/scrape_job_coordinator.dart';
+import '../services/avbase/avbase_client.dart';
+import '../services/avbase/avbase_transport.dart';
+import '../services/avwiki/avwiki_client.dart';
+import '../services/avwiki/avwiki_transport.dart';
+import '../services/javbus/javbus_client.dart';
+import '../services/javbus/javbus_verification.dart';
 import '../services/javbus/prefix_route_repository.dart';
+import '../services/minnano/minnano_client.dart';
+import '../services/minnano/minnano_transport.dart';
+import '../services/scrape/scrape_source_registry.dart';
 import 'software_update_view.dart';
 import 'prefix_route_rules_view.dart';
 import 'data_health_view.dart';
+import 'scrape_jobs_view.dart';
 
 typedef ExternalUrlLauncher = Future<bool> Function(Uri uri);
+typedef ScrapeSourceConnectionTester =
+    Future<void> Function(ScrapeSourceId source);
+
+enum _ScrapeSourceConnectionStatus {
+  notTested,
+  testing,
+  connected,
+  failed,
+  verificationRequired,
+}
 
 Future<bool> _launchExternalUrl(Uri uri) {
   return launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -177,6 +202,8 @@ class SettingsView extends StatefulWidget {
     this.softwareUpdateController,
     this.prefixRouteFilePicker,
     this.externalUrlLauncher = _launchExternalUrl,
+    this.scrapeSourceConnectionTester,
+    this.scrapeJobCoordinator,
   });
 
   final AppDatabase db;
@@ -191,6 +218,8 @@ class SettingsView extends StatefulWidget {
   final SoftwareUpdateController? softwareUpdateController;
   final PrefixRouteFilePicker? prefixRouteFilePicker;
   final ExternalUrlLauncher externalUrlLauncher;
+  final ScrapeSourceConnectionTester? scrapeSourceConnectionTester;
+  final ScrapeJobCoordinator? scrapeJobCoordinator;
 
   @override
   State<SettingsView> createState() => _SettingsViewState();
@@ -318,13 +347,13 @@ class _SettingsViewState extends State<SettingsView> {
             const SizedBox(height: 8),
             _categoryCard(
               tokens: tokens,
-              feedbackId: 'category-playback',
-              icon: Icons.play_circle_outline,
-              title: AppLocalizations.of(context).playbackSettings,
+              feedbackId: 'category-scrape',
+              icon: Icons.manage_search_outlined,
+              title: AppLocalizations.of(context).scrapeSettings,
               onTap: () => _openCategory(
                 titleBuilder: (context) =>
-                    AppLocalizations.of(context).playbackSettings,
-                bodyBuilder: _buildPlaybackSettings,
+                    AppLocalizations.of(context).scrapeSettings,
+                bodyBuilder: _buildScrapeSettings,
               ),
             ),
             const SizedBox(height: 8),
@@ -338,14 +367,6 @@ class _SettingsViewState extends State<SettingsView> {
                     AppLocalizations.of(context).settingsDataTransferTitle,
                 bodyBuilder: _buildDataTransferSettings,
               ),
-            ),
-            const SizedBox(height: 8),
-            _categoryCard(
-              tokens: tokens,
-              feedbackId: 'category-library-import',
-              icon: Icons.video_library_outlined,
-              title: AppLocalizations.of(context).libraryImportTitle,
-              onTap: () => Navigator.of(context).pushNamed('/library-import'),
             ),
             const SizedBox(height: 8),
             _categoryCard(
@@ -448,56 +469,6 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  Widget _buildPlaybackSettings(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
-    final seekSeconds = controller.playerSeekSeconds;
-    final holdSpeed = controller.playerHoldSpeed;
-
-    return ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        _settingsExpansionCard(
-          context: context,
-          feedbackId: 'playback-seek-interval',
-          icon: Icons.forward_5_outlined,
-          title: localizations.playbackSeekSeconds,
-          subtitle: '$seekSeconds ${localizations.seconds}',
-          child: Slider(
-            key: const ValueKey('player-seek-seconds-slider'),
-            min: 1,
-            max: 60,
-            divisions: 59,
-            label: '$seekSeconds ${localizations.seconds}',
-            value: seekSeconds.toDouble(),
-            onChanged: (value) =>
-                controller.playerSeekSecondsChanged(value.round()),
-          ),
-        ),
-        const SizedBox(height: 8),
-        _settingsExpansionCard(
-          context: context,
-          feedbackId: 'playback-hold-speed',
-          icon: Icons.speed_outlined,
-          title: localizations.playbackHoldSpeed,
-          subtitle: '${_formatPlaybackSpeed(holdSpeed)}x',
-          child: Slider(
-            key: const ValueKey('player-hold-speed-slider'),
-            min: 1.25,
-            max: 4,
-            divisions: 11,
-            label: '${_formatPlaybackSpeed(holdSpeed)}x',
-            value: holdSpeed,
-            onChanged: controller.playerHoldSpeedChanged,
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _formatPlaybackSpeed(double value) {
-    return value.toStringAsFixed(value == value.roundToDouble() ? 0 : 2);
-  }
-
   Widget _buildDataTransferSettings(BuildContext context) {
     return ListenableBuilder(
       listenable: dataTransferController,
@@ -569,6 +540,28 @@ class _SettingsViewState extends State<SettingsView> {
         const SizedBox(height: 8),
         _settingsExpansionCard(
           context: context,
+          feedbackId: 'other-scrape-jobs',
+          icon: Icons.queue_play_next_outlined,
+          title: localizations.settingsScrapeJobsTitle,
+          subtitle: localizations.settingsScrapeJobsSubtitle,
+          child: widget.scrapeJobCoordinator == null
+              ? Text(localizations.scrapeJobsEmpty)
+              : ListTile(
+                  leading: const Icon(Icons.open_in_new),
+                  title: Text(localizations.scrapeJobsTitle),
+                  onTap: () => Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => ScrapeJobsView(
+                        db: widget.db,
+                        coordinator: widget.scrapeJobCoordinator!,
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+        const SizedBox(height: 8),
+        _settingsExpansionCard(
+          context: context,
           feedbackId: 'other-prefix-route-rules',
           icon: Icons.route_outlined,
           title: localizations.prefixRouteRulesTitle,
@@ -588,6 +581,37 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildScrapeSettings(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        _settingsExpansionCard(
+          context: context,
+          feedbackId: 'scrape-sources',
+          icon: Icons.source_outlined,
+          title: localizations.scrapeSources,
+          subtitle: null,
+          child: _buildScrapeSourcesSettings(context, shrinkWrap: true),
+        ),
+        const SizedBox(height: 12),
+        _ScrapePreferencesSettingsBody(database: widget.db),
+      ],
+    );
+  }
+
+  Widget _buildScrapeSourcesSettings(
+    BuildContext context, {
+    bool shrinkWrap = false,
+  }) {
+    return _ScrapeSourcesSettingsBody(
+      database: widget.db,
+      connectionTester:
+          widget.scrapeSourceConnectionTester ?? _checkScrapeSourceConnection,
+      shrinkWrap: shrinkWrap,
+    );
+  }
+
   Widget _buildPrefixRouteRulesSettings(
     BuildContext context, {
     bool shrinkWrap = false,
@@ -597,6 +621,74 @@ class _SettingsViewState extends State<SettingsView> {
       repository: PrefixRouteRepository.forDatabase(widget.db),
       filePicker: widget.prefixRouteFilePicker,
       shrinkWrap: shrinkWrap,
+    );
+  }
+
+  Future<void> _checkScrapeSourceConnection(ScrapeSourceId source) async {
+    switch (source) {
+      case ScrapeSourceId.javbus:
+        String? initialCookies;
+        try {
+          initialCookies = await widget.db.getSetting('javbus_cookies');
+        } catch (_) {
+          initialCookies = null;
+        }
+
+        final transport = HttpJavBusTransport(
+          initialCookieHeader: initialCookies,
+          verificationHandler: _showJavBusVerification,
+        );
+        final client = JavBusClient(transport: transport);
+        try {
+          await client.checkConnection();
+        } finally {
+          if (transport.cookieHeader.isNotEmpty) {
+            try {
+              await widget.db.setSetting(
+                'javbus_cookies',
+                transport.cookieHeader,
+              );
+            } catch (_) {
+              // Cookie 儲存失敗不應遮蔽原始連線結果。
+            }
+          }
+          client.close();
+        }
+      case ScrapeSourceId.minnanoAv:
+        final client = MinnanoClient(transport: HttpMinnanoTransport());
+        try {
+          await client.checkConnection();
+        } finally {
+          client.close();
+        }
+      case ScrapeSourceId.avbase:
+        final client = AvBaseClient(transport: HttpAvBaseTransport());
+        try {
+          await client.checkConnection();
+        } finally {
+          client.close();
+        }
+      case ScrapeSourceId.avwiki:
+        final client = AvWikiClient(transport: HttpAvWikiTransport());
+        try {
+          await client.checkConnection();
+        } finally {
+          client.close();
+        }
+    }
+  }
+
+  Future<Map<String, String>?> _showJavBusVerification(
+    JavBusVerificationChallenge challenge,
+  ) {
+    if (!mounted) {
+      return Future.value(null);
+    }
+
+    return showDialog<Map<String, String>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => JavBusVerificationDialog(challenge: challenge),
     );
   }
 
@@ -1180,6 +1272,728 @@ class _TransferProgressIndicator extends StatelessWidget {
     return const SizedBox.square(
       dimension: 22,
       child: CircularProgressIndicator(strokeWidth: 2),
+    );
+  }
+}
+
+class _ScrapeSourcesSettingsBody extends StatefulWidget {
+  const _ScrapeSourcesSettingsBody({
+    required this.database,
+    required this.connectionTester,
+    this.shrinkWrap = false,
+  });
+
+  final AppDatabase database;
+  final ScrapeSourceConnectionTester connectionTester;
+  final bool shrinkWrap;
+
+  @override
+  State<_ScrapeSourcesSettingsBody> createState() =>
+      _ScrapeSourcesSettingsBodyState();
+}
+
+class _ScrapeSourcesSettingsBodyState
+    extends State<_ScrapeSourcesSettingsBody> {
+  late final Future<ScrapeSourceSettings> _settingsFuture;
+  ScrapeSourceSettings? _settings;
+  Future<void> _saveQueue = Future<void>.value();
+  int _selectionVersion = 0;
+  final _connectionStatuses = <ScrapeSourceId, _ScrapeSourceConnectionStatus>{
+    for (final source in ScrapeSourceRegistry.aggregatePriority)
+      source: _ScrapeSourceConnectionStatus.notTested,
+  };
+  bool _isTestingConnections = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // This state is created for each category visit, so reopening the page
+    // always reads the latest persisted selection instead of reusing the
+    // SettingsView state's initial Future.
+    _settingsFuture = _loadScrapeSourceSettings();
+  }
+
+  Future<ScrapeSourceSettings> _loadScrapeSourceSettings() async {
+    return ScrapeSourceSettings.decode(
+      await widget.database.getSetting(scrapeSourceSettingsKey),
+    );
+  }
+
+  Future<void> _select({
+    ScrapeSourceId? actressDetailsSource,
+    List<ScrapeSourceId>? worksSources,
+    ScrapeSourceId? aliasSource,
+  }) async {
+    final current = _settings;
+    if (current == null) {
+      return;
+    }
+    final next = current.copyWith(
+      actressDetailsSource: actressDetailsSource,
+      worksSources: worksSources,
+      aliasSource: aliasSource,
+    );
+    final version = ++_selectionVersion;
+    setState(() => _settings = next);
+    final save = _saveQueue.then<void>(
+      (_) => widget.database.setSetting(scrapeSourceSettingsKey, next.encode()),
+    );
+    _saveQueue = save.catchError((_) {});
+    try {
+      await save;
+    } catch (_) {
+      if (!mounted || version != _selectionVersion) {
+        return;
+      }
+      final persisted = await _loadScrapeSourceSettings();
+      if (!mounted || version != _selectionVersion) {
+        return;
+      }
+      setState(() => _settings = persisted);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).scrapeSourceSaveFailed),
+          ),
+        );
+    }
+  }
+
+  Future<void> _testConnections() async {
+    if (_isTestingConnections) {
+      return;
+    }
+
+    setState(() {
+      _isTestingConnections = true;
+      for (final source in _connectionStatuses.keys) {
+        _connectionStatuses[source] = _ScrapeSourceConnectionStatus.testing;
+      }
+    });
+
+    try {
+      for (final source in ScrapeSourceRegistry.aggregatePriority) {
+        if (!mounted) {
+          return;
+        }
+
+        try {
+          await widget.connectionTester(source);
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _connectionStatuses[source] =
+                _ScrapeSourceConnectionStatus.connected;
+          });
+        } on JavBusVerificationCancelledException {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _connectionStatuses[source] =
+                _ScrapeSourceConnectionStatus.verificationRequired;
+          });
+        } on Object {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _connectionStatuses[source] = _ScrapeSourceConnectionStatus.failed;
+          });
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isTestingConnections = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<ScrapeSourceSettings>(
+      key: const PageStorageKey('scrape-source-settings-loader'),
+      future: _settingsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(AppLocalizations.of(context).scrapeSourceSaveFailed),
+          );
+        }
+        _settings ??= snapshot.data ?? const ScrapeSourceSettings();
+        final settings = _settings!;
+        final localizations = AppLocalizations.of(context);
+        return ListView(
+          key: const PageStorageKey('scrape-source-settings-scroll'),
+          padding: EdgeInsets.zero,
+          shrinkWrap: widget.shrinkWrap,
+          physics: widget.shrinkWrap
+              ? const NeverScrollableScrollPhysics()
+              : null,
+          children: [
+            _connectionStatusSelector(context),
+            const SizedBox(height: 12),
+            _sourceSelector<ScrapeSourceId>(
+              key: const PageStorageKey('scrape-actress-source'),
+              title: localizations.scrapeSourceDetailsTitle,
+              value: settings.actressDetailsSource,
+              options: [
+                (ScrapeSourceId.minnanoAv, localizations.scrapeSourceMinnanoAv),
+                (ScrapeSourceId.javbus, localizations.scrapeSourceJavBus),
+                (ScrapeSourceId.avbase, localizations.scrapeSourceAvBase),
+              ],
+              onChanged: (value) =>
+                  unawaited(_select(actressDetailsSource: value)),
+            ),
+            const SizedBox(height: 12),
+            _worksSourceSelector(context, settings),
+            const SizedBox(height: 12),
+            _sourceSelector<ScrapeSourceId>(
+              key: const PageStorageKey('scrape-alias-source'),
+              title: localizations.scrapeSourceAliasTitle,
+              value: settings.aliasSource,
+              options: [
+                (ScrapeSourceId.avbase, localizations.scrapeSourceAvBase),
+              ],
+              onChanged: (value) => unawaited(_select(aliasSource: value)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _connectionStatusSelector(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        key: const PageStorageKey('scrape-source-connection-status'),
+        title: Text(localizations.scrapeSourceConnectionTitle),
+        subtitle: Text(localizations.scrapeSourceConnectionSubtitle),
+        backgroundColor: colorScheme.surfaceContainer,
+        collapsedBackgroundColor: colorScheme.surfaceContainer,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        clipBehavior: Clip.antiAlias,
+        children: [
+          for (final source in ScrapeSourceRegistry.aggregatePriority)
+            _connectionStatusTile(context, source),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const ValueKey('scrape-source-retest-button'),
+                onPressed: _isTestingConnections ? null : _testConnections,
+                icon: _isTestingConnections
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                label: Text(
+                  _isTestingConnections
+                      ? localizations.scrapeSourceTesting
+                      : localizations.scrapeSourceRetest,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _connectionStatusTile(BuildContext context, ScrapeSourceId source) {
+    final localizations = AppLocalizations.of(context);
+    final status =
+        _connectionStatuses[source] ?? _ScrapeSourceConnectionStatus.notTested;
+    final (label, icon, color) = switch (status) {
+      _ScrapeSourceConnectionStatus.notTested => (
+        localizations.scrapeSourceNotTested,
+        Icons.help_outline,
+        Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+      _ScrapeSourceConnectionStatus.testing => (
+        localizations.scrapeSourceTesting,
+        Icons.sync,
+        Theme.of(context).colorScheme.primary,
+      ),
+      _ScrapeSourceConnectionStatus.connected => (
+        localizations.scrapeSourceConnected,
+        Icons.check_circle_outline,
+        Theme.of(context).colorScheme.tertiary,
+      ),
+      _ScrapeSourceConnectionStatus.failed => (
+        localizations.scrapeSourceConnectionFailed,
+        Icons.error_outline,
+        Theme.of(context).colorScheme.error,
+      ),
+      _ScrapeSourceConnectionStatus.verificationRequired => (
+        localizations.scrapeSourceVerificationRequired,
+        Icons.verified_user_outlined,
+        Theme.of(context).colorScheme.primary,
+      ),
+    };
+
+    return ListTile(
+      key: ValueKey('scrape-source-status-${source.name}'),
+      title: Text(_sourceLabel(localizations, source)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(color: color)),
+        ],
+      ),
+    );
+  }
+
+  String _sourceLabel(AppLocalizations localizations, ScrapeSourceId source) {
+    return switch (source) {
+      ScrapeSourceId.minnanoAv => localizations.scrapeSourceMinnanoAv,
+      ScrapeSourceId.javbus => localizations.scrapeSourceJavBus,
+      ScrapeSourceId.avbase => localizations.scrapeSourceAvBase,
+      ScrapeSourceId.avwiki => localizations.scrapeSourceAvWiki,
+    };
+  }
+
+  Widget _worksSourceSelector(
+    BuildContext context,
+    ScrapeSourceSettings settings,
+  ) {
+    final localizations = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final selected = settings.worksSources;
+    final unselected = ScrapeSourceRegistry.worksSources
+        .where((source) => !selected.contains(source))
+        .toList(growable: false);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        key: const PageStorageKey('scrape-works-source'),
+        backgroundColor: colorScheme.surfaceContainer,
+        collapsedBackgroundColor: colorScheme.surfaceContainer,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        clipBehavior: Clip.antiAlias,
+        title: Text(localizations.scrapeSourceWorksTitle),
+        subtitle: Text(localizations.scrapeSourcePriorityHint),
+        children: [
+          ReorderableListView.builder(
+            key: const PageStorageKey('scrape-works-source-order'),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            itemCount: selected.length,
+            onReorderItem: (oldIndex, newIndex) {
+              final reordered = [...selected];
+              final source = reordered.removeAt(oldIndex);
+              reordered.insert(newIndex, source);
+              unawaited(_select(worksSources: reordered));
+            },
+            itemBuilder: (context, index) {
+              final source = selected[index];
+              return CheckboxListTile(
+                key: ValueKey('scrape-works-source-selected-${source.name}'),
+                value: true,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Row(
+                  children: [
+                    Expanded(child: Text(_sourceLabel(localizations, source))),
+                    Text('#${index + 1}'),
+                  ],
+                ),
+                secondary: ReorderableDragStartListener(
+                  index: index,
+                  child: const Icon(Icons.drag_handle),
+                ),
+                onChanged: selected.length == 1
+                    ? null
+                    : (_) => unawaited(
+                        _select(
+                          worksSources: selected
+                              .where((item) => item != source)
+                              .toList(growable: false),
+                        ),
+                      ),
+              );
+            },
+          ),
+          for (final source in unselected)
+            CheckboxListTile(
+              key: ValueKey('scrape-works-source-available-${source.name}'),
+              value: false,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(_sourceLabel(localizations, source)),
+              onChanged: (_) =>
+                  unawaited(_select(worksSources: [...selected, source])),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sourceSelector<T>({
+    required Key key,
+    required String title,
+    required T value,
+    required List<(T, String)> options,
+    required ValueChanged<T?> onChanged,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        key: key,
+        backgroundColor: colorScheme.surfaceContainer,
+        collapsedBackgroundColor: colorScheme.surfaceContainer,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        clipBehavior: Clip.antiAlias,
+        title: Text(title),
+        children: [
+          RadioGroup<T>(
+            groupValue: value,
+            onChanged: onChanged,
+            child: Column(
+              children: [
+                for (final option in options)
+                  RadioListTile<T>(
+                    value: option.$1,
+                    title: Text(option.$2),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScrapePreferencesSettingsBody extends StatefulWidget {
+  const _ScrapePreferencesSettingsBody({required this.database});
+
+  final AppDatabase database;
+
+  @override
+  State<_ScrapePreferencesSettingsBody> createState() =>
+      _ScrapePreferencesSettingsBodyState();
+}
+
+class _ScrapePreferencesSettingsBodyState
+    extends State<_ScrapePreferencesSettingsBody> {
+  late final Future<WorkScrapeOptions> _optionsFuture;
+  final exactAllowController = TextEditingController();
+  final exactDenyController = TextEditingController();
+  WorkScrapeOptions? options;
+  bool advancedExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _optionsFuture = _loadOptions();
+  }
+
+  @override
+  void dispose() {
+    exactAllowController.dispose();
+    exactDenyController.dispose();
+    super.dispose();
+  }
+
+  Future<WorkScrapeOptions> _loadOptions() async {
+    try {
+      final loaded = WorkScrapeOptions.decode(
+        await widget.database.getSetting('works_scrape_options'),
+      );
+      if (mounted) setState(() => options = loaded);
+      return loaded;
+    } catch (_) {
+      const fallback = WorkScrapeOptions();
+      if (mounted) setState(() => options = fallback);
+      return fallback;
+    }
+  }
+
+  Future<void> _update(WorkScrapeOptions next) async {
+    if (!mounted) return;
+    setState(() => options = next);
+    try {
+      await widget.database.setSetting('works_scrape_options', next.encode());
+    } catch (_) {
+      // Keep the in-memory preference usable when the settings store is busy.
+    }
+  }
+
+  void _addExactAllow(WorkScrapeOptions current) {
+    final value = exactAllowController.text.trim().toUpperCase();
+    if (value.isEmpty ||
+        current.exactAllows.any((rule) => rule.normalizedCode == value)) {
+      return;
+    }
+    exactAllowController.clear();
+    unawaited(
+      _update(
+        current.copyWith(
+          exactAllows: [
+            ...current.exactAllows,
+            ScrapeExactAllowRule(code: value),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _addExactDeny(WorkScrapeOptions current) {
+    final value = exactDenyController.text.trim().toUpperCase();
+    if (value.isEmpty ||
+        current.exactDenies.any((rule) => rule.normalizedCode == value)) {
+      return;
+    }
+    exactDenyController.clear();
+    unawaited(
+      _update(
+        current.copyWith(
+          exactDenies: [
+            ...current.exactDenies,
+            ScrapeExactDenyRule(code: value),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _ruleEditor({
+    required String title,
+    required String hint,
+    required TextEditingController controller,
+    required List<String> values,
+    required VoidCallback onAdd,
+    required ValueChanged<String> onDelete,
+    required Key inputKey,
+    required Key addKey,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                key: inputKey,
+                controller: controller,
+                textCapitalization: TextCapitalization.characters,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  hintText: hint,
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => onAdd(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              key: addKey,
+              tooltip: title,
+              onPressed: onAdd,
+              icon: const Icon(Icons.add),
+            ),
+          ],
+        ),
+        if (values.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              AppLocalizations.of(context).scrapeNoRules,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final value in values)
+                  InputChip(
+                    label: Text(value),
+                    onDeleted: () => onDelete(value),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    return FutureBuilder<WorkScrapeOptions>(
+      future: _optionsFuture,
+      builder: (context, snapshot) {
+        final current = options ?? snapshot.data;
+        if (current == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return Card(
+          key: const Key('settings-scrape-preferences'),
+          margin: EdgeInsets.zero,
+          elevation: 0,
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            key: const Key('scrape-preferences-padding'),
+            padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DropdownButtonFormField<bool>(
+                  key: const Key('scrape-existing-data-policy'),
+                  initialValue: current.fillMissingOnly,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: localizations.scrapeExistingData,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                      value: true,
+                      child: Text(localizations.fillMissingOnly),
+                    ),
+                    DropdownMenuItem(
+                      value: false,
+                      child: Text(localizations.scrapeUpdateAll),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      unawaited(
+                        _update(current.copyWith(fillMissingOnly: value)),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 4),
+                SwitchListTile(
+                  key: const Key('scrape-aliases-switch'),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text(localizations.scrapeAliases),
+                  value: current.scrapeAliases,
+                  onChanged: (value) => unawaited(
+                    _update(current.copyWith(scrapeAliases: value)),
+                  ),
+                ),
+                SwitchListTile(
+                  key: const Key('scrape-replace-actress-image-switch'),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text(localizations.replaceActressImage),
+                  value: current.replaceActressImage,
+                  onChanged: (value) => unawaited(
+                    _update(current.copyWith(replaceActressImage: value)),
+                  ),
+                ),
+                SwitchListTile(
+                  key: const Key('scrape-auto-exclude-derived-switch'),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text(localizations.scrapeAutomaticDerivedFilter),
+                  subtitle: Text(
+                    localizations.scrapeAutomaticDerivedFilterDescription,
+                  ),
+                  value: current.autoExcludeDerivedWorks,
+                  onChanged: (value) => unawaited(
+                    _update(current.copyWith(autoExcludeDerivedWorks: value)),
+                  ),
+                ),
+                ExpansionTile(
+                  key: const Key('scrape-advanced-rules'),
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: const EdgeInsets.only(bottom: 8),
+                  shape: const Border(),
+                  collapsedShape: const Border(),
+                  title: Text(localizations.scrapeAdvancedRules),
+                  subtitle: Text(localizations.scrapeAdvancedRulesDescription),
+                  initiallyExpanded: advancedExpanded,
+                  onExpansionChanged: (value) =>
+                      setState(() => advancedExpanded = value),
+                  children: [
+                    _ruleEditor(
+                      title: localizations.scrapeExactAllows,
+                      hint: localizations.scrapeRuleHint,
+                      controller: exactAllowController,
+                      values: [
+                        for (final rule in current.exactAllows) rule.code,
+                      ],
+                      onAdd: () => _addExactAllow(current),
+                      onDelete: (value) => unawaited(
+                        _update(
+                          current.copyWith(
+                            exactAllows: [
+                              for (final rule in current.exactAllows)
+                                if (rule.code != value) rule,
+                            ],
+                          ),
+                        ),
+                      ),
+                      inputKey: const Key('scrape-exact-allow-input'),
+                      addKey: const Key('scrape-exact-allow-add'),
+                    ),
+                    const SizedBox(height: 16),
+                    _ruleEditor(
+                      title: localizations.scrapeExactDenies,
+                      hint: localizations.scrapeRuleHint,
+                      controller: exactDenyController,
+                      values: [
+                        for (final rule in current.exactDenies) rule.code,
+                      ],
+                      onAdd: () => _addExactDeny(current),
+                      onDelete: (value) => unawaited(
+                        _update(
+                          current.copyWith(
+                            exactDenies: [
+                              for (final rule in current.exactDenies)
+                                if (rule.code != value) rule,
+                            ],
+                          ),
+                        ),
+                      ),
+                      inputKey: const Key('scrape-exact-deny-input'),
+                      addKey: const Key('scrape-exact-deny-add'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

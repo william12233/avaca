@@ -370,10 +370,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'The selected works will be removed globally, including links from other actresses.';
 
   @override
-  String get libraryCollectionDeleteUnavailable =>
-      'Delete is unavailable for Library-managed Collection items.';
-
-  @override
   String worksDeleted(int count) {
     return 'Deleted $count works';
   }
@@ -396,6 +392,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noMatchingWorks => 'No matching works';
 
   @override
+  String get scrapeWorks => 'Scrape works';
+
+  @override
+  String get scrapeSettings => 'Scrape settings';
+
+  @override
+  String get scrapeExistingData => 'Existing data policy';
+
+  @override
+  String get scrapeUpdateAll => 'Update existing data';
+
+  @override
+  String get scrapeAutomaticDerivedFilter =>
+      'Automatically exclude derived or bundled works';
+
+  @override
+  String get scrapeAutomaticDerivedFilterDescription =>
+      'Use lineage and work semantics; keep unknown works and never exclude by prefix alone.';
+
+  @override
+  String get scrapeAdvancedRules => 'Advanced rules';
+
+  @override
+  String get scrapeAdvancedRulesDescription =>
+      'Enter a full work code or prefix, e.g. KCKC or KCKC-212.';
+
+  @override
+  String get scrapeExactAllows => 'Code/prefix allows';
+
+  @override
+  String get scrapeExactDenies => 'Code/prefix denies';
+
+  @override
+  String get scrapeRuleHint => 'Enter a code or prefix';
+
+  @override
+  String get scrapeNoRules => 'No rules configured';
+
+  @override
+  String get syncActressDetails => 'Sync profile details';
+
+  @override
+  String get replaceActressImage => 'Replace actress image';
+
+  @override
+  String get scrapeAvatarUnavailable => 'No usable actress image was found.';
+
+  @override
+  String get scrapeAvatarFailed =>
+      'Actress image replacement failed; the previous image was kept.';
+
+  @override
+  String get fillMissingOnly => 'Only fill missing information on rescrape';
+
+  @override
+  String get startScrape => 'Start scraping';
+
+  @override
   String get noWorks => 'No works yet';
 
   @override
@@ -411,6 +465,157 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get series => 'Series';
+
+  @override
+  String scrapeComplete(int saved, int excluded, int failed) {
+    return 'Scrape complete: saved $saved, excluded $excluded, failed $failed';
+  }
+
+  @override
+  String scrapeCancelled(int saved, int excluded, int failed) {
+    return 'Scrape cancelled: saved $saved, excluded $excluded, failed $failed';
+  }
+
+  @override
+  String get scrapeFailed => 'Scrape failed. Please try again.';
+
+  @override
+  String get scrapePhaseCollecting => 'Getting the work list';
+
+  @override
+  String get scrapePhaseSyncingActress => 'Syncing actress details';
+
+  @override
+  String get scrapePhaseFetchingDetails => 'Getting work details';
+
+  @override
+  String get scrapePhaseResolvingWorks => 'Merging deduplicated works';
+
+  @override
+  String get scrapePhaseSavingWorks => 'Saving works and downloading images';
+
+  @override
+  String get scrapePhaseCompleted => 'Scrape complete';
+
+  @override
+  String get scrapeSyncingTitle => 'Scraping';
+
+  @override
+  String get scrapeSyncCompleted => 'Scrape complete';
+
+  @override
+  String get scrapeSyncPartial => 'Scrape complete with some failures';
+
+  @override
+  String get scrapeSyncFailed => 'Scrape failed';
+
+  @override
+  String get scrapeSyncStopped => 'Scrape stopped';
+
+  @override
+  String get scrapeDetailsSection => 'Details';
+
+  @override
+  String get scrapeWorksSection => 'Works';
+
+  @override
+  String get scrapeDownloadSection => 'Downloads';
+
+  @override
+  String scrapeCurrentWork(String code) {
+    return 'Currently processing: $code';
+  }
+
+  @override
+  String get scrapeImagesLabel => 'Work images';
+
+  @override
+  String get scrapeSavedCount => 'Saved';
+
+  @override
+  String get scrapeExcludedCount => 'Excluded';
+
+  @override
+  String get scrapeFailedCount => 'Failed';
+
+  @override
+  String get scrapeStatusWaiting => 'Waiting';
+
+  @override
+  String get scrapeStatusSyncing => 'Scraping';
+
+  @override
+  String get scrapeStatusCompleted => 'Complete';
+
+  @override
+  String get scrapeStatusPartial => 'Partial';
+
+  @override
+  String get scrapeStatusFailed => 'Failed';
+
+  @override
+  String get scrapeStatusCancelled => 'Stopped';
+
+  @override
+  String get scrapeStatusNoNewWorks => 'Complete, no new works';
+
+  @override
+  String get scrapeStatusUnavailable => 'Unavailable';
+
+  @override
+  String get scrapeStatusBlocked => 'Page blocked';
+
+  @override
+  String get scrapeStatusRateLimited => 'Rate limited';
+
+  @override
+  String get scrapeStatusTimedOut => 'Timed out';
+
+  @override
+  String get stopScrape => 'Stop';
+
+  @override
+  String scrapeProgressSummary(int saved, int excluded, int failed) {
+    return 'Saved $saved, excluded $excluded, failed $failed';
+  }
+
+  @override
+  String scrapeFailedWorksTitle(int count) {
+    return 'Failed works ($count)';
+  }
+
+  @override
+  String scrapeImageFailuresTitle(int count) {
+    return 'Image download failures ($count)';
+  }
+
+  @override
+  String get scrapeFailureDetailsUnavailable =>
+      'No source returned usable work details';
+
+  @override
+  String get scrapeFailureDetailCodeMismatch =>
+      'Work detail code did not match the work';
+
+  @override
+  String get scrapeFailureInvalidCode =>
+      'The work code could not be normalized';
+
+  @override
+  String get scrapeFailurePerformerCountUnavailable =>
+      'Performer count was unavailable';
+
+  @override
+  String get scrapeFailureDatabaseSave => 'Work data could not be saved';
+
+  @override
+  String get scrapeImageFailureCard => 'cover image';
+
+  @override
+  String get scrapeImageFailureDetail => 'detail image';
+
+  @override
+  String get scrapeImageFailureBoth => 'cover and detail images';
 
   @override
   String get javBusVerificationTitle => 'JavBus verification';
@@ -525,6 +730,78 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedbackSuggestions => 'Feedback';
+
+  @override
+  String get scrapeSources => 'Scrape sources';
+
+  @override
+  String get scrapeSourceDetailsTitle => 'Actress details source';
+
+  @override
+  String get scrapeSourceWorksTitle => 'Works source';
+
+  @override
+  String get scrapeSourcePriorityHint =>
+      'Select sources and drag to set priority';
+
+  @override
+  String get scrapeSourceAliasTitle => 'Actress aliases source';
+
+  @override
+  String get scrapeSourceMinnanoAv => 'Minnano AV';
+
+  @override
+  String get scrapeSourceJavBus => 'JavBus';
+
+  @override
+  String get scrapeSourceAvBase => 'AvBase';
+
+  @override
+  String get scrapeSourceAvWiki => 'AV-Wiki';
+
+  @override
+  String get scrapeSourceAll => 'All sources (merge and deduplicate by code)';
+
+  @override
+  String get scrapeSourceSaveFailed => 'Could not save scrape source settings.';
+
+  @override
+  String get scrapeSourceConnectionTitle => 'Scrape source connections';
+
+  @override
+  String get scrapeSourceConnectionSubtitle =>
+      'View the added scrape websites, test their connections, and complete verification here.';
+
+  @override
+  String get scrapeSourceRetest => 'Retest connections';
+
+  @override
+  String get scrapeSourceTesting => 'Testing…';
+
+  @override
+  String get scrapeSourceNotTested => 'Not tested';
+
+  @override
+  String get scrapeSourceConnected => 'Connected';
+
+  @override
+  String get scrapeSourceConnectionFailed => 'Connection failed';
+
+  @override
+  String get scrapeSourceVerificationRequired => 'Verification required';
+
+  @override
+  String get scrapeAliases => 'Scrape aliases';
+
+  @override
+  String get scrapeAliasesDescription =>
+      'Save names found by the alias source as actress aliases, excluding the current name.';
+
+  @override
+  String get scrapePartial => 'Some sources or records could not be processed.';
+
+  @override
+  String get scrapeZeroResults => 'No new works were found.';
 
   @override
   String get softwareUpdate => 'Software update';
@@ -802,7 +1079,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dataHealthSubtitle =>
-      'Check counts, missing metadata/images, provenance, and pending cleanup.';
+      'Check counts, missing metadata/images, provenance, pending cleanup, and scrape-source errors.';
 
   @override
   String dataHealthSectionUnavailable(String section) {
@@ -837,232 +1114,182 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dataHealthPendingDeletions => 'Pending file cleanup';
 
   @override
+  String get dataHealthJobStates => 'Scrape job states';
+
+  @override
+  String get dataHealthSourceErrors => 'Source errors in the last 7 days';
+
+  @override
+  String get scrapeJobsTitle => 'Scrape jobs';
+
+  @override
+  String get scrapeJobsEmpty => 'There are no scrape jobs yet.';
+
+  @override
+  String scrapeJobsSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get scrapeJobsDelete => 'Delete';
+
+  @override
+  String get scrapeJobsDeleteTitle => 'Delete selected scrape jobs?';
+
+  @override
+  String scrapeJobsDeleteMessage(int count) {
+    return 'Delete $count completed scrape-job records? Works, actresses, and settings will not be changed.';
+  }
+
+  @override
+  String get scrapeJobsDeleteActive =>
+      'Running or queued jobs cannot be deleted. Select completed jobs only.';
+
+  @override
+  String scrapeJobsDeleted(int count) {
+    return 'Deleted $count scrape-job records.';
+  }
+
+  @override
+  String get scrapeJobsDeleteFailed => 'Could not delete scrape-job records.';
+
+  @override
+  String get scrapeJobDetailTitle => 'Scrape job details';
+
+  @override
+  String get scrapeJobPause => 'Pause';
+
+  @override
+  String get scrapeJobResume => 'Resume';
+
+  @override
+  String get scrapeJobCancel => 'Cancel';
+
+  @override
+  String get scrapeJobRetryFailed => 'Retry failed works only';
+
+  @override
+  String get scrapeJobEvents => 'Event journal';
+
+  @override
+  String get scrapeJobDiagnostics => 'Scrape diagnostics';
+
+  @override
+  String get scrapeJobItems => 'Work checkpoints';
+
+  @override
+  String get scrapeJobNoEvents => 'No events have been recorded.';
+
+  @override
+  String get scrapeJobNoItems => 'No work checkpoints have been recorded.';
+
+  @override
+  String get scrapeJobFilterAll => 'All';
+
+  @override
+  String get scrapeJobFilterReview => 'Review';
+
+  @override
+  String get scrapeJobFilterKeep => 'Keep';
+
+  @override
+  String get scrapeJobFilterExclude => 'Exclude';
+
+  @override
+  String get scrapeJobFilterFailed => 'Failed';
+
+  @override
+  String get scrapeJobNoFilteredItems => 'No checkpoints match this filter.';
+
+  @override
+  String get scrapeJobStateReview => 'Review';
+
+  @override
+  String get scrapeJobStateQueued => 'Queued';
+
+  @override
+  String get scrapeJobStateRunning => 'Running';
+
+  @override
+  String get scrapeJobStatePaused => 'Paused';
+
+  @override
+  String get scrapeJobStateWaiting => 'Waiting for verification';
+
+  @override
+  String get scrapeJobStateSucceeded => 'Succeeded';
+
+  @override
+  String get scrapeJobStatePartial => 'Partially complete';
+
+  @override
+  String get scrapeJobStateFailed => 'Failed';
+
+  @override
+  String get scrapeJobStateCancelled => 'Cancelled';
+
+  @override
+  String get scrapeJobStateExcluded => 'Excluded';
+
+  @override
+  String scrapeJobCollectionSummary(int raw, int unique, int duplicates) {
+    return 'Found $raw; unique $unique; duplicates $duplicates';
+  }
+
+  @override
+  String scrapeJobDetailProgress(int current, int total) {
+    return 'Details $current/$total';
+  }
+
+  @override
+  String scrapeJobTerminalProgress(
+    int processed,
+    int total,
+    int saved,
+    int excluded,
+    int failed,
+  ) {
+    return 'Processed $processed/$total; saved $saved; excluded $excluded; failed $failed';
+  }
+
+  @override
+  String scrapeJobCandidateSummary(int count, int duplicates) {
+    return 'Candidates $count; collection duplicates $duplicates';
+  }
+
+  @override
+  String scrapeJobSupplementalEvidence(int current, int total) {
+    return 'Supplemental evidence $current/$total';
+  }
+
+  @override
+  String scrapeJobOutcomeSummary(
+    int processed,
+    int total,
+    int keep,
+    int review,
+    int excluded,
+    int failed,
+  ) {
+    return 'Processed $processed/$total; kept $keep; review $review; excluded $excluded; failed $failed';
+  }
+
+  @override
+  String scrapeJobRulesVersion(String version) {
+    return 'Rules version: $version';
+  }
+
+  @override
   String get settingsDataHealthTitle => 'Data health';
 
   @override
   String get settingsDataHealthSubtitle =>
-      'Inspect data completeness and provenance.';
+      'Inspect data completeness and scrape observability.';
 
   @override
-  String get libraryImportTitle => 'Folder scrape and media import';
+  String get settingsScrapeJobsTitle => 'Scrape jobs';
 
   @override
-  String get libraryImportOpen => 'Import videos';
-
-  @override
-  String get libraryImportSelectFolder => 'Select scrape folder';
-
-  @override
-  String get libraryImportSelectRoot => 'Select library root';
-
-  @override
-  String get libraryImportScan => 'Scan folder';
-
-  @override
-  String get libraryImportConfirm => 'Confirm and start scrape';
-
-  @override
-  String get libraryImportPhase1ReadOnly =>
-      'This phase only reads filenames and file metadata; source videos are not changed.';
-
-  @override
-  String get libraryImportNoFolder => 'Select a scrape folder first.';
-
-  @override
-  String get libraryImportNoRoot => 'Select a library root first.';
-
-  @override
-  String get libraryImportMediaAccessRequired =>
-      'Allow AVACA to read videos in the selected folder, then scan again.';
-
-  @override
-  String get libraryImportManualCode => 'Manual code correction';
-
-  @override
-  String get libraryImportStatusReady => 'Ready to process';
-
-  @override
-  String get libraryImportStatusNeedsCorrection => 'Needs code correction';
-
-  @override
-  String libraryImportSelected(int count) {
-    return '$count files selected';
-  }
-
-  @override
-  String libraryImportResult(int succeeded, int duplicate, int failed) {
-    return 'Import result: $succeeded succeeded, $duplicate duplicate, $failed failed';
-  }
-
-  @override
-  String libraryImportProgress(
-    int index,
-    int total,
-    String code,
-    String filename,
-    String phase,
-  ) {
-    return 'Item $index/$total · $code · $filename · $phase';
-  }
-
-  @override
-  String libraryImportProgressPhase(String phase) {
-    String _temp0 = intl.Intl.selectLogic(phase, {
-      'resolving': 'Resolving',
-      'hashing': 'Hashing',
-      'probing': 'Probing',
-      'preflight': 'Preflight',
-      'staging': 'Staging',
-      'copying': 'Copying',
-      'verifying': 'Verifying',
-      'portableCommit': 'Portable commit',
-      'indexing': 'Indexing',
-      'linking': 'Linking',
-      'sourceCleanup': 'Source cleanup',
-      'succeeded': 'Succeeded',
-      'duplicate': 'Duplicate',
-      'failed': 'Failed',
-      'cancelled': 'Cancelled',
-      'repairRequired': 'Repair required',
-      'other': 'Working',
-    });
-    return '$_temp0';
-  }
-
-  @override
-  String get libraryImportNoPending => 'No pending import items remain.';
-
-  @override
-  String get libraryImportSource => 'Source folder';
-
-  @override
-  String get libraryImportDestination => 'Destination LibraryRoot';
-
-  @override
-  String get libraryImportSelectAll => 'Select all recognizable';
-
-  @override
-  String get libraryImportClearAll => 'Clear all';
-
-  @override
-  String get libraryImportReview => 'Review selected';
-
-  @override
-  String get libraryImportBackToScan => 'Back to scan';
-
-  @override
-  String get libraryImportCommit => 'Commit to Library';
-
-  @override
-  String get libraryImportReviewTitle => 'Review import';
-
-  @override
-  String get libraryImportPrimaryPerformer => 'Primary performer';
-
-  @override
-  String get libraryImportChoosePrimary => 'Choose primary performer';
-
-  @override
-  String get libraryImportPrimaryRequired =>
-      'Choose a primary performer before committing.';
-
-  @override
-  String get libraryImportReviewNoItems =>
-      'No selected media is ready for review.';
-
-  @override
-  String get libraryImportReviewWork => 'Work';
-
-  @override
-  String get libraryImportReviewMedia => 'Media';
-
-  @override
-  String get libraryImportReviewDestination => 'Destination';
-
-  @override
-  String get libraryImportReviewIssues => 'Review issues';
-
-  @override
-  String get libraryImportCommitBlocked =>
-      'Commit is blocked until every selected item is ready.';
-
-  @override
-  String get libraryImportNoRecognizable =>
-      'No recognizable video files were found.';
-
-  @override
-  String get libraryMediaTitle => 'Media files';
-
-  @override
-  String get libraryMediaPlay => 'Play media';
-
-  @override
-  String get libraryMediaUnavailable =>
-      'Media is unavailable; repair the Library entry.';
-
-  @override
-  String get libraryMediaPart => 'Part';
-
-  @override
-  String get libraryMediaResolution => 'Resolution';
-
-  @override
-  String get libraryMediaFrameRate => 'Frame rate';
-
-  @override
-  String get dataHealthLibraryWorks => 'Library works';
-
-  @override
-  String get dataHealthLibraryMediaIssues => 'Library media issues';
-
-  @override
-  String get dataHealthImportRepairs => 'Imports needing repair';
-
-  @override
-  String get dataHealthLibraryLinks => 'Actress link issues';
-
-  @override
-  String get playbackSettings => 'Playback';
-
-  @override
-  String get playbackSeekSeconds => 'Seek interval';
-
-  @override
-  String get playbackHoldSpeed => 'Hold speed';
-
-  @override
-  String get seconds => 's';
-
-  @override
-  String get playerBack => 'Back';
-
-  @override
-  String get playerPlay => 'Play';
-
-  @override
-  String get playerPause => 'Pause';
-
-  @override
-  String get playerSpeed => 'Speed';
-
-  @override
-  String get playerSubtitles => 'Subtitles';
-
-  @override
-  String get playerFullscreen => 'Fullscreen';
-
-  @override
-  String get playerExitFullscreen => 'Exit fullscreen';
-
-  @override
-  String get playerSubtitleOff => 'Off';
-
-  @override
-  String get playerHoldSpeed => 'Hold speed';
-
-  @override
-  String get playerPosition => 'Playback position';
-
-  @override
-  String get playerPlaybackError => 'Unable to play this video';
+  String get settingsScrapeJobsSubtitle =>
+      'Inspect queue, recovery, pause, and failed-work retry.';
 }

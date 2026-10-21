@@ -37,8 +37,6 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-**/build/
-**/.cxx/
 /coverage/
 
 # Symbolication related

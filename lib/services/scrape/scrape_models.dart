@@ -1,5 +1,6 @@
+import '../../models/scraped_actress_details.dart';
 import '../../models/work.dart';
-import '../../models/scrape_source_id.dart';
+import '../../models/scrape_source_settings.dart';
 
 final class WorkFieldSourceEvidence {
   const WorkFieldSourceEvidence({required this.source, this.sourceUri});
@@ -10,9 +11,9 @@ final class WorkFieldSourceEvidence {
 
 /// Typed identity evidence supplied by a metadata source.
 ///
-/// These values are identifiers and provenance, not image URLs. A source may
+/// These values are identifiers and provenance, not image URLs.  A source may
 /// provide a canonical maker code together with platform-specific aliases so
-/// that exact lookup can retain source evidence without applying a global
+/// that the aggregate scrape can reconcile records without applying a global
 /// number/prefix normalizer.
 final class ScrapeExternalWorkIdentity {
   const ScrapeExternalWorkIdentity({
@@ -109,9 +110,10 @@ final class ScrapeWorkProvenanceFacts {
 typedef WorkProvenanceEvidence = ScrapeWorkProvenanceFacts;
 typedef ScrapeWorkProvenance = ScrapeWorkProvenanceFacts;
 
-/// Classification facts exposed by a source's exact work response. This is
-/// deliberately source-scoped so one source's maker, series, or lineage hints
-/// remain distinguishable from another source's values.
+/// Classification facts exposed while a source is still returning a catalog
+/// summary.  This is deliberately source-scoped: the union may merge several
+/// records for one identity, but it must not overwrite one source's maker,
+/// series, or lineage hints with another source's values.
 final class ScrapeCatalogWorkEvidence {
   const ScrapeCatalogWorkEvidence({
     required this.source,
@@ -213,6 +215,56 @@ final class ScrapeCatalogWorkEvidence {
   }
 }
 
+final class ScrapeActressSearchResult {
+  const ScrapeActressSearchResult({
+    required this.source,
+    required this.name,
+    required this.uri,
+  });
+
+  final ScrapeSourceId source;
+  final String name;
+  final Uri uri;
+}
+
+final class ScrapeActressPage {
+  const ScrapeActressPage({
+    required this.source,
+    required this.details,
+    this.aliases = const [],
+    this.works = const [],
+    this.pageCount = 1,
+  });
+
+  final ScrapeSourceId source;
+  final ScrapedActressDetails details;
+  final List<String> aliases;
+  final List<ScrapeWorkSummary> works;
+  final int pageCount;
+}
+
+final class ScrapeWorkSummary {
+  const ScrapeWorkSummary({
+    required this.source,
+    required this.code,
+    this.rawCode,
+    required this.title,
+    required this.detailUri,
+    this.releaseDate,
+    this.externalIdentity,
+    this.catalogEvidence = const [],
+  });
+
+  final ScrapeSourceId source;
+  final String? code;
+  final String? rawCode;
+  final String title;
+  final Uri detailUri;
+  final String? releaseDate;
+  final ScrapeExternalWorkIdentity? externalIdentity;
+  final List<ScrapeCatalogWorkEvidence> catalogEvidence;
+}
+
 final class ScrapeWorkDetails {
   const ScrapeWorkDetails({
     required this.source,
@@ -292,4 +344,57 @@ final class ScrapeWorkDetails {
     externalIdentity: externalIdentity,
     catalogEvidence: catalogEvidence ?? this.catalogEvidence,
   );
+
+  Work toWork({String? cardImagePath, String? detailImagePath}) {
+    return Work(
+      code: code,
+      title: title,
+      releaseDate: releaseDate,
+      durationMinutes: durationMinutes,
+      studio: studio,
+      publisher: publisher,
+      series: series,
+      cardImagePath: cardImagePath,
+      detailImagePath: detailImagePath,
+    );
+  }
+}
+
+enum ScrapeSourceRunState {
+  success,
+  zeroResults,
+  partial,
+  unavailable,
+  failed,
+  cancelled,
+  verificationRequired,
+  blocked,
+  rateLimited,
+  timedOut,
+}
+
+final class ScrapeSourceRunResult {
+  const ScrapeSourceRunResult({
+    required this.source,
+    required this.state,
+    this.discovered = 0,
+    this.error,
+  });
+
+  final ScrapeSourceId source;
+  final ScrapeSourceRunState state;
+  final int discovered;
+  final Object? error;
+
+  bool get succeeded =>
+      state == ScrapeSourceRunState.success ||
+      state == ScrapeSourceRunState.zeroResults ||
+      state == ScrapeSourceRunState.partial;
+}
+
+final class ScrapeSourceRunDiagnostic {
+  const ScrapeSourceRunDiagnostic({required this.state, required this.error});
+
+  final ScrapeSourceRunState state;
+  final Object error;
 }

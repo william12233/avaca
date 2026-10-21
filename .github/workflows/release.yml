@@ -17,7 +17,6 @@ env:
 
 jobs:
   metadata:
-    name: Validate release metadata
     runs-on: ubuntu-24.04
     outputs:
       tag: ${{ steps.version.outputs.tag }}
@@ -29,51 +28,41 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: Validate app versions and tag
+      - name: Validate tag and pubspec version
         id: version
         shell: bash
         run: |
           set -euo pipefail
 
-          tag="${GITHUB_REF_NAME}"
+          tag="$(printenv GITHUB_REF_NAME)"
           if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Release tags must match vX.Y.Z; received: $tag" >&2
             exit 1
           fi
 
-          client_pubspec='apps/avaca/pubspec.yaml'
-          server_pubspec='apps/server/pubspec.yaml'
-          client_full="$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' "$client_pubspec" | head -n 1)"
-          server_full="$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' "$server_pubspec" | head -n 1)"
-          if [[ -z "$client_full" || "$client_full" != "$server_full" ]]; then
-            echo "apps/avaca and apps/server versions must match: client=$client_full server=$server_full" >&2
+          version="$(printf '%s' "$tag" | sed 's/^v//')"
+          app_version="$(sed -n 's/^version:[[:space:]]*\([^+[:space:]]*\).*/\1/p' pubspec.yaml | head -n 1)"
+          if [[ -z "$app_version" || "$app_version" != "$version" ]]; then
+            echo "Tag $tag does not match pubspec.yaml base version $app_version" >&2
             exit 1
           fi
 
-          version="${tag#v}"
-          client_version="${client_full%%+*}"
-          version_code="${client_full#*+}"
-          if [[ "$client_version" != "$version" ]]; then
-            echo "Tag $tag does not match apps/avaca version $client_version" >&2
-            exit 1
-          fi
-          if [[ "$version_code" == "$client_full" || ! "$version_code" =~ ^[0-9]+$ ]]; then
-            echo "App pubspecs must provide a numeric Android build number: $client_full" >&2
-            exit 1
+          if [[ "$version" == '0.8.0' ]]; then
+            version_code=30
+          else
+            version_code=$((GITHUB_RUN_NUMBER + 2020))
           fi
           if (( version_code < 30 )); then
-            echo "Android versionCode is invalid: $version_code" >&2
+            echo "Android versionCode is invalid: $version_code." >&2
             exit 1
           fi
 
-          {
-            echo "tag=$tag"
-            echo "version=$version"
-            echo "version_code=$version_code"
-          } >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
 
-  android-avaca:
-    name: Android AVACA ARMv8-A APK
+  android:
+    name: Android ARMv8-A APK
     needs: metadata
     runs-on: ubuntu-24.04
     steps:
@@ -89,69 +78,11 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install AVACA dependencies
-        working-directory: apps/avaca
+      - name: Install dependencies
         run: flutter pub get
-
-      - name: Provision pinned MsQuic source for Android
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          lock='tooling/msquic/msquic-v2.6.0.lock.json'
-          repository="$(jq -r '.repository' "$lock")"
-          tag="$(jq -r '.tag' "$lock")"
-          commit="$(jq -r '.commit' "$lock")"
-          root="$RUNNER_TEMP/msquic-android-$commit"
-
-          rm -rf "$root"
-          git clone --recurse-submodules --branch "$tag" --depth 1 "$repository" "$root"
-          git -C "$root" checkout --detach "$commit"
-          git -C "$root" submodule update --init --recursive
-          actual="$(git -C "$root" rev-parse HEAD)"
-          tagged="$(git -C "$root" rev-list -n 1 "$tag")"
-          if [[ "$actual" != "$commit" || "$tagged" != "$commit" ]]; then
-            echo "Pinned Android MsQuic checkout mismatch: expected=$commit actual=$actual tag=$tagged" >&2
-            exit 1
-          fi
-          test -f "$root/src/inc/msquic.h"
-          echo "AVACA_MSQUIC_ROOT=$root" >> "$GITHUB_ENV"
-
-      - name: Configure Android NDK toolchain
-        shell: bash
-        run: |
-          set -euo pipefail
-          ndk_root="${ANDROID_NDK_ROOT:-${ANDROID_NDK_HOME:-${ANDROID_NDK_LATEST_HOME:-}}}"
-          if [[ -z "$ndk_root" ]]; then
-            sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
-            if [[ -z "$sdk_root" || ! -d "$sdk_root/ndk" ]]; then
-              echo 'Unable to locate the Android SDK NDK directory.' >&2
-              exit 1
-            fi
-            ndk_root="$(find "$sdk_root/ndk" -mindepth 1 -maxdepth 1 -type d -print | sort -V | tail -n 1)"
-          fi
-          test -d "$ndk_root"
-          ndk_bin="$ndk_root/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          if [[ ! -x "$ndk_bin/clang" || ! -x "$ndk_bin/aarch64-linux-android29-clang" ]]; then
-            echo "Android NDK LLVM toolchain is incomplete: $ndk_bin" >&2
-            exit 1
-          fi
-          echo "ANDROID_NDK_ROOT=$ndk_root" >> "$GITHUB_ENV"
-          echo "$ndk_bin" >> "$GITHUB_PATH"
-          {
-            echo '### Android native provenance'
-            echo
-            echo "- repository: $(jq -r '.repository' tooling/msquic/msquic-v2.6.0.lock.json)"
-            echo "- tag: $(jq -r '.tag' tooling/msquic/msquic-v2.6.0.lock.json)"
-            echo "- commit: $(jq -r '.commit' tooling/msquic/msquic-v2.6.0.lock.json)"
-            echo "- NDK: $(basename "$ndk_root")"
-            echo '- target ABI: arm64-v8a'
-            echo '- TLS: Android quictls (Windows Schannel/x64 provenance is not used)'
-          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Configure release signing
         shell: bash
-        working-directory: apps/avaca
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -159,6 +90,7 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
+
           for secret_name in \
             ANDROID_KEYSTORE_BASE64 \
             ANDROID_KEYSTORE_PASSWORD \
@@ -170,6 +102,7 @@ jobs:
               exit 1
             fi
           done
+
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/avaca-release.jks
           cat > android/key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
@@ -178,79 +111,62 @@ jobs:
           storeFile=avaca-release.jks
           EOF
 
-      - name: Build AVACA ARMv8-A APK from apps/avaca
-        working-directory: apps/avaca
-        env:
-          AVACA_ANDROID_ARM64_ONLY: 'true'
-          AVACA_REQUIRE_RELEASE_SIGNING: 'true'
-        run: |
-          flutter clean
-          flutter pub get
-          flutter build apk \
-            --release \
-            --target-platform android-arm64 \
-            --build-name "${{ needs.metadata.outputs.version }}" \
-            --build-number "${{ needs.metadata.outputs.version_code }}"
-
-      - name: Verify Android product, ABI, and version
+      - name: Use runner Java for Gradle
         shell: bash
-        working-directory: apps/avaca
+        run: |
+          set -euo pipefail
+          sed -i '/^[[:space:]]*org\.gradle\.java\.home[[:space:]]*=/d' android/gradle.properties
+
+      - name: Build ARMv8-A APK
+        run: >
+          flutter build apk
+          --release
+          --target-platform android-arm64
+          --build-name "${{ needs.metadata.outputs.version }}"
+          --build-number "${{ needs.metadata.outputs.version_code }}"
+
+      - name: Verify Android version metadata
+        shell: bash
         env:
           EXPECTED_VERSION: ${{ needs.metadata.outputs.version }}
           EXPECTED_VERSION_CODE: ${{ needs.metadata.outputs.version_code }}
         run: |
           set -euo pipefail
-          apk='build/app/outputs/flutter-apk/app-release.apk'
-          test -f "$apk"
+
+          apk="build/app/outputs/flutter-apk/app-release.apk"
           aapt="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-          package_line="$($aapt dump badging "$apk" | grep -m 1 '^package:')"
-          grep -F "name='com.avaca.avaca'" <<< "$package_line"
+          if [[ -z "$aapt" || ! -x "$aapt" ]]; then
+            echo "Unable to locate Android aapt for version verification." >&2
+            exit 1
+          fi
+
+          package_line="$("$aapt" dump badging "$apk" | grep -m 1 '^package:')"
           grep -F "versionCode='$EXPECTED_VERSION_CODE'" <<< "$package_line"
           grep -F "versionName='$EXPECTED_VERSION'" <<< "$package_line"
-          listing="$(unzip -Z1 "$apk")"
-          grep -F 'lib/arm64-v8a/libavaca_remote_android.so' <<< "$listing"
-          grep -F 'lib/arm64-v8a/libmsquic.so' <<< "$listing"
-          if grep -E '^lib/(armeabi-v7a|x86|x86_64)/' <<< "$listing"; then
-            echo 'Release APK contains a non-arm64 ABI.' >&2
-            exit 1
-          fi
-          if unzip -p "$apk" 'lib/arm64-v8a/libapp.so' | grep -a -qi 'migration fixture'; then
-            echo 'Root migration fixture text was found in the Android product.' >&2
-            exit 1
-          fi
-          {
-            echo '### Android product verification'
-            echo
-            echo "- APK source: apps/avaca/build/app/outputs/flutter-apk/app-release.apk"
-            echo "- package: com.avaca.avaca"
-            echo "- version: $EXPECTED_VERSION+$EXPECTED_VERSION_CODE"
-            echo '- ABI: arm64-v8a only'
-            echo '- native closure: libavaca_remote_android.so + libmsquic.so'
-          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Name and hash Android artifact
+      - name: Name and hash APK
         shell: bash
-        working-directory: apps/avaca
         run: |
           set -euo pipefail
-          mkdir -p "$GITHUB_WORKSPACE/dist"
+          mkdir -p dist
           artifact="avaca-${{ needs.metadata.outputs.version }}-arm64-v8a.apk"
-          cp build/app/outputs/flutter-apk/app-release.apk "$GITHUB_WORKSPACE/dist/$artifact"
-          (cd "$GITHUB_WORKSPACE/dist" && sha256sum "$artifact" > "$artifact.sha256")
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/$artifact"
+          (
+            cd dist
+            sha256sum "$artifact" > "$artifact.sha256"
+          )
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-avaca-${{ needs.metadata.outputs.version }}
+          name: android-${{ needs.metadata.outputs.version }}
           path: dist/*
           if-no-files-found: error
 
-  windows-avaca:
-    name: Windows AVACA client portable bundle
+  windows:
+    name: Windows x64 portable bundle
     needs: metadata
     runs-on: windows-2022
-    env:
-      AVACA_REQUIRE_REMOTE_QUIC: 'ON'
     steps:
       - name: Check out tagged source
         uses: actions/checkout@v4
@@ -264,196 +180,72 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install AVACA client dependencies
-        working-directory: apps/avaca
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Fetch pinned Windows player dependencies
+      - name: Verify Windows native toolchain
         shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $requiredComponent = 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64'
+          if (-not (Test-Path -LiteralPath $vswhere -PathType Leaf)) {
+            throw "Visual Studio Locator is missing: $vswhere"
+          }
+
+          $installationPath = [string](& $vswhere -latest -products '*' -requires $requiredComponent -property installationPath | Select-Object -First 1)
+          if ([string]::IsNullOrWhiteSpace($installationPath)) {
+            throw "Visual Studio with MSVC x64 tools was not found."
+          }
+
+          $installationVersion = [string](& $vswhere -latest -products '*' -requires $requiredComponent -property installationVersion | Select-Object -First 1)
+          $vcvars = Join-Path $installationPath 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $vcvars -PathType Leaf)) {
+            throw "The x64 MSVC environment script is missing: $vcvars"
+          }
+
+          Write-Host "Using Visual Studio $($installationVersion.Trim()) at $($installationPath.Trim())"
+
+      - name: Build Windows release bundle
         run: >
-          pwsh -NoProfile -ExecutionPolicy Bypass -File
-          "${{ github.workspace }}\scripts\fetch_windows_player_dependencies.ps1"
-          -DependencyRoot "${{ github.workspace }}\windows\engine"
+          flutter build windows
+          --release
+          --build-name "${{ needs.metadata.outputs.version }}"
+          --build-number "${{ needs.metadata.outputs.version_code }}"
 
-      - name: Provision pinned Windows MsQuic
+      - name: Package versioned portable archive
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $root = Join-Path $env:RUNNER_TEMP 'msquic-v2.6.0-x64-release'
-          $lines = & pwsh -NoProfile -ExecutionPolicy Bypass -File `
-            "${{ github.workspace }}\tooling\msquic\provision_windows.ps1" `
-            -ExternalRoot $root -Configuration Release -Architecture x64 -Tls schannel `
-            -Generator 'Visual Studio 17 2022'
-          if ($LASTEXITCODE -ne 0) { throw "MsQuic provisioning failed: $LASTEXITCODE" }
-          foreach ($line in $lines) {
-            if ($line -match '^AVACA_(MSQUIC_ROOT|MSQUIC_DLL|MSQUIC_SHA256|MSQUIC_PROVENANCE)=') {
-              Add-Content -LiteralPath $env:GITHUB_ENV -Value $line
-            }
-          }
-          $provenanceLine = $lines | Where-Object { $_ -match '^AVACA_MSQUIC_PROVENANCE=' } | Select-Object -First 1
-          $provenancePath = $provenanceLine -replace '^AVACA_MSQUIC_PROVENANCE=', ''
-          if ([string]::IsNullOrWhiteSpace($provenancePath) -or
-              -not (Test-Path -LiteralPath $provenancePath -PathType Leaf)) {
-            throw 'MsQuic provenance was not exported.'
-          }
 
-      - name: Build Windows AVACA client from apps/avaca
-        working-directory: apps/avaca
-        run: |
-          flutter clean
-          flutter pub get
-          flutter build windows --release `
-            --build-name "${{ needs.metadata.outputs.version }}" `
-            --build-number "${{ needs.metadata.outputs.version_code }}"
-
-      - name: Verify Windows AVACA bundle
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $releaseDir = Join-Path $env:GITHUB_WORKSPACE 'apps/avaca/build/windows/x64/runner/Release'
-          & (Join-Path $env:GITHUB_WORKSPACE 'tooling/verify_windows_bundle.ps1') `
-            -Role avaca -BundlePath $releaseDir
-
-      - name: Package Windows AVACA client
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
           $version = '${{ needs.metadata.outputs.version }}'
-          $releaseDir = Join-Path $env:GITHUB_WORKSPACE 'apps/avaca/build/windows/x64/runner/Release'
+          $releaseDir = Join-Path $env:GITHUB_WORKSPACE 'build/windows/x64/runner/Release'
           $packageRoot = Join-Path $env:RUNNER_TEMP "avaca-$version-windows-x64-portable"
           $dist = Join-Path $env:GITHUB_WORKSPACE 'dist'
           $zipName = "avaca-$version.zip"
           $zipPath = Join-Path $dist $zipName
-          $required = @('avaca.exe', 'msquic.dll', 'avaca_remote_quic.dll', 'avaca-msquic-provenance.json')
-          foreach ($file in $required) {
-            if (-not (Test-Path -LiteralPath (Join-Path $releaseDir $file) -PathType Leaf)) {
-              throw "AVACA client bundle is missing $file"
+
+          foreach ($requiredFile in @('avaca.exe', 'avaca_update.exe')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $releaseDir $requiredFile) -PathType Leaf)) {
+              throw "Windows release bundle is missing ${requiredFile}: $releaseDir"
             }
           }
+
           Remove-Item -LiteralPath $packageRoot -Recurse -Force -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path $packageRoot, $dist | Out-Null
           Copy-Item -Path (Join-Path $releaseDir '*') -Destination $packageRoot -Recurse -Force
           Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'README.md') -Destination (Join-Path $packageRoot 'README.md') -Force
-          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'THIRD_PARTY_NOTICES.md') -Destination (Join-Path $packageRoot 'THIRD_PARTY_NOTICES.md') -Force
-          Set-Content -LiteralPath (Join-Path $packageRoot 'AVACA-WINDOWS-CLIENT.txt') -Value 'AVACA Windows client. Pair with AVACA Server using AVACA-PAIR-V2.' -Encoding utf8
-          $licenseRoot = Join-Path $packageRoot 'licenses/avaca_player_native/windows'
-          New-Item -ItemType Directory -Force -Path $licenseRoot | Out-Null
-          foreach ($file in @('THIRD_PARTY_PROVENANCE.md', 'THIRD_PARTY_LICENSES.md', 'WINDOWS_PLAYER_DEPS.lock.json')) {
-            Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE "packages/avaca_player_native/windows/$file") -Destination $licenseRoot -Force
-          }
-          $msquicLicenseRoot = Join-Path $packageRoot 'licenses/msquic'
-          New-Item -ItemType Directory -Force -Path $msquicLicenseRoot | Out-Null
-          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'tooling/msquic/msquic-v2.6.0.lock.json') -Destination $msquicLicenseRoot -Force
           Set-Content -LiteralPath (Join-Path $packageRoot 'version.txt') -Value $version -NoNewline -Encoding utf8
+
           Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
           Compress-Archive -Path (Join-Path $packageRoot '*') -DestinationPath $zipPath -CompressionLevel Optimal
+
           $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
           Set-Content -LiteralPath "$zipPath.sha256" -Value "$hash  $zipName" -NoNewline -Encoding ascii
 
-      - name: Upload Windows AVACA artifact
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-avaca-${{ needs.metadata.outputs.version }}
-          path: dist/*
-          if-no-files-found: error
-
-  windows-server:
-    name: Windows AVACA Server portable bundle
-    needs: metadata
-    runs-on: windows-2022
-    env:
-      AVACA_REQUIRE_REMOTE_QUIC: 'ON'
-    steps:
-      - name: Check out tagged source
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.metadata.outputs.tag }}
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-
-      - name: Install AVACA Server dependencies
-        working-directory: apps/server
-        run: flutter pub get
-
-      - name: Provision pinned Windows MsQuic
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $root = Join-Path $env:RUNNER_TEMP 'msquic-v2.6.0-x64-release'
-          $lines = & pwsh -NoProfile -ExecutionPolicy Bypass -File `
-            "${{ github.workspace }}\tooling\msquic\provision_windows.ps1" `
-            -ExternalRoot $root -Configuration Release -Architecture x64 -Tls schannel `
-            -Generator 'Visual Studio 17 2022'
-          if ($LASTEXITCODE -ne 0) { throw "MsQuic provisioning failed: $LASTEXITCODE" }
-          foreach ($line in $lines) {
-            if ($line -match '^AVACA_(MSQUIC_ROOT|MSQUIC_DLL|MSQUIC_SHA256|MSQUIC_PROVENANCE)=') {
-              Add-Content -LiteralPath $env:GITHUB_ENV -Value $line
-            }
-          }
-          $provenanceLine = $lines | Where-Object { $_ -match '^AVACA_MSQUIC_PROVENANCE=' } | Select-Object -First 1
-          $provenancePath = $provenanceLine -replace '^AVACA_MSQUIC_PROVENANCE=', ''
-          if ([string]::IsNullOrWhiteSpace($provenancePath) -or
-              -not (Test-Path -LiteralPath $provenancePath -PathType Leaf)) {
-            throw 'MsQuic provenance was not exported.'
-          }
-
-      - name: Build Windows AVACA Server from apps/server
-        working-directory: apps/server
-        run: |
-          flutter clean
-          flutter pub get
-          flutter build windows --release `
-            --build-name "${{ needs.metadata.outputs.version }}" `
-            --build-number "${{ needs.metadata.outputs.version_code }}"
-
-      - name: Verify Windows AVACA Server bundle
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $releaseDir = Join-Path $env:GITHUB_WORKSPACE 'apps/server/build/windows/x64/runner/Release'
-          & (Join-Path $env:GITHUB_WORKSPACE 'tooling/verify_windows_bundle.ps1') `
-            -Role server -BundlePath $releaseDir
-
-      - name: Package Windows AVACA Server
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $version = '${{ needs.metadata.outputs.version }}'
-          $releaseDir = Join-Path $env:GITHUB_WORKSPACE 'apps/server/build/windows/x64/runner/Release'
-          $packageRoot = Join-Path $env:RUNNER_TEMP "avaca-server-$version-windows-x64-portable"
-          $dist = Join-Path $env:GITHUB_WORKSPACE 'dist'
-          $zipName = "avaca-server-$version.zip"
-          $zipPath = Join-Path $dist $zipName
-          $required = @('avaca_server.exe', 'msquic.dll', 'avaca_remote_quic.dll', 'avaca-msquic-provenance.json')
-          foreach ($file in $required) {
-            if (-not (Test-Path -LiteralPath (Join-Path $releaseDir $file) -PathType Leaf)) {
-              throw "AVACA Server bundle is missing $file"
-            }
-          }
-          Remove-Item -LiteralPath $packageRoot -Recurse -Force -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path $packageRoot, $dist | Out-Null
-          Copy-Item -Path (Join-Path $releaseDir '*') -Destination $packageRoot -Recurse -Force
-          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'README.md') -Destination (Join-Path $packageRoot 'README.md') -Force
-          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'THIRD_PARTY_NOTICES.md') -Destination (Join-Path $packageRoot 'THIRD_PARTY_NOTICES.md') -Force
-          Set-Content -LiteralPath (Join-Path $packageRoot 'AVACA-SERVER-WINDOWS.txt') -Value 'AVACA Server Windows service. Pair AVACA clients using AVACA-PAIR-V2.' -Encoding utf8
-          $msquicLicenseRoot = Join-Path $packageRoot 'licenses/msquic'
-          New-Item -ItemType Directory -Force -Path $msquicLicenseRoot | Out-Null
-          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'tooling/msquic/msquic-v2.6.0.lock.json') -Destination $msquicLicenseRoot -Force
-          Set-Content -LiteralPath (Join-Path $packageRoot 'version.txt') -Value $version -NoNewline -Encoding utf8
-          Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
-          Compress-Archive -Path (Join-Path $packageRoot '*') -DestinationPath $zipPath -CompressionLevel Optimal
-          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
-          Set-Content -LiteralPath "$zipPath.sha256" -Value "$hash  $zipName" -NoNewline -Encoding ascii
-
-      - name: Upload Windows AVACA Server artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-server-${{ needs.metadata.outputs.version }}
+          name: windows-${{ needs.metadata.outputs.version }}
           path: dist/*
           if-no-files-found: error
 
@@ -461,9 +253,8 @@ jobs:
     name: Publish GitHub Release
     needs:
       - metadata
-      - android-avaca
-      - windows-avaca
-      - windows-server
+      - android
+      - windows
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -473,53 +264,46 @@ jobs:
         with:
           ref: ${{ needs.metadata.outputs.tag }}
 
-      - name: Download Android AVACA artifact
+      - name: Download Android artifact
         uses: actions/download-artifact@v4
         with:
-          name: android-avaca-${{ needs.metadata.outputs.version }}
+          name: android-${{ needs.metadata.outputs.version }}
           path: dist
-          merge-multiple: true
 
-      - name: Download Windows AVACA artifact
+      - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: windows-avaca-${{ needs.metadata.outputs.version }}
+          name: windows-${{ needs.metadata.outputs.version }}
           path: dist
-          merge-multiple: true
 
-      - name: Download Windows Server artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-server-${{ needs.metadata.outputs.version }}
-          path: dist
-          merge-multiple: true
-
-      - name: Verify exact six-asset release contract
+      - name: Verify versioned release assets
         shell: bash
         run: |
           set -euo pipefail
+
           expected_files=(
             "avaca-${{ needs.metadata.outputs.version }}-arm64-v8a.apk"
             "avaca-${{ needs.metadata.outputs.version }}-arm64-v8a.apk.sha256"
             "avaca-${{ needs.metadata.outputs.version }}.zip"
             "avaca-${{ needs.metadata.outputs.version }}.zip.sha256"
-            "avaca-server-${{ needs.metadata.outputs.version }}.zip"
-            "avaca-server-${{ needs.metadata.outputs.version }}.zip.sha256"
           )
           mapfile -t expected_sorted < <(printf '%s\n' "${expected_files[@]}" | sort)
           mapfile -t actual_sorted < <(find dist -maxdepth 1 -type f -printf '%f\n' | sort)
+
           if [[ "${actual_sorted[*]}" != "${expected_sorted[*]}" ]]; then
-            echo 'Release assets do not match the exact six-file naming contract.' >&2
+            echo 'Release assets do not match the required naming contract.' >&2
             echo 'Expected:' >&2
             printf '  %s\n' "${expected_sorted[@]}" >&2
             echo 'Actual:' >&2
             printf '  %s\n' "${actual_sorted[@]}" >&2
             exit 1
           fi
-          (cd dist && sha256sum --check --strict \
-            "avaca-${{ needs.metadata.outputs.version }}-arm64-v8a.apk.sha256" \
-            "avaca-${{ needs.metadata.outputs.version }}.zip.sha256" \
-            "avaca-server-${{ needs.metadata.outputs.version }}.zip.sha256")
+
+          for checksum in "${expected_sorted[@]}"; do
+            if [[ "$checksum" == *.sha256 ]]; then
+              (cd dist && sha256sum --check --strict "$checksum")
+            fi
+          done
 
       - name: Create or update GitHub Release
         env:
@@ -535,21 +319,32 @@ jobs:
           if [[ -f "$notes_file" ]]; then
             create_notes_args=(--notes-file "$notes_file")
           fi
-          assets=(
-            "dist/avaca-$version-arm64-v8a.apk"
-            "dist/avaca-$version-arm64-v8a.apk.sha256"
-            "dist/avaca-$version.zip"
-            "dist/avaca-$version.zip.sha256"
-            "dist/avaca-server-$version.zip"
-            "dist/avaca-server-$version.zip.sha256"
-          )
+
           if gh release view "$tag" --repo "$GH_REPO" >/dev/null 2>&1; then
             if [[ -f "$notes_file" ]]; then
-              gh release edit "$tag" --repo "$GH_REPO" --title "AVACA $version" --notes-file "$notes_file"
+              gh release edit "$tag" \
+                --repo "$GH_REPO" \
+                --title "AVACA $version" \
+                --notes-file "$notes_file"
             else
-              gh release edit "$tag" --repo "$GH_REPO" --title "AVACA $version"
+              gh release edit "$tag" \
+                --repo "$GH_REPO" \
+                --title "AVACA $version"
             fi
-            gh release upload "$tag" --repo "$GH_REPO" "${assets[@]}" --clobber
+            gh release upload "$tag" \
+              --repo "$GH_REPO" \
+              "dist/avaca-$version-arm64-v8a.apk" \
+              "dist/avaca-$version-arm64-v8a.apk.sha256" \
+              "dist/avaca-$version.zip" \
+              "dist/avaca-$version.zip.sha256" \
+              --clobber
           else
-            gh release create "$tag" --repo "$GH_REPO" "${assets[@]}" --title "AVACA $version" "${create_notes_args[@]}"
+            gh release create "$tag" \
+              --repo "$GH_REPO" \
+              "dist/avaca-$version-arm64-v8a.apk" \
+              "dist/avaca-$version-arm64-v8a.apk.sha256" \
+              "dist/avaca-$version.zip" \
+              "dist/avaca-$version.zip.sha256" \
+              --title "AVACA $version" \
+              "${create_notes_args[@]}"
           fi

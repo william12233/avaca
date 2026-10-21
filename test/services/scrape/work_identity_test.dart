@@ -1,8 +1,23 @@
 import 'package:avaca/services/scrape/work_identity.dart';
 import 'package:avaca/services/scrape/scrape_models.dart';
+import 'package:avaca/models/scrape_source_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('title identity only removes explicit 特典版 markers', () {
+    final ordinary = scrapeTitleIdentity('  普通作品  名稱 ');
+    final special = scrapeTitleIdentity('【特典版】 普通作品 名稱');
+    final asciiSpecial = scrapeTitleIdentity('[特典版] 普通作品 名稱');
+
+    expect(ordinary.key, '普通作品 名稱');
+    expect(ordinary.isSpecialEdition, isFalse);
+    expect(special.key, ordinary.key);
+    expect(special.isSpecialEdition, isTrue);
+    expect(asciiSpecial.key, ordinary.key);
+    expect(scrapeTitleIdentity('普通作品 (別名)').key, '普通作品 (別名)');
+    expect(scrapeTitleIdentity('作品 A－B').key, isNot('作品 A-B'));
+  });
+
   test('work code surface normalization does not infer aliases', () {
     expect(normalizeScrapeWorkCodeSurface(' start－489 '), 'START-489');
     expect(normalizeScrapeWorkCodeSurface('H_346REBD00975'), isNot('REBD-975'));
@@ -15,7 +30,9 @@ void main() {
 
   test('matches safe separatorless forms and preserves unsafe forms', () {
     expect(scrapeWorkCodesEqual('SSIS875', 'SSIS-875'), isTrue);
+    expect(preferredScrapeWorkCode(['SSIS875', 'SSIS-875']), 'SSIS-875');
     expect(scrapeWorkCodesEqual('START00023', 'START-023'), isTrue);
+    expect(preferredScrapeWorkCode(['START00023', 'START-023']), 'START-023');
 
     expect(scrapeWorkCodesEqual('SIVR00303', 'SIVR-303'), isFalse);
     expect(scrapeWorkCodesEqual('1STZY00017', 'STZY-017'), isFalse);
@@ -58,13 +75,18 @@ void main() {
         aliases: ['1start00164'],
         platformIds: {'fanza': 'START-164'},
       );
+      final summary = ScrapeWorkSummary(
+        source: ScrapeSourceId.avwiki,
+        code: '1start00164',
+        rawCode: '1start00164',
+        title: 'cross-platform identity',
+        detailUri: Uri.parse('https://av-wiki.net/start-164/'),
+        externalIdentity: bridge,
+      );
+      expect(scrapeWorkIdentityKeyForSummary(summary), 'code:start164');
       expect(
-        scrapeWorkResolvedIdentityKey(
-          rawCode: '1start00164',
-          externalIdentity: bridge,
-          fallback: 'fallback',
-        ),
-        'code:start164',
+        scrapeWorkCanonicalStorageCode('1start00164', externalIdentity: bridge),
+        'START-164',
       );
     },
   );
@@ -92,6 +114,49 @@ void main() {
       scrapeWorkCodesEqual('SIVR00303', 'SIVR-303', evidence: sodEvidence),
       isFalse,
     );
+  });
+
+  test('uses only same-source catalog metadata for scoped identity', () {
+    final contextual = ScrapeWorkSummary(
+      source: ScrapeSourceId.avbase,
+      code: 'STARS-087-V',
+      rawCode: 'STARS-087-V',
+      title: 'SOD catalog entry',
+      detailUri: Uri.parse('https://www.avbase.net/works/STARS-087-V'),
+      catalogEvidence: const [
+        ScrapeCatalogWorkEvidence(
+          source: ScrapeSourceId.avbase,
+          code: 'STARS-087-V',
+          manufacturer: 'SODクリエイト',
+        ),
+      ],
+    );
+    final unscoped = ScrapeWorkSummary(
+      source: ScrapeSourceId.avbase,
+      code: 'STARS-087',
+      rawCode: 'STARS-087',
+      title: 'Unscoped entry',
+      detailUri: Uri.parse('https://www.avbase.net/works/STARS-087'),
+    );
+    final foreign = ScrapeWorkSummary(
+      source: ScrapeSourceId.avbase,
+      code: 'STARS-087-V',
+      rawCode: 'STARS-087-V',
+      title: 'Foreign catalog metadata',
+      detailUri: Uri.parse('https://www.avbase.net/works/STARS-087-V-foreign'),
+      catalogEvidence: const [
+        ScrapeCatalogWorkEvidence(
+          source: ScrapeSourceId.javbus,
+          code: 'STARS-087-V',
+          manufacturer: 'SODクリエイト',
+        ),
+      ],
+    );
+
+    expect(scrapeWorkIdentityKeyForSummary(contextual), 'code:stars87');
+    expect(scrapeWorkIdentityKeyForSummary(unscoped), 'code:stars087');
+    expect(scrapeWorkIdentityKeyForSummary(foreign), 'code:opaque:stars-087-v');
+    expect(scrapeWorkIdentityKeyForSummary(contextual), isNot('code:stars087'));
   });
 
   test(
@@ -156,8 +221,55 @@ void main() {
         );
       }
 
+      expect(
+        preferredScrapeWorkCode([
+          'START-053-VT',
+          'START-053-T',
+          'START-053',
+        ], evidence: sodEvidence),
+        'START-053',
+      );
       expect(scrapeWorkCodesEqual('START-053-VR', 'START-053'), isFalse);
       expect(scrapeWorkCodesEqual('START-053-V', 'START-053'), isFalse);
     },
   );
+
+  test('requires title plus independent metadata when a code is missing', () {
+    const common = '同一作品標題';
+    expect(
+      scrapeWorkMetadataLikelySame(
+        firstTitle: common,
+        firstReleaseDate: '2025-10-01',
+        firstPublisher: null,
+        firstStudio: null,
+        secondTitle: common,
+        secondReleaseDate: '2025-10-01',
+        secondPublisher: null,
+        secondStudio: null,
+      ),
+      isTrue,
+    );
+    expect(
+      scrapeWorkMetadataLikelySame(
+        firstTitle: common,
+        firstReleaseDate: null,
+        firstPublisher: null,
+        firstStudio: null,
+        secondTitle: common,
+        secondReleaseDate: null,
+        secondPublisher: null,
+        secondStudio: null,
+      ),
+      isFalse,
+    );
+  });
+
+  test('Rebecca classification is publisher based and exact', () {
+    expect(isRebeccaPublisher(' Rebecca '), isTrue);
+    expect(isRebeccaPublisher('REBECCA'), isTrue);
+    expect(isRebeccaPublisher('Rebecca / Rebecca'), isTrue);
+    expect(isRebeccaPublisher('REBD'), isFalse);
+    expect(isRebeccaPublisher('H_346REBD00975'), isFalse);
+    expect(isRebeccaPublisher('Rebecca Studio'), isFalse);
+  });
 }

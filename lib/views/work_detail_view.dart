@@ -8,12 +8,7 @@ import '../components/adaptive_page_layout.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../l10n/app_localizations.dart';
-import '../library/library_collection_service.dart';
-import '../library/library_media_locator.dart';
-import '../library/library_media_resolver.dart';
-import '../library/library_repository.dart';
 import '../models/work_storage.dart';
-import '../player/player_launcher.dart';
 
 class WorkDetailView extends StatefulWidget {
   const WorkDetailView({
@@ -21,13 +16,11 @@ class WorkDetailView extends StatefulWidget {
     required this.db,
     required this.workId,
     this.currentActressId,
-    this.collectionService,
   });
 
   final AppDatabase db;
   final int workId;
   final int? currentActressId;
-  final LibraryCollectionService? collectionService;
 
   @override
   State<WorkDetailView> createState() => _WorkDetailViewState();
@@ -35,73 +28,15 @@ class WorkDetailView extends StatefulWidget {
 
 class _WorkDetailViewState extends State<WorkDetailView> {
   late final Future<Map<String, Object?>?> workFuture;
-  late final LibraryRepository _libraryRepository;
-  late final LibraryMediaLocator _libraryLocator;
-  late final LibraryMediaResolver _mediaResolver;
-  late final PlayerLauncher _playerLauncher;
   WorkStorageRecord? _storageRecord;
-  bool _playerBusy = false;
 
   @override
   void initState() {
     super.initState();
-    final collectionService = widget.collectionService;
-    _libraryRepository =
-        collectionService?.repository ?? LibraryRepository(db: widget.db);
-    _libraryLocator = collectionService?.locator ?? LibraryMediaLocator();
-    _mediaResolver =
-        collectionService?.mediaResolver ??
-        LibraryMediaResolver(
-          repository: _libraryRepository,
-          locator: _libraryLocator,
-        );
-    _playerLauncher = PlayerLauncher(mediaResolver: _mediaResolver);
-    workFuture = _loadWorkWithHealthyMedia();
-  }
-
-  Future<Map<String, Object?>?> _loadWorkWithHealthyMedia() async {
-    final collectionService = widget.collectionService;
-    if (collectionService != null) {
-      return collectionService.getWorkById(
-        widget.workId,
-        currentActressId: widget.currentActressId,
-      );
-    }
-    final work = await widget.db.getWorkById(
+    workFuture = widget.db.getWorkById(
       widget.workId,
       currentActressId: widget.currentActressId,
     );
-    if (work == null || !_isLibraryManaged(work)) return work;
-
-    final rawMedia = work['library_media'];
-    if (rawMedia is! List || rawMedia.isEmpty) return null;
-    final root = await _libraryRepository.activeLibraryRoot();
-    final workPath = work['library_relative_path']?.toString() ?? '';
-    final healthyMedia = <Map<String, Object?>>[];
-    if (root == null || root.trim().isEmpty || workPath.trim().isEmpty) {
-      return null;
-    }
-    for (final value in rawMedia.whereType<Map>()) {
-      final media = Map<String, Object?>.from(value);
-      if (media['portable_id']?.toString().trim().isEmpty ?? true) {
-        continue;
-      }
-      try {
-        await _libraryLocator.resolveMedia(
-          libraryRoot: root,
-          workRelativePath: workPath,
-          mediaRelativePath: media['relative_path']?.toString() ?? '',
-          mediaPortableId: media['portable_id']?.toString(),
-        );
-        healthyMedia.add(media);
-      } on Object {
-        // A broken media row remains visible in Data Health, but it must not
-        // present an unplayable item as part of the normal Work detail.
-      }
-    }
-    if (healthyMedia.isEmpty) return null;
-    work['library_media'] = List.unmodifiable(healthyMedia);
-    return work;
   }
 
   @override
@@ -116,10 +51,7 @@ class _WorkDetailViewState extends State<WorkDetailView> {
                 ? const AlignedAppBarBackButton()
                 : null,
             title: Text(work?['code']?.toString() ?? ''),
-            actions: [
-              if (work != null && !_isLibraryManaged(work))
-                _buildStorageAction(work),
-            ],
+            actions: [if (work != null) _buildStorageAction(work)],
           ),
           body: switch (snapshot.connectionState) {
             ConnectionState.waiting => const Center(
@@ -307,97 +239,10 @@ class _WorkDetailViewState extends State<WorkDetailView> {
             _labeledValue(l10n.publisher, work['publisher']?.toString()),
             _labeledValue(l10n.series, work['series']?.toString()),
             _buildRelatedActresses(work),
-            _buildLibraryMedia(work),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildLibraryMedia(Map<String, Object?> work) {
-    final raw = work['library_media'];
-    if (raw is! List || raw.isEmpty) return const SizedBox.shrink();
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      key: const Key('library-media-section'),
-      padding: const EdgeInsets.only(top: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.libraryMediaTitle),
-          const SizedBox(height: 4),
-          for (final value in raw.whereType<Map>())
-            _libraryMediaTile(Map<String, Object?>.from(value), l10n),
-        ],
-      ),
-    );
-  }
-
-  Widget _libraryMediaTile(Map<String, Object?> media, AppLocalizations l10n) {
-    final fileName = media['file_name']?.toString() ?? '';
-    final part = media['part_label']?.toString();
-    final resolution = media['resolution_label']?.toString();
-    final width = media['width'];
-    final height = media['height'];
-    final fps = (media['frame_rate_decimal'] as num?)?.toDouble();
-    final dimensions = width is num && height is num
-        ? '${width.toInt()} × ${height.toInt()}'
-        : null;
-    final details = <String>[
-      if (part != null && part.isNotEmpty) '${l10n.libraryMediaPart}: $part',
-      if (dimensions != null)
-        '${l10n.libraryMediaResolution}: $dimensions${resolution == null ? '' : ' · $resolution'}',
-      if (fps != null)
-        '${l10n.libraryMediaFrameRate}: ${fps.toStringAsFixed(2)} FPS',
-    ];
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      enabled: !_playerBusy,
-      onTap: () => _playLibraryMedia(media),
-      leading: const Icon(Icons.play_circle_outline),
-      trailing: Tooltip(
-        message: l10n.libraryMediaPlay,
-        child: const Icon(Icons.play_arrow),
-      ),
-      title: Text(fileName),
-      subtitle: details.isEmpty ? null : Text(details.join(' · ')),
-    );
-  }
-
-  Future<void> _playLibraryMedia(Map<String, Object?> media) async {
-    if (_playerBusy) return;
-    final l10n = AppLocalizations.of(context);
-    setState(() => _playerBusy = true);
-    try {
-      final work = await workFuture;
-      if (!mounted) return;
-      if (work == null) {
-        throw const LibraryLocatorFailure('Work is unavailable');
-      }
-      await _playerLauncher.launch(
-        context: context,
-        workCode: work['code']?.toString() ?? '',
-        mediaPortableId: media['portable_id']?.toString() ?? '',
-        expectedWorkId: widget.workId,
-        expectedWorkPortableId: work['portable_id']?.toString(),
-        localizations: l10n,
-      );
-    } on Object catch (error) {
-      if (mounted) {
-        AppSnackBar.showError(
-          context,
-          '${l10n.libraryMediaUnavailable}: $error',
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _playerBusy = false);
-    }
-  }
-
-  bool _isLibraryManaged(Map<String, Object?> work) {
-    final value = work['library_managed'];
-    return value is num ? value.toInt() == 1 : value == true;
   }
 
   Widget _buildRelatedActresses(Map<String, Object?> work) {
@@ -474,11 +319,7 @@ class _WorkDetailViewState extends State<WorkDetailView> {
   }
 
   Widget _detailImage(String path) {
-    // Image.file performs its own asynchronous open and routes missing or
-    // inaccessible files through errorBuilder.  Avoid existsSync here: this
-    // widget can rebuild while navigating through a large Collection, and a
-    // synchronous probe would block the Flutter frame isolate.
-    if (path.isNotEmpty) {
+    if (path.isNotEmpty && File(path).existsSync()) {
       return Image.file(
         File(path),
         fit: BoxFit.cover,

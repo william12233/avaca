@@ -1,6 +1,5 @@
 import 'package:avaca/controllers/works_controller.dart';
 import 'package:avaca/core/database.dart';
-import 'package:avaca/library/library_collection_service.dart';
 import 'package:avaca/models/work_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -75,27 +74,6 @@ void main() {
     controller.changeStorageFilter(WorkStorageFilter.all);
     expect(controller.visibleWorks.map((work) => work['id']), [2]);
 
-    controller.dispose();
-  });
-
-  test('normal Collection ignores the legacy storage filter', () {
-    final controller =
-        WorksController(
-            db: _WorksControllerDatabase(),
-            actressId: 7,
-            collectionService: LibraryCollectionService(
-              db: _WorksControllerDatabase(),
-            ),
-          )
-          ..works = [
-            {'id': 1, 'code': 'SONE-001', 'is_stored': 1},
-            {'id': 2, 'code': 'ABF-002', 'is_stored': 0},
-          ];
-
-    controller.changeStorageFilter(WorkStorageFilter.stored);
-
-    expect(controller.storageFilter, WorkStorageFilter.all);
-    expect(controller.visibleWorks, hasLength(2));
     controller.dispose();
   });
 }

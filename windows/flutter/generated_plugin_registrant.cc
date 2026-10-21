@@ -6,15 +6,9 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <avaca_player_native/avaca_player_native_plugin.h>
-#include <ffmpeg_kit_flutter_new/f_fmpeg_kit_flutter_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
-  AvacaPlayerNativePluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("AvacaPlayerNativePlugin"));
-  FFmpegKitFlutterPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("FFmpegKitFlutterPlugin"));
   UrlLauncherWindowsRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("UrlLauncherWindows"));
 }

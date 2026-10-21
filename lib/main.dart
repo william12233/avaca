@@ -8,72 +8,46 @@ import 'core/config.dart';
 import 'core/database.dart';
 import 'core/keyboard_dismiss_navigator_observer.dart';
 import 'controllers/software_update_controller.dart';
-import 'remote/remote_coordinator.dart';
 import 'services/update_cache_service.dart';
+import 'services/update_startup_marker.dart';
+import 'services/scrape_job_coordinator.dart';
+import 'views/add_view.dart';
 import 'views/data_health_view.dart';
 import 'views/detail_view.dart';
 import 'views/home_view.dart';
 import 'views/settings_view.dart';
 import 'views/software_update_view.dart';
 import 'views/works_view.dart';
-import 'views/library_import_view.dart';
-import 'library/library_collection_service.dart';
+import 'views/scrape_job_detail_view.dart';
+import 'views/scrape_jobs_view.dart';
 
-/// The root target is retained as a migration fixture only.
-///
-/// Production composition lives in `apps/server` and `apps/avaca`. Keeping
-/// this entrypoint lightweight is intentional: launching the repository root
-/// must not open the legacy database, start remote services, or initialize the
-/// old player/library monolith before the first frame.
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const _LegacyTargetNotice());
-}
 
-class _LegacyTargetNotice extends StatelessWidget {
-  const _LegacyTargetNotice();
+  final db = AppDatabase();
+  await db.init();
+  await markWindowsStartupSuccess();
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'AVACA',
-      home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Text(
-              '此根目錄 target 僅供 migration fixture。\n'
-              '請執行 apps/server（Windows Server）或 apps/avaca（AVACA 用戶端）。',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  runApp(AvacaApp(db: db, enableAutomaticUpdateCheck: true));
 }
 
 class AvacaApp extends StatefulWidget {
   const AvacaApp({
     super.key,
     required this.db,
-    this.collectionService,
     this.softwareUpdateController,
     this.enableAutomaticUpdateCheck = false,
-    this.remoteServiceCoordinator,
   });
 
   final AppDatabase db;
-  final LibraryCollectionService? collectionService;
   final SoftwareUpdateController? softwareUpdateController;
   final bool enableAutomaticUpdateCheck;
-  final RemoteServiceCoordinator? remoteServiceCoordinator;
 
   @override
   State<AvacaApp> createState() => _AvacaAppState();
 }
 
-class _AvacaAppState extends State<AvacaApp> with WidgetsBindingObserver {
+class _AvacaAppState extends State<AvacaApp> {
   final KeyboardDismissNavigatorObserver _keyboardObserver =
       KeyboardDismissNavigatorObserver();
   ThemeMode _themeMode = ThemeMode.system;
@@ -83,6 +57,7 @@ class _AvacaAppState extends State<AvacaApp> with WidgetsBindingObserver {
   bool _ready = false;
   late final SoftwareUpdateController _softwareUpdateController;
   late final bool _ownsSoftwareUpdateController;
+  late final ScrapeJobCoordinator _scrapeJobCoordinator;
   final UpdateCacheService _updateCacheService = UpdateCacheService();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   bool _automaticUpdateStarted = false;
@@ -90,50 +65,25 @@ class _AvacaAppState extends State<AvacaApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _ownsSoftwareUpdateController = widget.softwareUpdateController == null;
     _softwareUpdateController =
         widget.softwareUpdateController ??
         SoftwareUpdateController.forApp(db: widget.db);
-    final remote = widget.remoteServiceCoordinator;
-    if (remote != null) {
-      unawaited(
-        remote.startIfEnabled().catchError((Object error) {
-          debugPrint('Remote core startup failed: ${error.runtimeType}');
-        }),
-      );
-    }
+    _scrapeJobCoordinator = ScrapeJobCoordinator(db: widget.db);
+    unawaited(
+      _scrapeJobCoordinator.initialize().catchError((Object error) {
+        debugPrint('Scrape job coordinator initialization failed: $error');
+      }),
+    );
     unawaited(_restoreThemeState());
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     if (_ownsSoftwareUpdateController) _softwareUpdateController.dispose();
-    final remote = widget.remoteServiceCoordinator;
-    if (remote != null) {
-      unawaited(
-        remote.dispose().catchError((Object error) {
-          debugPrint('Remote core shutdown failed: ${error.runtimeType}');
-        }),
-      );
-    }
+    _scrapeJobCoordinator.rulesRepository.close();
+    _scrapeJobCoordinator.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
-    if (lifecycleState != AppLifecycleState.detached) {
-      return;
-    }
-    final remote = widget.remoteServiceCoordinator;
-    if (remote != null) {
-      unawaited(
-        remote.stop().catchError((Object error) {
-          debugPrint('Remote core lifecycle stop failed: ${error.runtimeType}');
-        }),
-      );
-    }
   }
 
   // 啟動時讀取上次儲存的主題與語言設定。
@@ -321,19 +271,18 @@ class _AvacaAppState extends State<AvacaApp> with WidgetsBindingObserver {
     final name = settings.name ?? '/';
 
     if (name == '/') {
-      return _page(
-        HomeView(db: widget.db, collectionService: widget.collectionService),
-      );
+      return _page(HomeView(db: widget.db));
     }
 
-    if (name == '/library-import') {
-      return _page(LibraryImportView(db: widget.db));
+    if (name == '/add') {
+      return _page(AddView(db: widget.db));
     }
 
     if (name == '/settings') {
       return _page(
         SettingsView(
           db: widget.db,
+          scrapeJobCoordinator: _scrapeJobCoordinator,
           softwareUpdateController: _softwareUpdateController,
           onThemeChanged: (mode, pureBlack, custom) {
             setState(() {
@@ -355,13 +304,7 @@ class _AvacaAppState extends State<AvacaApp> with WidgetsBindingObserver {
       final id = int.tryParse(name.split('/').last);
 
       if (id != null) {
-        return _page(
-          DetailView(
-            db: widget.db,
-            actressId: id,
-            collectionService: widget.collectionService,
-          ),
-        );
+        return _page(DetailView(db: widget.db, actressId: id));
       }
     }
 
@@ -373,7 +316,26 @@ class _AvacaAppState extends State<AvacaApp> with WidgetsBindingObserver {
           WorksView(
             db: widget.db,
             actressId: id,
-            collectionService: widget.collectionService,
+            scrapeJobCoordinator: _scrapeJobCoordinator,
+          ),
+        );
+      }
+    }
+
+    if (name == '/scrape-jobs') {
+      return _page(
+        ScrapeJobsView(db: widget.db, coordinator: _scrapeJobCoordinator),
+      );
+    }
+
+    if (name.startsWith('/scrape-job/')) {
+      final id = name.substring('/scrape-job/'.length);
+      if (id.isNotEmpty) {
+        return _page(
+          ScrapeJobDetailView(
+            db: widget.db,
+            coordinator: _scrapeJobCoordinator,
+            jobId: id,
           ),
         );
       }
@@ -383,9 +345,7 @@ class _AvacaAppState extends State<AvacaApp> with WidgetsBindingObserver {
       return _page(DataHealthView(db: widget.db));
     }
 
-    return _page(
-      HomeView(db: widget.db, collectionService: widget.collectionService),
-    );
+    return _page(HomeView(db: widget.db));
   }
 
   MaterialPageRoute<void> _page(Widget child) {

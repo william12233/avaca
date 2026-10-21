@@ -1,26 +1,74 @@
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html;
 
-import '../../models/scrape_source_id.dart';
+import '../../models/scraped_actress_details.dart';
+import '../../models/scrape_source_settings.dart';
 import '../../models/work.dart';
 import '../scrape/provenance_semantics.dart';
 import '../scrape/scrape_models.dart';
 import '../scrape/work_identity.dart';
 import 'avwiki_models.dart';
 
-final class _AvWikiWorkSearchHit {
-  const _AvWikiWorkSearchHit({
-    required this.code,
-    required this.detailUri,
-    this.externalIdentity,
-  });
-
-  final String? code;
-  final Uri detailUri;
-  final ScrapeExternalWorkIdentity? externalIdentity;
-}
-
 final class AvWikiHtmlParser {
+  bool hasConnectionMarker(String source) {
+    final document = html.parse(source);
+    final text = document.text?.toLowerCase() ?? '';
+    return text.contains('av-wiki') ||
+        text.contains('av wiki') ||
+        text.contains('女優名') ||
+        document.querySelector('input[name="s"], input.header_search_input') !=
+            null;
+  }
+
+  List<ScrapeActressSearchResult> parseActressSearchResults(
+    String source, {
+    required Uri pageUri,
+    required String query,
+  }) {
+    final document = html.parse(source);
+    final results = <ScrapeActressSearchResult>[];
+    final seen = <String>{};
+    for (final anchor in document.querySelectorAll('a[href]')) {
+      final href = _clean(anchor.attributes['href']);
+      final name = _clean(anchor.text);
+      if (href == null || name == null || !_isActressHref(href)) continue;
+      final uri = pageUri.resolve(href);
+      if (uri.host.toLowerCase() != pageUri.host.toLowerCase()) continue;
+      if (!_namesMatch(name, query)) continue;
+      if (!seen.add(uri.toString())) continue;
+      results.add(
+        ScrapeActressSearchResult(
+          source: ScrapeSourceId.avwiki,
+          name: name,
+          uri: uri,
+        ),
+      );
+    }
+    return List.unmodifiable(results);
+  }
+
+  AvWikiActressPage parseActressPage(String source, {required Uri pageUri}) {
+    final document = html.parse(source);
+    final main =
+        document.querySelector('main') ?? document.body ?? Element.tag('body');
+    final heading = _clean(main.querySelector('h1')?.text);
+    final name =
+        _actressName(heading) ??
+        _clean(main.querySelector('a[href*="/av-actress/"]')?.text);
+    final aliases = _actressAliases(main, name);
+    final works = main
+        .querySelectorAll('article.archive-list')
+        .map((article) => _parseArchiveSummary(article, pageUri))
+        .whereType<AvWikiWorkSummary>()
+        .toList(growable: false);
+    return AvWikiActressPage(
+      details: ScrapedActressDetails(name: name),
+      aliases: aliases,
+      works: works,
+      pageCount: _pageCount(main, pageUri),
+    );
+  }
+
   AvWikiWorkDetails parseWorkPage(String source, {required Uri pageUri}) {
     final document = html.parse(source);
     final article =
@@ -115,7 +163,9 @@ final class AvWikiHtmlParser {
     for (final article in document.querySelectorAll('article.archive-list')) {
       final summary = _parseArchiveSummary(article, pageUri);
       if (summary == null) continue;
-      final candidate = normalizeScrapeWorkCodeSurface(summary.code);
+      final candidate = normalizeScrapeWorkCodeSurface(
+        summary.rawCode ?? summary.code,
+      );
       if (candidate == expected) return summary.detailUri;
       final expectedKey = scrapeWorkResolvedIdentityKey(
         rawCode: code,
@@ -123,7 +173,7 @@ final class AvWikiHtmlParser {
         fallback: 'expected:$expected',
       );
       final candidateKey = scrapeWorkResolvedIdentityKey(
-        rawCode: summary.code,
+        rawCode: summary.rawCode ?? summary.code,
         externalIdentity: summary.externalIdentity,
         fallback: 'candidate:${summary.detailUri}',
       );
@@ -132,7 +182,10 @@ final class AvWikiHtmlParser {
     return null;
   }
 
-  _AvWikiWorkSearchHit? _parseArchiveSummary(Element article, Uri pageUri) {
+  AvWikiWorkSummary? parseSearchWorkSummary(Element article, Uri pageUri) =>
+      _parseArchiveSummary(article, pageUri);
+
+  AvWikiWorkSummary? _parseArchiveSummary(Element article, Uri pageUri) {
     final metadata = article.querySelectorAll('.post-meta li');
     String? code;
     String? manufacturer;
@@ -161,6 +214,14 @@ final class AvWikiHtmlParser {
     if (detailHref == null) return null;
     final detailUri = pageUri.resolve(detailHref);
     if (!_isSameHttpsHost(detailUri, pageUri)) return null;
+    final heading = article.querySelector('.archive-header-title a');
+    final imageAlt = _clean(
+      article.querySelector('img[alt]')?.attributes['alt'],
+    );
+    final title = _clean(heading?.text) ?? imageAlt ?? code ?? detailUri.path;
+    final releaseDate = _clean(
+      article.querySelector('time[datetime]')?.attributes['datetime'],
+    );
     final platformIds = _platformIdsFromLinks(article);
     final identity = ScrapeExternalWorkIdentity(
       canonicalCode: code,
@@ -170,10 +231,26 @@ final class AvWikiHtmlParser {
       series: series,
       platformIds: platformIds,
     );
-    return _AvWikiWorkSearchHit(
+    final tags = _archiveTags(article);
+    final catalogEvidence = ScrapeCatalogWorkEvidence(
+      source: ScrapeSourceId.avwiki,
       code: code,
+      rawCode: code,
+      title: title,
+      manufacturer: manufacturer,
+      label: label,
+      series: series,
+      tags: tags,
+      provenanceHints: tags,
+    );
+    return AvWikiWorkSummary(
+      code: code,
+      rawCode: code,
+      title: title,
       detailUri: detailUri,
+      releaseDate: releaseDate,
       externalIdentity: identity.isEmpty ? null : identity,
+      catalogEvidence: [catalogEvidence],
     );
   }
 
@@ -185,6 +262,18 @@ final class AvWikiHtmlParser {
       if (value != null) return value;
     }
     return null;
+  }
+
+  List<String> _archiveTags(Element article) {
+    final values = <String>[];
+    final seen = <String>{};
+    for (final anchor in article.querySelectorAll(
+      'a[rel="tag"], a[href*="/tags/"]',
+    )) {
+      final value = _clean(anchor.text);
+      if (value != null && seen.add(value)) values.add(value);
+    }
+    return List.unmodifiable(values);
   }
 
   Map<String, String> _detailFields(Element article) {
@@ -410,11 +499,88 @@ final class AvWikiHtmlParser {
     return List.unmodifiable(values);
   }
 
-  String _titleWithoutCode(String heading, String? subtitle, String code) {
-    if (subtitle != null && subtitle.isNotEmpty) {
-      return subtitle;
+  List<String> _actressAliases(Element main, String? canonicalName) {
+    final canonicalKey = _nameKey(canonicalName);
+    final aliases = <String>[];
+    final seen = <String>{};
+    void add(String? raw) {
+      final value = _clean(raw);
+      final key = _nameKey(value);
+      if (value == null ||
+          key == null ||
+          key == canonicalKey ||
+          !seen.add(key)) {
+        return;
+      }
+      aliases.add(value);
     }
+
+    for (final paragraph in main.querySelectorAll('p')) {
+      final text = _clean(paragraph.text) ?? '';
+      if (!RegExp(r'(?:別名義|別名)').hasMatch(text)) continue;
+      for (final anchor in paragraph.querySelectorAll(
+        'a[href*="/av-actress/"]',
+      )) {
+        add(anchor.text);
+      }
+      final match = RegExp(r'(?:別名義|別名)\s*[:：]?\s*(.+)').firstMatch(text);
+      if (match != null) {
+        for (final alias in match.group(1)!.split(RegExp(r'[,、/／|]'))) {
+          add(alias);
+        }
+      }
+    }
+    for (final list in main.querySelectorAll('dl')) {
+      final children = list.children;
+      for (var index = 0; index + 1 < children.length; index++) {
+        final label = _clean(children[index].text) ?? '';
+        if (!RegExp(r'(?:別名義|別名)').hasMatch(label)) continue;
+        final value = children[index + 1];
+        for (final anchor in value.querySelectorAll(
+          'a[href*="/av-actress/"]',
+        )) {
+          add(anchor.text);
+        }
+        for (final alias in (_clean(value.text) ?? '').split(
+          RegExp(r'[,、/／|]'),
+        )) {
+          add(alias);
+        }
+      }
+    }
+    return List.unmodifiable(aliases);
+  }
+
+  int _pageCount(Element root, Uri pageUri) {
+    var maximum = 1;
+    for (final anchor in root.querySelectorAll(
+      'nav.navigation.pagination a[href]',
+    )) {
+      final href = _clean(anchor.attributes['href']);
+      if (href == null) continue;
+      final uri = pageUri.resolve(href);
+      final match = RegExp(r'/page/(\d+)/?$').firstMatch(uri.path);
+      final page = match == null ? null : int.tryParse(match.group(1)!);
+      if (page != null && page > maximum) maximum = page;
+    }
+    return maximum;
+  }
+
+  String? _actressName(String? heading) {
+    if (heading == null) return null;
+    final value = heading.replaceFirst(
+      RegExp(r'\s*の出演作一覧.*$', caseSensitive: false),
+      '',
+    );
+    return _clean(value);
+  }
+
+  String _titleWithoutCode(String heading, String? subtitle, String code) {
     var value = heading.trim();
+    if (subtitle != null && subtitle.isNotEmpty) {
+      final index = value.lastIndexOf(subtitle);
+      if (index >= 0) value = value.substring(0, index).trim();
+    }
     final codeIndex = value.lastIndexOf(code);
     if (codeIndex > 0) value = value.substring(0, codeIndex).trim();
     return value.isEmpty ? code : value;
@@ -462,12 +628,25 @@ final class AvWikiHtmlParser {
         .replaceAll(RegExp(r'\s+'), '');
   }
 
+  bool _isActressHref(String href) {
+    final uri = Uri.tryParse(href);
+    return uri != null && uri.path.contains('/av-actress/');
+  }
+
   bool _isSameHttpsHost(Uri uri, Uri pageUri) {
     return uri.scheme == 'https' &&
         uri.userInfo.isEmpty &&
         uri.host.toLowerCase() == pageUri.host.toLowerCase() &&
         (uri.hasPort ? uri.port : 443) ==
             (pageUri.hasPort ? pageUri.port : 443);
+  }
+
+  bool _namesMatch(String left, String right) =>
+      _nameKey(left) == _nameKey(right);
+
+  String? _nameKey(String? raw) {
+    final value = raw?.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
+    return value == null || value.isEmpty ? null : value;
   }
 
   String? _clean(String? raw) {

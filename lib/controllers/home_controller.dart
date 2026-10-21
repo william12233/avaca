@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../core/database.dart';
-import '../library/library_collection_service.dart';
 
 final class HomeSearchState {
   const HomeSearchState({
@@ -16,10 +15,9 @@ final class HomeSearchState {
 
 /// 管理首頁的搜尋、篩選、排序與頁面導向狀態。
 class HomeController {
-  HomeController({required this.db, this.collectionService});
+  HomeController({required this.db});
 
   final AppDatabase db;
-  final LibraryCollectionService? collectionService;
 
   String currentSearch = '';
   String currentFilter = 'all';
@@ -79,14 +77,6 @@ class HomeController {
 
   /// 使用目前搜尋、篩選與排序狀態取得首頁列表資料。
   Future<List<Map<String, Object?>>> getGalleryData() {
-    final collection = collectionService;
-    if (collection != null) {
-      return collection.getActresses(
-        searchKeyword: currentSearch,
-        filterType: _filterValueForDatabase(currentFilter),
-        sortBy: _sortValueForDatabase(currentSort),
-      );
-    }
     return db.getAllActresses(
       searchKeyword: currentSearch,
       filterType: _filterValueForDatabase(currentFilter),
@@ -130,8 +120,8 @@ class HomeController {
     await Navigator.of(context).pushNamed('/settings');
   }
 
-  /// 前往以實體媒體為核心的 Library Import 流程。
-  Future<void> goLibraryImport(BuildContext context) async {
-    await Navigator.of(context).pushNamed('/library-import');
+  /// 前往新增頁。
+  Future<void> goAdd(BuildContext context) async {
+    await Navigator.of(context).pushNamed('/add');
   }
 }

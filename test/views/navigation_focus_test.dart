@@ -51,9 +51,7 @@ void main() {
     await tester.pumpWidget(
       _app(
         home: HomeView(db: database),
-        routes: {
-          '/library-import': (_) => const Scaffold(body: Text('import route')),
-        },
+        routes: {'/add': (_) => const Scaffold(body: Text('add route'))},
       ),
     );
     await tester.pumpAndSettle();
@@ -62,7 +60,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 60));
     expect(tester.testTextInput.isVisible, isTrue);
 
-    await tester.tap(find.byTooltip('匯入影片'));
+    await tester.tap(find.byTooltip('新增'));
     await tester.pumpAndSettle();
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();

@@ -28,14 +28,7 @@ class _DataHealthViewState extends State<DataHealthView> {
     _future = _service.load();
   }
 
-  void _refresh() {
-    // Keep the Future creation inside a synchronous setState block.  Returning
-    // the Future from an arrow callback makes Flutter reject the refresh
-    // gesture with "setState callback returned a Future".
-    setState(() {
-      _future = _service.load();
-    });
-  }
+  void _refresh() => setState(() => _future = _service.load());
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +86,6 @@ class _DataHealthViewState extends State<DataHealthView> {
               _Metric(l10n.dataHealthWorks, health.workCount),
               _Metric(l10n.dataHealthStored, health.storedWorkCount),
               _Metric(l10n.dataHealthNotStored, health.notStoredWorkCount),
-              _Metric(l10n.dataHealthLibraryWorks, health.libraryWorkCount),
             ]),
             SizedBox(height: tokens.sectionGap),
             Card(
@@ -117,20 +109,16 @@ class _DataHealthViewState extends State<DataHealthView> {
                     l10n.dataHealthPendingDeletions,
                     health.pendingDeletionCount,
                   ),
-                  _healthTile(
-                    l10n.dataHealthLibraryMediaIssues,
-                    health.libraryMediaIssueCount,
-                  ),
-                  _healthTile(
-                    l10n.dataHealthImportRepairs,
-                    health.importRepairCount,
-                  ),
-                  _healthTile(
-                    l10n.dataHealthLibraryLinks,
-                    health.libraryLinkIssueCount,
-                  ),
                 ],
               ),
+            ),
+            SizedBox(height: tokens.sectionGap),
+            _mapSection(context, l10n.dataHealthJobStates, health.jobCounts),
+            SizedBox(height: tokens.sectionGap),
+            _mapSection(
+              context,
+              l10n.dataHealthSourceErrors,
+              health.sourceErrorCounts,
             ),
           ],
         );
@@ -202,7 +190,8 @@ class _DataHealthViewState extends State<DataHealthView> {
       'metadata' => l10n.dataHealthMetadataIssues,
       'images' => l10n.dataHealthMissingImages,
       'provenance' => l10n.dataHealthMissingProvenance,
-      'library' => l10n.dataHealthLibraryWorks,
+      'jobStates' => l10n.dataHealthJobStates,
+      'sourceErrors' => l10n.dataHealthSourceErrors,
       _ => warning,
     };
   }
@@ -251,6 +240,30 @@ class _DataHealthViewState extends State<DataHealthView> {
 
   Widget _healthTile(String label, int value) =>
       ListTile(dense: true, title: Text(label), trailing: Text('$value'));
+
+  Widget _mapSection(
+    BuildContext context,
+    String title,
+    Map<String, int> values,
+  ) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ExpansionTile(
+        title: Text(title),
+        children: values.isEmpty
+            ? [const ListTile(title: Text('—'))]
+            : values.entries
+                  .map(
+                    (entry) => ListTile(
+                      dense: true,
+                      title: Text(entry.key),
+                      trailing: Text('${entry.value}'),
+                    ),
+                  )
+                  .toList(),
+      ),
+    );
+  }
 }
 
 class _Metric {

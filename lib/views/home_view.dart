@@ -5,16 +5,14 @@ import '../components/actress_card.dart';
 import '../controllers/home_controller.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
-import '../library/library_collection_service.dart';
 
 /// 首頁畫面。
 ///
-/// 負責顯示收藏資料、搜尋列、篩選排序選單，以及導向 Library Import、設定與詳細頁。
+/// 負責顯示收藏資料、搜尋列、篩選排序選單，以及導向新增、設定與詳細頁。
 class HomeView extends StatefulWidget {
-  const HomeView({super.key, required this.db, this.collectionService});
+  const HomeView({super.key, required this.db});
 
   final AppDatabase db;
-  final LibraryCollectionService? collectionService;
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -30,10 +28,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   void initState() {
     super.initState();
-    controller = HomeController(
-      db: widget.db,
-      collectionService: widget.collectionService,
-    );
+    controller = HomeController(db: widget.db);
     galleryFuture = controller.getGalleryData();
   }
 
@@ -83,17 +78,17 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Future<void> goSettings() async {
+  Future<void> goAdd() async {
     _dismissKeyboard();
-    await controller.goSettings(context);
+    await controller.goAdd(context);
     if (mounted) {
       refreshGallery();
     }
   }
 
-  Future<void> goLibraryImport() async {
+  Future<void> goSettings() async {
     _dismissKeyboard();
-    await controller.goLibraryImport(context);
+    await controller.goSettings(context);
     if (mounted) {
       refreshGallery();
     }
@@ -137,11 +132,6 @@ class _HomeViewState extends State<HomeView> {
       title: Text(AppLocalizations.of(context).appTitle),
       actions: [
         IconButton(
-          tooltip: AppLocalizations.of(context).libraryImportOpen,
-          icon: const Icon(Icons.video_library_outlined),
-          onPressed: goLibraryImport,
-        ),
-        IconButton(
           tooltip: AppLocalizations.of(context).search,
           icon: const Icon(Icons.search),
           onPressed: toggleSearch,
@@ -150,6 +140,11 @@ class _HomeViewState extends State<HomeView> {
           tooltip: AppLocalizations.of(context).filterAndSort,
           icon: const Icon(Icons.tune),
           onPressed: openFilterSheet,
+        ),
+        IconButton(
+          tooltip: AppLocalizations.of(context).add,
+          icon: const Icon(Icons.add),
+          onPressed: goAdd,
         ),
         IconButton(
           tooltip: AppLocalizations.of(context).settings,

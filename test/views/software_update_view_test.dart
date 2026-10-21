@@ -74,6 +74,7 @@ void main() {
     await tester.tap(find.text('Other'));
     await tester.pumpAndSettle();
     expect(find.text('Software update'), findsOneWidget);
+    expect(find.text('Scrape sources'), findsNothing);
 
     await tester.tap(find.text('Software update'));
     await tester.pumpAndSettle();

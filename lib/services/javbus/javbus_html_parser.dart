@@ -1,14 +1,42 @@
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html;
 
-import '../../models/scrape_source_id.dart';
+import '../../models/scrape_source_settings.dart';
+import '../../models/scraped_actress_details.dart';
 import '../../models/work.dart';
 import '../scrape/scrape_models.dart';
 import '../scrape/provenance_semantics.dart';
-import '../scrape/work_identity.dart';
 import 'javbus_models.dart';
+import 'work_code.dart';
 
 class JavBusHtmlParser {
+  JavBusActressPage parseActressPage(String source, {required Uri pageUri}) {
+    final document = html.parse(source);
+    final info = document.querySelector('.avatar-box .photo-info');
+    final avatar = document.querySelector(
+      '.avatar-box .photo-frame img, .avatar-box img',
+    );
+
+    return JavBusActressPage(
+      details: ScrapedActressDetails(
+        name: _clean(info?.querySelector('span')?.text),
+        avatarUrl: _resolveAvatar(pageUri, avatar?.attributes['src']),
+        birthDate: _profileValue(info, const ['生日', '生年月日']),
+        height: _digits(_profileValue(info, const ['身高', '身長'])),
+        cup: _profileValue(info, const ['罩杯', 'カップ']),
+        bust: _digits(_profileValue(info, const ['胸圍', '胸围', 'バスト'])),
+        waist: _digits(_profileValue(info, const ['腰圍', '腰围', 'ウエスト'])),
+        hip: _digits(_profileValue(info, const ['臀圍', '臀围', 'ヒップ'])),
+      ),
+      works: document
+          .querySelectorAll('a.movie-box')
+          .map((element) => _parseWorkSummary(element, pageUri))
+          .whereType<JavBusWorkSummary>()
+          .toList(growable: false),
+      pageCount: _pageCount(document),
+    );
+  }
+
   JavBusWorkDetails parseWorkPage(String source, {required Uri pageUri}) {
     final document = html.parse(source);
     final fields = <String, String>{};
@@ -26,8 +54,7 @@ class JavBusHtmlParser {
     final duration = RegExp(r'\d+').firstMatch(durationText ?? '')?.group(0);
     final rawCode =
         _field(fields, const ['識別碼', '识别码', '品番']) ?? _codeFromUri(pageUri);
-    final code =
-        normalizeScrapeWorkCodeSurface(rawCode) ?? rawCode.trim().toUpperCase();
+    final code = canonicalizeJavBusWorkCode(rawCode);
     final rawTitle = _clean(document.querySelector('h3')?.text) ?? '';
     final strippedTitle = rawTitle
         .replaceFirst(
@@ -36,7 +63,7 @@ class JavBusHtmlParser {
         )
         .trim();
 
-    final performers = _performers(document, pageUri);
+    final performers = _actressPerformers(document, pageUri);
     final genres = _genreValues(document);
     final parsedTitle = strippedTitle.isEmpty ? rawTitle : strippedTitle;
     final provenanceFacts = _provenanceFacts(
@@ -68,6 +95,7 @@ class JavBusHtmlParser {
           provenanceFacts: provenanceFacts,
         ),
       ],
+      actressUris: _actressUris(document, pageUri),
       originalImageEvidenceUris: _originalImageEvidenceUris(
         document,
         pageUri,
@@ -188,7 +216,43 @@ class JavBusHtmlParser {
     return List.unmodifiable(values);
   }
 
-  List<WorkPerformer>? _performers(Document document, Uri pageUri) {
+  List<Uri> _actressUris(Document document, Uri pageUri) {
+    final info = document.querySelector('.info');
+    if (info == null) {
+      return const [];
+    }
+    final children = info.children;
+    final headerIndex = children.indexWhere((element) {
+      final header = element.querySelector('.header');
+      final key = header?.text.replaceAll(RegExp(r'[:：\s]'), '') ?? '';
+      return const {'演員', '演员', '出演者'}.contains(key);
+    });
+    if (headerIndex < 0) {
+      return const [];
+    }
+
+    final result = <Uri>[];
+    final seen = <String>{};
+    for (final element in children.skip(headerIndex + 1)) {
+      final nextHeader = element.querySelector('.header');
+      if (nextHeader != null) {
+        break;
+      }
+      for (final anchor in element.querySelectorAll('a[href*="/star/"]')) {
+        final href = _clean(anchor.attributes['href']);
+        if (href == null) {
+          continue;
+        }
+        final uri = pageUri.resolve(href);
+        if (seen.add(uri.toString())) {
+          result.add(uri);
+        }
+      }
+    }
+    return List.unmodifiable(result);
+  }
+
+  List<WorkPerformer>? _actressPerformers(Document document, Uri pageUri) {
     final info = document.querySelector('.info');
     if (info == null) {
       return null;
@@ -205,10 +269,9 @@ class JavBusHtmlParser {
 
     final result = <WorkPerformer>[];
     final seenNames = <String>{};
-    for (var index = headerIndex; index < children.length; index++) {
-      final element = children[index];
+    for (final element in children.skip(headerIndex + 1)) {
       final nextHeader = element.querySelector('.header');
-      if (index != headerIndex && nextHeader != null) {
+      if (nextHeader != null) {
         break;
       }
       for (final anchor in element.querySelectorAll('a[href*="/star/"]')) {
@@ -285,6 +348,95 @@ class JavBusHtmlParser {
         compact.contains(isMgStage ? digits : digits.padLeft(5, '0'));
   }
 
+  List<JavBusActressSearchResult> parseActressSearchResults(
+    String source, {
+    required Uri pageUri,
+  }) {
+    final document = html.parse(source);
+    return document
+        .querySelectorAll('a.avatar-box, a.star-box')
+        .map((element) {
+          final nameElement =
+              element.querySelector('.photo-info .mleft') ??
+              element.querySelector('.photo-info span');
+          final directName = nameElement?.nodes
+              .whereType<Text>()
+              .map((node) => node.data)
+              .join(' ');
+          final name =
+              _clean(directName) ??
+              _clean(nameElement?.text) ??
+              _clean(element.text) ??
+              '';
+          return JavBusActressSearchResult(
+            name: name,
+            uri: pageUri.resolve(element.attributes['href'] ?? ''),
+          );
+        })
+        .where((result) => result.name.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  JavBusWorkSummary? _parseWorkSummary(Element element, Uri pageUri) {
+    final dates = element.querySelectorAll('date');
+    final code = _clean(dates.firstOrNull?.text);
+    final href = _clean(element.attributes['href']);
+    if (code == null || href == null) {
+      return null;
+    }
+    return JavBusWorkSummary(
+      code: canonicalizeJavBusWorkCode(code),
+      rawCode: code,
+      title: _clean(element.querySelector('.photo-info span')?.text) ?? '',
+      releaseDate: dates.length > 1 ? _clean(dates[1].text) : null,
+      detailUri: pageUri.resolve(href),
+      catalogEvidence: [
+        ScrapeCatalogWorkEvidence(
+          source: ScrapeSourceId.javbus,
+          code: canonicalizeJavBusWorkCode(code),
+          rawCode: code,
+          title: _clean(element.querySelector('.photo-info span')?.text),
+        ),
+      ],
+    );
+  }
+
+  int _pageCount(Document document) {
+    var maximum = 1;
+    for (final anchor in document.querySelectorAll('.pagination a')) {
+      final label = int.tryParse(anchor.text.trim());
+      if (label != null && label > maximum) {
+        maximum = label;
+      }
+      final href = anchor.attributes['href'];
+      final lastSegment = href == null
+          ? null
+          : int.tryParse(Uri.parse(href).pathSegments.lastOrNull ?? '');
+      if (lastSegment != null && lastSegment > maximum) {
+        maximum = lastSegment;
+      }
+    }
+    return maximum;
+  }
+
+  String? _profileValue(Element? info, List<String> labels) {
+    final lines =
+        info?.querySelectorAll('p').map((element) => element.text) ??
+        const <String>[];
+    for (final source in lines) {
+      for (final label in labels) {
+        final match = RegExp(
+          '^\\s*${RegExp.escape(label)}\\s*[:：]\\s*(.+?)\\s*\$',
+        ).firstMatch(source);
+        final value = _clean(match?.group(1));
+        if (value != null) {
+          return value;
+        }
+      }
+    }
+    return null;
+  }
+
   String? _field(Map<String, String> fields, List<String> labels) {
     for (final label in labels) {
       final value = _clean(fields[label]);
@@ -295,8 +447,25 @@ class JavBusHtmlParser {
     return null;
   }
 
+  String? _digits(String? value) {
+    return RegExp(r'\d+').firstMatch(value ?? '')?.group(0);
+  }
+
   String _codeFromUri(Uri uri) {
     return uri.pathSegments.lastOrNull?.toUpperCase() ?? '';
+  }
+
+  Uri? _resolveOptional(Uri pageUri, String? value) {
+    final cleaned = _clean(value);
+    return cleaned == null ? null : pageUri.resolve(cleaned);
+  }
+
+  Uri? _resolveAvatar(Uri pageUri, String? value) {
+    final uri = _resolveOptional(pageUri, value);
+    if (uri == null || uri.path.toLowerCase().endsWith('/nowprinting.gif')) {
+      return null;
+    }
+    return uri;
   }
 
   String? _clean(String? value) {

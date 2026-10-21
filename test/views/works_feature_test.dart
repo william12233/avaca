@@ -1,5 +1,13 @@
+import 'dart:async';
+
 import 'package:avaca/core/database.dart';
 import 'package:avaca/l10n/app_localizations.dart';
+import 'package:avaca/models/scrape_exclusion_policy.dart';
+import 'package:avaca/models/work_scrape_options.dart';
+import 'package:avaca/models/scrape_source_settings.dart';
+import 'package:avaca/services/scrape/scrape_models.dart';
+import 'package:avaca/services/works_scrape_service.dart';
+import 'package:avaca/services/javbus/work_image_policy.dart';
 import 'package:avaca/views/detail_view.dart';
 import 'package:avaca/views/works_view.dart';
 import 'package:flutter/material.dart';
@@ -123,6 +131,18 @@ class _WideWorksFeatureDatabase extends _WorksFeatureDatabase {
   }
 }
 
+class _ConfiguredWorksFeatureDatabase extends _WorksFeatureDatabase {
+  _ConfiguredWorksFeatureDatabase(this.options);
+
+  final WorkScrapeOptions options;
+
+  @override
+  Future<String?> getSetting(String key) async {
+    if (key == 'works_scrape_options') return options.encode();
+    return super.getSetting(key);
+  }
+}
+
 class _DeletingWorksFeatureDatabase extends _WorksFeatureDatabase {
   final deletedWorkIds = <int>[];
 
@@ -193,17 +213,19 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('works overflow menu contains search and storage filters', (
+  testWidgets('works overflow menu contains search and scrape actions', (
     tester,
   ) async {
     await _pumpWorks(tester);
 
     expect(find.byKey(const Key('works-overflow-menu')), findsOneWidget);
+    expect(find.byKey(const Key('works-scrape-action')), findsNothing);
 
     await tester.tap(find.byKey(const Key('works-overflow-menu')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('works-search-menu-item')), findsOneWidget);
+    expect(find.byKey(const Key('works-scrape-menu-item')), findsOneWidget);
     expect(
       find.byKey(const Key('works-filter-stored-menu-item')),
       findsOneWidget,
@@ -492,6 +514,77 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('scrape action starts with persisted global preferences', (
+    tester,
+  ) async {
+    const persisted = WorkScrapeOptions(
+      syncDetails: false,
+      fillMissingOnly: false,
+      scrapeAliases: true,
+      autoExcludeDerivedWorks: false,
+      exactDenies: [ScrapeExactDenyRule(code: 'MANUAL-001')],
+    );
+    WorkScrapeOptions? received;
+    await _pumpWorks(
+      tester,
+      database: _ConfiguredWorksFeatureDatabase(persisted),
+      scrapeExecutor: (options, token, onProgress) async {
+        received = options;
+        return const WorksScrapeResult(
+          saved: 1,
+          excluded: 0,
+          failed: 0,
+          cancelled: false,
+        );
+      },
+    );
+
+    await _openWorksScrapeSettings(tester);
+    await tester.pumpAndSettle();
+
+    expect(received?.syncDetails, isFalse);
+    expect(received?.fillMissingOnly, isFalse);
+    expect(received?.scrapeAliases, isTrue);
+    expect(received?.autoExcludeDerivedWorks, isFalse);
+    expect(received?.exactDenies.single.normalizedCode, 'MANUAL-001');
+    expect(find.byKey(const Key('scrape-result-dialog')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('scrape-result-done')));
+    await tester.pumpAndSettle();
+  });
+  testWidgets('avatar failure is visible while the scrape still completes', (
+    tester,
+  ) async {
+    await _pumpWorks(
+      tester,
+
+      scrapeExecutor: (options, token, onProgress) async =>
+          const WorksScrapeResult(
+            saved: 1,
+
+            excluded: 0,
+
+            failed: 0,
+
+            cancelled: false,
+
+            actressImageStatus: ActressImageSyncStatus.downloadFailed,
+          ),
+    );
+
+    await _openWorksScrapeSettings(tester);
+
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('女優頭像替換失敗，已保留原頭像'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('scrape-result-done')));
+
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('tapping a work opens details with the downloaded large image', (
     tester,
   ) async {
@@ -516,25 +609,629 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('system back cannot dismiss the active scrape dialog', (
+    tester,
+  ) async {
+    final result = Completer<WorksScrapeResult>();
+
+    await _pumpWorks(
+      tester,
+
+      scrapeExecutor: (options, token, onProgress) async {
+        onProgress(
+          const WorksScrapeProgress(
+            phase: WorksScrapePhase.fetchingDetails,
+            current: 0,
+            total: 1,
+            saved: 0,
+            excluded: 0,
+            failed: 0,
+            source: ScrapeSourceId.javbus,
+            worksSources: [ScrapeSourceId.javbus],
+            sourceProgress: {
+              ScrapeSourceId.javbus: WorksScrapeSourceProgress(
+                phase: WorksScrapePhase.fetchingDetails,
+                current: 0,
+                total: 1,
+                totalKnown: true,
+              ),
+            },
+          ),
+        );
+        return result.future;
+      },
+    );
+
+    await _openWorksScrapeSettings(tester);
+
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.byKey(const Key('scrape-progress-circular')), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+
+    await tester.pump();
+
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.byKey(const Key('scrape-progress-circular')), findsOneWidget);
+
+    expect(find.byType(WorksView), findsOneWidget);
+
+    result.complete(
+      const WorksScrapeResult(
+        saved: 0,
+
+        excluded: 0,
+
+        failed: 0,
+
+        cancelled: false,
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(WorksView), findsOneWidget);
+
+    expect(find.byKey(const Key('scrape-result-dialog')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('scrape-result-done')));
+
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('scrape-result-dialog')), findsNothing);
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('completed scrape result requires explicit Done dismissal', (
+    tester,
+  ) async {
+    await _pumpWorks(
+      tester,
+      scrapeExecutor: (options, token, onProgress) async =>
+          const WorksScrapeResult(
+            saved: 1,
+            excluded: 0,
+            failed: 0,
+            cancelled: false,
+          ),
+    );
+
+    await _openWorksScrapeSettings(tester);
+
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('scrape-result-dialog')), findsOneWidget);
+
+    await tester.tapAt(const Offset(4, 4));
+
+    await tester.pump();
+
+    expect(find.byKey(const Key('scrape-result-dialog')), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+
+    await tester.pump();
+
+    expect(find.byKey(const Key('scrape-result-dialog')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('scrape-result-done')));
+
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('scrape-result-dialog')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'scrape progress keeps phase rows stable and uses circular progress',
+    (tester) async {
+      final result = Completer<WorksScrapeResult>();
+      final allowDetailProgress = Completer<void>();
+      final allowImageProgress = Completer<void>();
+      var executorStarted = false;
+
+      await _pumpWorks(
+        tester,
+        scrapeExecutor: (options, token, onProgress) async {
+          executorStarted = true;
+          onProgress(
+            const WorksScrapeProgress(
+              phase: WorksScrapePhase.collectingSources,
+              current: 0,
+              total: 0,
+              saved: 0,
+              excluded: 0,
+              failed: 0,
+              source: ScrapeSourceId.javbus,
+              worksSources: [ScrapeSourceId.javbus],
+            ),
+          );
+          await allowDetailProgress.future;
+          onProgress(
+            const WorksScrapeProgress(
+              phase: WorksScrapePhase.fetchingDetails,
+              current: 0,
+              total: 1,
+              saved: 0,
+              excluded: 0,
+              failed: 0,
+              source: ScrapeSourceId.javbus,
+              workCode: 'SHOULD-NOT-BE-SHOWN',
+              totalKnown: true,
+              worksSources: [ScrapeSourceId.javbus],
+              sourceProgress: {
+                ScrapeSourceId.javbus: WorksScrapeSourceProgress(
+                  phase: WorksScrapePhase.fetchingDetails,
+                  current: 0,
+                  total: 1,
+                  totalKnown: true,
+                ),
+              },
+            ),
+          );
+          await allowImageProgress.future;
+          onProgress(
+            const WorksScrapeProgress(
+              phase: WorksScrapePhase.downloadingImages,
+              current: 0,
+              total: 1,
+              saved: 0,
+              excluded: 0,
+              failed: 0,
+              source: ScrapeSourceId.javbus,
+              workCode: 'REBD-975',
+              totalKnown: true,
+              worksSources: [ScrapeSourceId.javbus],
+              sourceProgress: {
+                ScrapeSourceId.javbus: WorksScrapeSourceProgress(
+                  phase: WorksScrapePhase.downloadingImages,
+                  current: 0,
+                  total: 1,
+                  totalKnown: true,
+                  workCode: 'REBD-975',
+                ),
+              },
+            ),
+          );
+          return result.future;
+        },
+      );
+
+      await _openWorksScrapeSettings(tester);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+
+      expect(executorStarted, isTrue);
+      expect(find.byKey(const Key('scrape-progress-operation')), findsNothing);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.byKey(const Key('scrape-progress-count')), findsNothing);
+      expect(find.byKey(const Key('scrape-progress-summary')), findsOneWidget);
+      expect(find.text('已儲存 0 排除 0 失敗 0'), findsOneWidget);
+
+      allowDetailProgress.complete();
+      await tester.pump();
+      expect(find.byKey(const Key('scrape-progress-operation')), findsNothing);
+      expect(find.text('SHOULD-NOT-BE-SHOWN'), findsNothing);
+      expect(find.byKey(const Key('scrape-progress-count')), findsOneWidget);
+      expect(find.byKey(const Key('scrape-progress-circular')), findsOneWidget);
+
+      allowImageProgress.complete();
+      await tester.pump();
+      expect(
+        find.byKey(const Key('scrape-progress-current-work')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('REBD-975'), findsOneWidget);
+      expect(
+        find.byKey(const Key('scrape-progress-download-circular')),
+        findsOneWidget,
+      );
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+
+      result.complete(
+        const WorksScrapeResult(
+          saved: 0,
+          excluded: 0,
+          failed: 0,
+          cancelled: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('scrape-result-done')));
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('shows numeric progress per source without work names', (
+    tester,
+  ) async {
+    final result = Completer<WorksScrapeResult>();
+    await _pumpWorks(
+      tester,
+      scrapeExecutor: (options, token, onProgress) async {
+        const payload = WorksScrapeProgress(
+          phase: WorksScrapePhase.fetchingDetails,
+          current: 3,
+          total: 10,
+          saved: 0,
+          excluded: 0,
+          failed: 0,
+          source: ScrapeSourceId.javbus,
+          worksSources: [ScrapeSourceId.minnanoAv, ScrapeSourceId.javbus],
+          sourceProgress: {
+            ScrapeSourceId.minnanoAv: WorksScrapeSourceProgress(
+              phase: WorksScrapePhase.fetchingDetails,
+              current: 3,
+              total: 10,
+              totalKnown: true,
+              workCode: 'MINNANO-TITLE-MUST-NOT-SHOW',
+            ),
+            ScrapeSourceId.javbus: WorksScrapeSourceProgress(
+              phase: WorksScrapePhase.fetchingDetails,
+              current: 4,
+              total: 10,
+              totalKnown: true,
+              workCode: 'JAVBUS-TITLE-MUST-NOT-SHOW',
+            ),
+          },
+        );
+        expect(payload.sourceProgress, hasLength(2));
+        onProgress(payload);
+        return result.future;
+      },
+    );
+
+    await _openWorksScrapeSettings(tester);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    expect(find.byKey(const Key('scrape-progress-sources')), findsOneWidget);
+    expect(find.text('Minnano AV'), findsOneWidget);
+    expect(find.text('JavBus'), findsOneWidget);
+    expect(find.text('3 / 10'), findsOneWidget);
+    expect(find.text('4 / 10'), findsOneWidget);
+    expect(find.byKey(const Key('scrape-progress-count')), findsOneWidget);
+    expect(find.byKey(const Key('scrape-progress-circular')), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('MINNANO-TITLE-MUST-NOT-SHOW'), findsNothing);
+    expect(find.text('JAVBUS-TITLE-MUST-NOT-SHOW'), findsNothing);
+
+    result.complete(
+      const WorksScrapeResult(
+        saved: 0,
+        excluded: 0,
+        failed: 0,
+        cancelled: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('scrape-result-done')));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('unknown totals use an indeterminate circular indicator', (
+    tester,
+  ) async {
+    final result = Completer<WorksScrapeResult>();
+    await _pumpWorks(
+      tester,
+      scrapeExecutor: (options, token, onProgress) async {
+        onProgress(
+          const WorksScrapeProgress(
+            phase: WorksScrapePhase.fetchingDetails,
+            current: 0,
+            total: 0,
+            saved: 0,
+            excluded: 0,
+            failed: 0,
+            source: ScrapeSourceId.javbus,
+            worksSources: [ScrapeSourceId.javbus],
+            sourceProgress: {
+              ScrapeSourceId.javbus: WorksScrapeSourceProgress(
+                phase: WorksScrapePhase.fetchingDetails,
+                current: 0,
+                total: 0,
+                totalKnown: false,
+              ),
+            },
+          ),
+        );
+        return result.future;
+      },
+    );
+
+    await _openWorksScrapeSettings(tester);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    final indicator = tester.widget<CircularProgressIndicator>(
+      find.byKey(const Key('scrape-progress-circular')),
+    );
+    expect(indicator.value, isNull);
+    expect(find.byKey(const Key('scrape-progress-count')), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+
+    result.complete(
+      const WorksScrapeResult(
+        saved: 0,
+        excluded: 0,
+        failed: 0,
+        cancelled: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('scrape-result-done')));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+    'scrape dialog bounds stay stable when the current work changes',
+    (tester) async {
+      final result = Completer<WorksScrapeResult>();
+      late void Function(WorksScrapeProgress progress) emitProgress;
+      await _pumpWorks(
+        tester,
+        size: const Size(320, 480),
+        textScaler: TextScaler.linear(1.3),
+        scrapeExecutor: (options, token, onProgress) async {
+          emitProgress = onProgress;
+          onProgress(
+            const WorksScrapeProgress(
+              phase: WorksScrapePhase.fetchingDetails,
+              current: 0,
+              total: 3,
+              saved: 0,
+              excluded: 0,
+              failed: 0,
+              totalKnown: true,
+              source: ScrapeSourceId.javbus,
+              worksSources: [ScrapeSourceId.javbus],
+              sourceProgress: {
+                ScrapeSourceId.javbus: WorksScrapeSourceProgress(
+                  phase: WorksScrapePhase.fetchingDetails,
+                  current: 0,
+                  total: 3,
+                  totalKnown: true,
+                ),
+              },
+            ),
+          );
+          return result.future;
+        },
+      );
+
+      await _openWorksScrapeSettings(tester);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+
+      final dialogKey = find.byKey(const Key('scrape-progress-dialog'));
+      final sourcesKey = find.byKey(const Key('scrape-progress-sources'));
+      final initialDialogRect = tester.getRect(dialogKey);
+      final initialSourcesRect = tester.getRect(sourcesKey);
+
+      emitProgress(
+        const WorksScrapeProgress(
+          phase: WorksScrapePhase.downloadingImages,
+          current: 1,
+          total: 3,
+          saved: 1,
+          excluded: 0,
+          failed: 0,
+          totalKnown: true,
+          source: ScrapeSourceId.javbus,
+          workCode: 'LONG-CURRENT-WORK-CODE-THAT-CHANGES',
+          worksSources: [ScrapeSourceId.javbus],
+          sourceProgress: {
+            ScrapeSourceId.javbus: WorksScrapeSourceProgress(
+              phase: WorksScrapePhase.downloadingImages,
+              current: 1,
+              total: 3,
+              totalKnown: true,
+              workCode: 'LONG-CURRENT-WORK-CODE-THAT-CHANGES',
+            ),
+          },
+        ),
+      );
+      await tester.pump();
+
+      expect(tester.getRect(dialogKey), initialDialogRect);
+      expect(tester.getRect(sourcesKey), initialSourcesRect);
+      expect(
+        find.byKey(const Key('scrape-progress-download-circular')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('scrape-progress-current-work')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+
+      result.complete(
+        const WorksScrapeResult(
+          saved: 1,
+          excluded: 0,
+          failed: 0,
+          cancelled: false,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('scrape-result-done')));
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('scrape progress dialog sizes to content on phone viewport', (
+    tester,
+  ) async {
+    final result = Completer<WorksScrapeResult>();
+    await _pumpWorks(
+      tester,
+      size: const Size(390, 844),
+      scrapeExecutor: (options, token, onProgress) async {
+        onProgress(
+          const WorksScrapeProgress(
+            phase: WorksScrapePhase.fetchingDetails,
+            current: 0,
+            total: 1,
+            saved: 0,
+            excluded: 0,
+            failed: 0,
+            totalKnown: true,
+            source: ScrapeSourceId.javbus,
+            worksSources: [ScrapeSourceId.javbus],
+            sourceProgress: {
+              ScrapeSourceId.javbus: WorksScrapeSourceProgress(
+                phase: WorksScrapePhase.fetchingDetails,
+                current: 0,
+                total: 1,
+                totalKnown: true,
+              ),
+            },
+          ),
+        );
+        return result.future;
+      },
+    );
+
+    await _openWorksScrapeSettings(tester);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    final progressViewport = tester.getRect(
+      find.byType(SingleChildScrollView).last,
+    );
+    expect(progressViewport.height, lessThan(400));
+
+    result.complete(
+      const WorksScrapeResult(
+        saved: 0,
+        excluded: 0,
+        failed: 0,
+        cancelled: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('scrape-result-done')));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('scrape result lists unique failed works and image issues', (
+    tester,
+  ) async {
+    await _pumpWorks(
+      tester,
+      scrapeExecutor: (options, token, onProgress) async {
+        return const WorksScrapeResult(
+          saved: 1,
+          excluded: 2,
+          failed: 1,
+          cancelled: false,
+          failedWorks: [
+            WorksScrapeFailure(
+              code: 'SIVR-303',
+              stage: WorksScrapeFailureStage.fetchingDetails,
+              reason: WorksScrapeFailureReason.detailsUnavailable,
+            ),
+          ],
+          imageFailures: [
+            WorksScrapeImageFailure(
+              code: 'SSIS-875',
+              variants: [WorkImageVariant.card, WorkImageVariant.detail],
+            ),
+          ],
+        );
+      },
+    );
+
+    await _openWorksScrapeSettings(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('失敗作品（1）'), findsOneWidget);
+    expect(find.textContaining('SIVR-303'), findsOneWidget);
+    expect(find.text('圖片下載失敗（1）'), findsOneWidget);
+    expect(find.textContaining('SSIS-875'), findsOneWidget);
+    expect(find.textContaining('SIVR00303'), findsNothing);
+    expect(find.text('所有來源都無法取得作品詳情'), findsOneWidget);
+    expect(find.byKey(const Key('scrape-result-scroll')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('scrape-result-done')));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+    'scrape result keeps actress details separate from work sources',
+    (tester) async {
+      await _pumpWorks(
+        tester,
+        scrapeExecutor: (options, token, onProgress) async {
+          return const WorksScrapeResult(
+            saved: 2,
+            excluded: 1,
+            failed: 0,
+            cancelled: false,
+            detailsSource: ScrapeSourceId.minnanoAv,
+            worksSources: [ScrapeSourceId.javbus],
+            sourceResults: {
+              ScrapeSourceId.minnanoAv: ScrapeSourceRunResult(
+                source: ScrapeSourceId.minnanoAv,
+                state: ScrapeSourceRunState.zeroResults,
+              ),
+              ScrapeSourceId.javbus: ScrapeSourceRunResult(
+                source: ScrapeSourceId.javbus,
+                state: ScrapeSourceRunState.success,
+                discovered: 3,
+              ),
+            },
+          );
+        },
+      );
+
+      await _openWorksScrapeSettings(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('詳細資料'), findsOneWidget);
+      expect(find.text('作品'), findsOneWidget);
+      expect(find.text('下載'), findsOneWidget);
+      expect(find.text('Minnano AV'), findsOneWidget);
+      expect(find.text('JavBus'), findsOneWidget);
+      expect(find.text('完成，無新增作品'), findsNothing);
+      expect(find.textContaining('已儲存'), findsOneWidget);
+      expect(find.textContaining('排除'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('scrape-result-done')));
+      await tester.pumpAndSettle();
+    },
+  );
+
   testWidgets(
     'detail page shows the local work count inside the works button',
+
     (tester) async {
       await tester.pumpWidget(
         _localizedApp(
           home: DetailView(db: _WorksFeatureDatabase(), actressId: 7),
         ),
       );
+
       await tester.pumpAndSettle();
 
       final button = tester.getRect(
         find.byKey(const Key('detail-works-button')),
       );
+
       final count = tester.getRect(find.byKey(const Key('detail-works-count')));
+
       expect(find.text('178'), findsOneWidget);
+
       expect(count.left, greaterThan(button.left));
       expect(count.right, lessThanOrEqualTo(button.right));
       expect(button.height, 52);
       expect(button.width, greaterThan(120));
+
       expect(tester.takeException(), isNull);
     },
   );
@@ -545,18 +1242,36 @@ Future<void> _pumpWorks(
   AppDatabase? database,
   Size size = const Size(390, 844),
   TextScaler textScaler = TextScaler.noScaling,
+  Future<WorksScrapeResult> Function(
+    WorkScrapeOptions options,
+    WorksScrapeCancellationToken token,
+    void Function(WorksScrapeProgress progress) onProgress,
+  )?
+  scrapeExecutor,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetPhysicalSize);
+
   await tester.pumpWidget(
     _localizedApp(
       textScaler: textScaler,
-      home: WorksView(db: database ?? _WorksFeatureDatabase(), actressId: 7),
+      home: WorksView(
+        db: database ?? _WorksFeatureDatabase(),
+        actressId: 7,
+        scrapeExecutor: scrapeExecutor,
+      ),
     ),
   );
   await tester.pumpAndSettle();
+}
+
+Future<void> _openWorksScrapeSettings(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('works-overflow-menu')));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('works-scrape-menu-item')));
+  await tester.pump();
 }
 
 Widget _localizedApp({

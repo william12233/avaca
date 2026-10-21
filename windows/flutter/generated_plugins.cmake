@@ -3,8 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  avaca_player_native
-  ffmpeg_kit_flutter_new
   url_launcher_windows
 )
 
