@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/app_snackbar.dart';
 import '../components/adaptive_page_layout.dart';
+import '../components/local_file_image.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../l10n/app_localizations.dart';
@@ -319,14 +318,11 @@ class _WorkDetailViewState extends State<WorkDetailView> {
   }
 
   Widget _detailImage(String path) {
-    if (path.isNotEmpty && File(path).existsSync()) {
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _placeholder(),
-      );
-    }
-    return _placeholder();
+    return LocalFileImage(
+      path: path,
+      fit: BoxFit.cover,
+      placeholder: _placeholder(),
+    );
   }
 
   Widget _placeholder() {

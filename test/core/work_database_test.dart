@@ -77,6 +77,47 @@ void main() {
     });
 
     test(
+      'updates work image references without replacing work metadata',
+      () async {
+        final workId = await database.upsertActressWork(
+          actressId: actressId,
+          work: const Work(
+            code: 'IMG-001',
+            title: '保留 metadata',
+            studio: 'Studio',
+            cardImagePath: 'old-card.jpg',
+          ),
+        );
+
+        final before = await database.getWorkImagePaths(workId);
+        expect(before?.card, 'old-card.jpg');
+        expect(before?.detail, isNull);
+
+        await database.updateWorkImagePaths(
+          workId: workId,
+          cardImagePath: 'new-card.jpg',
+          detailImagePath: 'new-detail.jpg',
+          missingOnly: true,
+        );
+
+        final preserved = await database.getWorkById(workId);
+        expect(preserved?['title'], '保留 metadata');
+        expect(preserved?['studio'], 'Studio');
+        expect(preserved?['card_image_path'], 'old-card.jpg');
+        expect(preserved?['detail_image_path'], 'new-detail.jpg');
+
+        await database.updateWorkImagePaths(
+          workId: workId,
+          cardImagePath: 'replacement-card.jpg',
+          detailImagePath: '   ',
+        );
+        final replaced = await database.getWorkImagePaths(workId);
+        expect(replaced?.card, 'replacement-card.jpg');
+        expect(replaced?.detail, 'new-detail.jpg');
+      },
+    );
+
+    test(
       'persists the work storage record with quality and frame rate',
       () async {
         final workId = await database.upsertActressWork(

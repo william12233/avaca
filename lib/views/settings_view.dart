@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
 import '../components/javbus_verification_dialog.dart';
+import '../components/local_file_image.dart';
 import '../controllers/data_transfer_controller.dart';
 import '../controllers/prefix_route_file_transfer.dart';
 import '../controllers/settings_controller.dart';
@@ -913,17 +913,14 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Widget _existingAvatar(String? imagePath) {
-    if (imagePath == null || imagePath.trim().isEmpty) {
-      return const _TransferAvatarPlaceholder();
-    }
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
-      child: Image.file(
-        File(imagePath),
+      child: LocalFileImage(
+        path: imagePath,
         width: 64,
         height: 64,
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => const _TransferAvatarPlaceholder(),
+        placeholder: const _TransferAvatarPlaceholder(),
       ),
     );
   }

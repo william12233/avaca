@@ -39,6 +39,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Golden-test diagnostics are generated locally and should never be committed.
+/test/failures/
+
 # Symbolication related
 app.*.symbols
 

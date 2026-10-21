@@ -192,7 +192,8 @@ class WorkImagePolicy {
   ) {
     final paddedNumber = parts.number.padLeft(5, '0');
     return switch (family) {
-      WorkImageNormalizationFamily.dmmStandard => '${parts.prefix}$paddedNumber',
+      WorkImageNormalizationFamily.dmmStandard =>
+        '${parts.prefix}$paddedNumber',
       WorkImageNormalizationFamily.dmmLeadingOne =>
         '1${parts.prefix}$paddedNumber',
       WorkImageNormalizationFamily.dmmH1711 =>

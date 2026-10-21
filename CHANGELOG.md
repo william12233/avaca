@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.1 - 2026-10-21
+
+- Improved SQLite query performance with typed gallery queries, indexes, and
+  batched work-performer writes while preserving legacy database migrations.
+- Reduced UI and scrape overhead with debounced search, indexed work filtering,
+  size-aware local image decoding, and coalesced progress persistence.
+- Changed data export and Windows update extraction to stream through files,
+  reducing peak memory usage for large collections and archives.
+- Added Flutter 3.44.8 CI checks, refreshed golden baselines, and removed
+  generated golden diagnostic files from version control.
+
 ## 1.0.0 - 2026-10-21
 
 - Restored AVACA to the final local collection product baseline from 0.9.18.

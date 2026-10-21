@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import '../components/adaptive_page_layout.dart';
@@ -24,6 +26,7 @@ class _HomeViewState extends State<HomeView> {
 
   final TextEditingController searchTextController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
+  Timer? _searchDebounceTimer;
 
   @override
   void initState() {
@@ -34,12 +37,14 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   void dispose() {
+    _searchDebounceTimer?.cancel();
     searchTextController.dispose();
     searchFocusNode.dispose();
     super.dispose();
   }
 
   void refreshGallery() {
+    _searchDebounceTimer?.cancel();
     setState(() {
       galleryFuture = controller.getGalleryData();
     });
@@ -66,7 +71,12 @@ class _HomeViewState extends State<HomeView> {
 
   void onSearchChange(String value) {
     controller.changeSearch(value);
-    refreshGallery();
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 220), () {
+      if (mounted) {
+        refreshGallery();
+      }
+    });
   }
 
   Future<void> openFilterSheet() async {

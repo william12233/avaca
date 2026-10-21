@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
+import 'local_file_image.dart';
 
 /// 顯示單一演員資料的卡片。
 class ActressCard extends StatelessWidget {
@@ -65,22 +65,14 @@ class ActressCard extends StatelessWidget {
 
   /// 根據圖片路徑決定顯示圖片或預設佔位內容。
   Widget _buildCoverContent(BuildContext context) {
-    final path = imgPath;
-
-    if (path != null && path.trim().isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(_imageBorderRadius),
-        child: Image.file(
-          File(path),
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _buildEmptyImagePlaceholder(context);
-          },
-        ),
-      );
-    }
-
-    return _buildEmptyImagePlaceholder(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(_imageBorderRadius),
+      child: LocalFileImage(
+        path: imgPath,
+        fit: BoxFit.cover,
+        placeholder: _buildEmptyImagePlaceholder(context),
+      ),
+    );
   }
 
   /// 建立沒有圖片或圖片讀取失敗時的佔位內容。

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
@@ -252,10 +252,11 @@ class SoftwareUpdateService {
     Directory stagingDirectory,
     SemanticVersion expectedVersion,
   ) async {
+    InputFileStream? input;
     try {
-      final bytes = await archiveFile.readAsBytes();
       final decoder = ZipDecoder();
-      final archive = decoder.decodeBytes(bytes, verify: true);
+      input = InputFileStream(archiveFile.path);
+      final archive = decoder.decodeStream(input, verify: true);
       final headers = decoder.directory.fileHeaders;
       if (headers.length > _windowsMaxArchiveEntries) {
         throw const SoftwareUpdateException(
@@ -315,18 +316,17 @@ class SoftwareUpdateService {
           );
         }
 
-        final payload = entry.readBytes();
-        if (payload == null || payload.length != entry.size) {
+        final target = File(
+          path.joinAll(<String>[extractRoot.path, ...name.split('/')]),
+        );
+        await target.parent.create(recursive: true);
+        final extractedBytes = await _extractArchiveEntry(entry, target);
+        if (extractedBytes != entry.size) {
           throw const SoftwareUpdateException(
             UpdateFailureReason.integrity,
             'The Windows update ZIP contains a corrupt entry.',
           );
         }
-        final target = File(
-          path.joinAll(<String>[extractRoot.path, ...name.split('/')]),
-        );
-        await target.parent.create(recursive: true);
-        await target.writeAsBytes(payload, flush: true);
       }
 
       final executable = File(path.join(extractRoot.path, 'avaca.exe'));
@@ -356,7 +356,28 @@ class SoftwareUpdateService {
         UpdateFailureReason.integrity,
         'The Windows update ZIP could not be prepared: $error',
       );
+    } finally {
+      await input?.close();
     }
+  }
+
+  Future<int> _extractArchiveEntry(ArchiveFile entry, File target) async {
+    final content = entry.getContent();
+    if (content == null) return -1;
+    final output = target.openWrite();
+    var written = 0;
+    try {
+      while (!content.isEOS) {
+        final chunkSize = content.length.clamp(1, 1024 * 1024);
+        final chunk = content.readBytes(chunkSize).toUint8List();
+        if (chunk.isEmpty) break;
+        output.add(chunk);
+        written += chunk.length;
+      }
+    } finally {
+      await output.close();
+    }
+    return written;
   }
 
   String _validateWindowsArchivePath(String value) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/actress_query.dart';
 import '../core/database.dart';
 
 final class HomeSearchState {
@@ -77,36 +78,36 @@ class HomeController {
 
   /// 使用目前搜尋、篩選與排序狀態取得首頁列表資料。
   Future<List<Map<String, Object?>>> getGalleryData() {
-    return db.getAllActresses(
-      searchKeyword: currentSearch,
-      filterType: _filterValueForDatabase(currentFilter),
-      sortBy: _sortValueForDatabase(currentSort),
+    return db.getAllActressesByQuery(
+      ActressQuery(
+        searchKeyword: currentSearch,
+        filter: _filterFromKey(currentFilter),
+        sort: _sortFromKey(currentSort),
+      ),
     );
   }
 
-  String _filterValueForDatabase(String filterValue) {
+  ActressFilter _filterFromKey(String filterValue) {
     return switch (filterValue) {
-      'all' => '全部',
-      'censored' => '有碼',
-      'uncensored' => '無碼',
-      'western' => '歐美',
-      'fc2' => 'FC2',
-      'domestic' => '國產',
-      _ => filterValue,
+      'censored' => ActressFilter.censored,
+      'uncensored' => ActressFilter.uncensored,
+      'western' => ActressFilter.western,
+      'fc2' => ActressFilter.fc2,
+      'domestic' => ActressFilter.domestic,
+      _ => ActressFilter.all,
     };
   }
 
-  String _sortValueForDatabase(String sortValue) {
+  ActressSort _sortFromKey(String sortValue) {
     return switch (sortValue) {
-      'created_desc' => '新增時間 (新到舊)',
-      'created_asc' => '新增時間 (舊到新)',
-      'modified_desc' => '修改時間 (新到舊)',
-      'modified_asc' => '修改時間 (舊到新)',
-      'name_asc' => '名稱 (A-Z)',
-      'name_desc' => '名稱 (Z-A)',
-      'age_asc' => '年齡 (低到高)',
-      'age_desc' => '年齡 (高到低)',
-      _ => sortValue,
+      'created_asc' => ActressSort.createdAsc,
+      'modified_desc' => ActressSort.modifiedDesc,
+      'modified_asc' => ActressSort.modifiedAsc,
+      'name_asc' => ActressSort.nameAsc,
+      'name_desc' => ActressSort.nameDesc,
+      'age_asc' => ActressSort.ageAsc,
+      'age_desc' => ActressSort.ageDesc,
+      _ => ActressSort.createdDesc,
     };
   }
 

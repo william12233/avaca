@@ -160,6 +160,27 @@ void main() {
   );
 
   test(
+    'file-backed export writes a valid archive without returning bytes',
+    () async {
+      final avatar = File(path.join(source.imgDir, 'avatar.jpg'));
+      await avatar.writeAsBytes([1, 2, 3, 4]);
+      await source.addActress(name: 'File Export Actor', imgPath: avatar.path);
+
+      final exported = await DataTransferService(db: source).buildExportFile();
+      addTearDown(() async {
+        if (await exported.file.exists()) await exported.file.delete();
+      });
+
+      expect(await exported.file.exists(), isTrue);
+      expect(exported.summary.images, 1);
+      final archive = ZipDecoder().decodeBytes(
+        await exported.file.readAsBytes(),
+      );
+      expect(archive.files.map((file) => file.name), contains('manifest.json'));
+    },
+  );
+
+  test(
     'duplicate actor resolution keeps existing details but imports relations',
     () async {
       await source.addActress(name: 'Duplicate Actor', mainType: 'imported');

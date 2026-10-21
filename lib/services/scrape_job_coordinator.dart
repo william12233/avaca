@@ -780,6 +780,8 @@ class _JobObserver extends ScrapeRunObserver {
   bool _accepting = true;
   ScrapeJobPhase? _lastPhase;
   String? _lastProgressKey;
+  WorksScrapeProgress? _pendingProgress;
+  bool _progressWriteQueued = false;
 
   void stopAccepting() {
     _accepting = false;
@@ -791,6 +793,31 @@ class _JobObserver extends ScrapeRunObserver {
   void _enqueue(Future<void> Function() operation) {
     if (!_accepting) return;
     writeFence.enqueue(operation);
+  }
+
+  /// Progress callbacks can arrive several times while one detail page is
+  /// being processed. Keep only the newest snapshot until the serialized
+  /// write queue reaches it; item outcomes and error events still retain their
+  /// ordering and are written independently.
+  void _enqueueLatestProgress(WorksScrapeProgress progress) {
+    if (!_accepting) return;
+    _pendingProgress = progress;
+    if (_progressWriteQueued) return;
+    _progressWriteQueued = true;
+    writeFence.enqueue(() async {
+      try {
+        final pending = _pendingProgress;
+        _pendingProgress = null;
+        if (pending != null) {
+          await _persistProgress(pending);
+        }
+      } finally {
+        _progressWriteQueued = false;
+        if (_pendingProgress != null && _accepting) {
+          _enqueueLatestProgress(_pendingProgress!);
+        }
+      }
+    });
   }
 
   Future<void> _ensureProgressState() async {
@@ -825,58 +852,59 @@ class _JobObserver extends ScrapeRunObserver {
         '${progress.supplementalEvidenceTotal}:$sourceKey';
     if (_lastProgressKey == progressKey) return;
     _lastProgressKey = progressKey;
-    _enqueue(() async {
-      await _ensureProgressState();
-      _progress.apply(progress);
-      await repository.updateJob(
-        jobId,
-        phase: _phase(progress.phase),
-        discoveredCount: _progress.discoveredCount,
-        rawDiscoveredCount: _progress.rawDiscoveredCount,
-        duplicateCount: _progress.duplicateCount,
-        detailCompletedCount: _progress.detailCompletedCount,
-        detailTotalCount: _progress.detailTotalCount,
-        processedCount: _progress.processedCount,
-        savedCount: _progress.savedCount,
-        excludedCount: _progress.excludedCount,
-        failedCount: _progress.failedCount,
-        reviewCount: _progress.reviewCount,
-        supplementalEvidenceCompletedCount:
-            _progress.supplementalEvidenceCompletedCount,
-        supplementalEvidenceTotalCount:
-            _progress.supplementalEvidenceTotalCount,
+    _enqueueLatestProgress(progress);
+  }
+
+  Future<void> _persistProgress(WorksScrapeProgress progress) async {
+    await _ensureProgressState();
+    _progress.apply(progress);
+    await repository.updateJob(
+      jobId,
+      phase: _phase(progress.phase),
+      discoveredCount: _progress.discoveredCount,
+      rawDiscoveredCount: _progress.rawDiscoveredCount,
+      duplicateCount: _progress.duplicateCount,
+      detailCompletedCount: _progress.detailCompletedCount,
+      detailTotalCount: _progress.detailTotalCount,
+      processedCount: _progress.processedCount,
+      savedCount: _progress.savedCount,
+      excludedCount: _progress.excludedCount,
+      failedCount: _progress.failedCount,
+      reviewCount: _progress.reviewCount,
+      supplementalEvidenceCompletedCount:
+          _progress.supplementalEvidenceCompletedCount,
+      supplementalEvidenceTotalCount: _progress.supplementalEvidenceTotalCount,
+    );
+    for (final entry in progress.sourceProgress.entries) {
+      await repository.upsertSourceProgress(
+        ScrapeJobSourceProgress(
+          jobId: jobId,
+          source: entry.key,
+          phase: _phase(entry.value.phase),
+          current: entry.value.current,
+          total: entry.value.total,
+          totalKnown: entry.value.totalKnown,
+          workCode: entry.value.workCode,
+          discovered: entry.value.discovered,
+        ),
       );
-      for (final entry in progress.sourceProgress.entries) {
-        await repository.upsertSourceProgress(
-          ScrapeJobSourceProgress(
-            jobId: jobId,
-            source: entry.key,
-            phase: _phase(entry.value.phase),
-            current: entry.value.current,
-            total: entry.value.total,
-            totalKnown: entry.value.totalKnown,
-            workCode: entry.value.workCode,
-            discovered: entry.value.discovered,
-          ),
-        );
-      }
-      if (_lastPhase != _phase(progress.phase)) {
-        _lastPhase = _phase(progress.phase);
-        await repository.appendEvent(
-          jobId,
-          severity: ScrapeJobEventSeverity.info,
-          stage: _lastPhase!,
-          message: '刮削階段：${_lastPhase!.storageValue}',
-        );
-      }
-      if (progress.workCode != null && progress.workCode!.trim().isNotEmpty) {
-        await _setItem(
-          progress.workCode!,
-          state: ScrapeJobItemState.running,
-          stage: _phase(progress.phase),
-        );
-      }
-    });
+    }
+    if (_lastPhase != _phase(progress.phase)) {
+      _lastPhase = _phase(progress.phase);
+      await repository.appendEvent(
+        jobId,
+        severity: ScrapeJobEventSeverity.info,
+        stage: _lastPhase!,
+        message: '刮削階段：${_lastPhase!.storageValue}',
+      );
+    }
+    if (progress.workCode != null && progress.workCode!.trim().isNotEmpty) {
+      await _setItem(
+        progress.workCode!,
+        state: ScrapeJobItemState.running,
+        stage: _phase(progress.phase),
+      );
+    }
   }
 
   @override
@@ -1085,6 +1113,13 @@ class _JobObserver extends ScrapeRunObserver {
   }) async {
     await _ensureProgressState();
     final existing = _items[code];
+    final sameState =
+        existing != null &&
+        existing.state == state &&
+        existing.stage == stage &&
+        existing.lastError == lastError &&
+        (rawCode == null || rawCode == existing.observedRawCode);
+    if (sameState) return;
     final item = ScrapeJobItem(
       id: existing?.id,
       jobId: jobId,
@@ -1094,7 +1129,12 @@ class _JobObserver extends ScrapeRunObserver {
       stage: stage,
       attemptCount:
           (existing?.attemptCount ?? 0) +
-          (state == ScrapeJobItemState.running ? 1 : 0),
+          (state == ScrapeJobItemState.running &&
+                  (existing == null ||
+                      existing.state != ScrapeJobItemState.running ||
+                      existing.stage != stage)
+              ? 1
+              : 0),
       lastError: lastError,
       createdAt: existing?.createdAt ?? DateTime.now().toUtc(),
       updatedAt: DateTime.now().toUtc(),

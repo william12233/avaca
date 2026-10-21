@@ -8,6 +8,7 @@ import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/app_snackbar.dart';
 import '../components/javbus_verification_dialog.dart';
+import '../components/local_file_image.dart';
 import '../controllers/works_controller.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
@@ -1150,14 +1151,11 @@ class _LocalWorkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (path.isNotEmpty && File(path).existsSync()) {
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _placeholder(context),
-      );
-    }
-    return _placeholder(context);
+    return LocalFileImage(
+      path: path,
+      fit: BoxFit.cover,
+      placeholder: _placeholder(context),
+    );
   }
 
   Widget _placeholder(BuildContext context) {

@@ -2530,11 +2530,12 @@ class WorksScrapeService {
         performers: performers,
         provenance: details.provenanceFor(0),
       );
-      final current = await db.getWorkById(workId);
+      final current = await db.getWorkImagePaths(workId);
       return _PreparedWorkImage(
         details: details,
-        currentCard: current?['card_image_path']?.toString() ?? '',
-        currentDetail: current?['detail_image_path']?.toString() ?? '',
+        workId: workId,
+        currentCard: current?.card ?? '',
+        currentDetail: current?.detail ?? '',
       );
     });
     if (_isCancelled(cancellationToken)) {
@@ -2577,18 +2578,12 @@ class WorksScrapeService {
     }
     final cardPath = imageResults[0];
     final detailPath = imageResults[1];
-    final work = prepared.details.toWork(
-      cardImagePath: cardPath.path,
-      detailImagePath: detailPath.path,
-    );
     await db.runManagedImageLifecycle(
-      () => db.upsertActressWork(
-        actressId: actressId,
-        work: work,
+      () => db.updateWorkImagePaths(
+        workId: prepared.workId,
+        cardImagePath: cardPath.path,
+        detailImagePath: detailPath.path,
         missingOnly: missingOnly,
-        performerSource: performerSource,
-        performers: performers,
-        provenance: details.provenanceFor(0),
       ),
     );
     return _WorkImageSaveResult(
@@ -2941,11 +2936,13 @@ final class _WorkImageResult {
 final class _PreparedWorkImage {
   const _PreparedWorkImage({
     required this.details,
+    required this.workId,
     required this.currentCard,
     required this.currentDetail,
   });
 
   final ScrapeWorkDetails details;
+  final int workId;
   final String currentCard;
   final String currentDetail;
 }

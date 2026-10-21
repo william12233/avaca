@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
@@ -27,6 +27,16 @@ class DataTransferExport {
   final DataTransferSummary summary;
 }
 
+/// A file-backed export used by platform pickers that can copy a path.
+/// Keeping the archive on disk avoids retaining every image and the encoded
+/// ZIP in Dart heap at the same time.
+class DataTransferFileExport {
+  const DataTransferFileExport({required this.file, required this.summary});
+
+  final File file;
+  final DataTransferSummary summary;
+}
+
 class DataTransferService {
   DataTransferService({required this.db});
 
@@ -34,6 +44,55 @@ class DataTransferService {
   static const _workImagePolicy = WorkImagePolicy();
 
   Future<DataTransferExport> buildExport({
+    DataTransferProgressCallback? onProgress,
+  }) async {
+    final exported = await buildExportFile(onProgress: onProgress);
+    try {
+      final bytes = await exported.file.readAsBytes();
+      if (bytes.length > DataTransferLimits.maxArchiveBytes) {
+        throw const DataTransferException(
+          'archive_too_large',
+          'The portable archive exceeds the supported size.',
+        );
+      }
+      return DataTransferExport(
+        bytes: Uint8List.fromList(bytes),
+        summary: exported.summary,
+      );
+    } finally {
+      if (await exported.file.exists()) {
+        await exported.file.delete();
+      }
+    }
+  }
+
+  /// Builds the archive directly on disk so callers can hand it to a native
+  /// save dialog without materializing the complete ZIP in memory.
+  Future<DataTransferFileExport> buildExportFile({
+    DataTransferProgressCallback? onProgress,
+  }) async {
+    await db.database;
+    final directory = Directory(path.join(db.baseDir, '.exports'));
+    await directory.create(recursive: true);
+    final outputFile = File(
+      path.join(
+        directory.path,
+        'avaca-export-${DateTime.now().microsecondsSinceEpoch}.zip',
+      ),
+    );
+    try {
+      return await _buildExportFile(
+        outputFile: outputFile,
+        onProgress: onProgress,
+      );
+    } catch (_) {
+      if (await outputFile.exists()) await outputFile.delete();
+      rethrow;
+    }
+  }
+
+  Future<DataTransferFileExport> _buildExportFile({
+    required File outputFile,
     DataTransferProgressCallback? onProgress,
   }) async {
     onProgress?.call(
@@ -144,8 +203,8 @@ class DataTransferService {
                 '${_supportedExtension(file.path)}';
       final existing = imageBySource[sourceKey];
       if (existing == null) {
-        final bytes = await file.readAsBytes();
-        if (bytes.length > DataTransferLimits.maxSingleEntryBytes) {
+        final size = await file.length();
+        if (size > DataTransferLimits.maxSingleEntryBytes) {
           throw const DataTransferException(
             'archive_too_large',
             'A referenced image exceeds the portable archive limit.',
@@ -153,9 +212,10 @@ class DataTransferService {
         }
         imageBySource[sourceKey] = _ExportImage(
           sourceKey: sourceKey,
+          file: file,
+          size: size,
           extension: _supportedExtension(file.path),
-          bytes: Uint8List.fromList(bytes),
-          sha256: sha256.convert(bytes).toString(),
+          sha256: await _sha256File(file),
           preferredFileName: preferredFileName,
         );
       } else if (existing.preferredFileName == null &&
@@ -323,7 +383,7 @@ class DataTransferService {
         DataTransferAsset(
           id: archiveId,
           path: image.archivePath!,
-          size: image.bytes.length,
+          size: image.size,
           sha256: image.sha256,
         ),
       );
@@ -398,7 +458,7 @@ class DataTransferService {
     }
     var totalBytes = manifestBytes.length;
     for (final image in sortedAssets) {
-      totalBytes += image.bytes.length;
+      totalBytes += image.size;
       if (totalBytes > DataTransferLimits.maxTotalUncompressedBytes) {
         throw const DataTransferException(
           'archive_too_large',
@@ -414,22 +474,47 @@ class DataTransferService {
         total: sortedAssets.length,
       ),
     );
-    final archive = Archive()
-      ..addFile(ArchiveFile.bytes('manifest.json', manifestBytes));
-    for (var index = 0; index < sortedAssets.length; index++) {
-      final image = sortedAssets[index];
-      archive.addFile(ArchiveFile.bytes(image.archivePath!, image.bytes));
-      onProgress?.call(
-        DataTransferProgress(
-          phase: DataTransferPhase.writing,
-          completed: index + 1,
-          total: sortedAssets.length,
-        ),
+    final encoder = ZipFileEncoder();
+    encoder.create(outputFile.path);
+    var encoderClosed = false;
+    try {
+      encoder.addArchiveFile(ArchiveFile.bytes('manifest.json', manifestBytes));
+      for (var index = 0; index < sortedAssets.length; index++) {
+        final image = sortedAssets[index];
+        if (await image.file.length() != image.size) {
+          throw const DataTransferException(
+            'file_changed',
+            'A referenced image changed while the archive was being built.',
+          );
+        }
+        await encoder.addFile(image.file, image.archivePath!);
+        onProgress?.call(
+          DataTransferProgress(
+            phase: DataTransferPhase.writing,
+            completed: index + 1,
+            total: sortedAssets.length,
+          ),
+        );
+      }
+      await encoder.close();
+      encoderClosed = true;
+    } finally {
+      if (!encoderClosed) {
+        try {
+          await encoder.close();
+        } catch (_) {
+          // Preserve the original archive-building error.
+        }
+      }
+    }
+    if (await outputFile.length() > DataTransferLimits.maxArchiveBytes) {
+      throw const DataTransferException(
+        'archive_too_large',
+        'The portable archive exceeds the supported size.',
       );
     }
-    final encoded = ZipEncoder().encode(archive);
-    return DataTransferExport(
-      bytes: Uint8List.fromList(encoded),
+    return DataTransferFileExport(
+      file: outputFile,
       summary: DataTransferSummary(
         actresses: exportedActresses.length,
         works: exportedWorks.length,
@@ -437,6 +522,16 @@ class DataTransferService {
         skippedImages: skippedImages,
       ),
     );
+  }
+
+  Future<String> _sha256File(File file) async {
+    final sink = _DataTransferDigestSink();
+    final input = sha256.startChunkedConversion(sink);
+    await for (final chunk in file.openRead()) {
+      input.add(chunk);
+    }
+    input.close();
+    return sink.value.toString();
   }
 
   Future<DataTransferOperationResult> importArchive({
@@ -1271,18 +1366,34 @@ class _ExportWorkDraft {
 class _ExportImage {
   _ExportImage({
     required this.sourceKey,
+    required this.file,
+    required this.size,
     required this.extension,
-    required this.bytes,
     required this.sha256,
     this.preferredFileName,
   });
 
   final String sourceKey;
+  final File file;
+  final int size;
   final String extension;
-  final Uint8List bytes;
   final String sha256;
   String? preferredFileName;
   String? archivePath;
+}
+
+class _DataTransferDigestSink implements Sink<Digest> {
+  Digest? _digest;
+
+  Digest get value => _digest!;
+
+  @override
+  void add(Digest value) {
+    _digest = value;
+  }
+
+  @override
+  void close() {}
 }
 
 String _validateArchivePath(String value) {

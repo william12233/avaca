@@ -8,6 +8,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../models/scraped_actress_details.dart';
 import '../models/scrape_job.dart';
+import '../models/actress_query.dart';
 import '../models/work.dart';
 import '../models/work_storage.dart';
 import 'platform_adapter.dart';
@@ -301,8 +302,27 @@ class WorkDeletionReport {
   };
 }
 
+/// The two managed image references belonging to a work.
+///
+/// Scrape persistence only needs these columns after metadata has been saved;
+/// loading the complete work, performers, and provenance is unnecessary work.
+class WorkImagePaths {
+  const WorkImagePaths({this.card, this.detail});
+
+  factory WorkImagePaths.fromRow(Map<String, Object?> row) {
+    return WorkImagePaths(
+      card: row['card_image_path']?.toString(),
+      detail: row['detail_image_path']?.toString(),
+    );
+  }
+
+  final String? card;
+  final String? detail;
+}
+
 class AppDatabase {
   static const int _sqliteBindBatchSize = 500;
+  static const int _schemaVersion = 2;
 
   AppDatabase()
     : _baseDirOverride = null,
@@ -384,7 +404,7 @@ class AppDatabase {
     await Directory(imgDir).create(recursive: true);
 
     final options = OpenDatabaseOptions(
-      version: 1,
+      version: _schemaVersion,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -394,11 +414,15 @@ class AppDatabase {
         await _createWorksTables(db);
         await _createOperationalTables(db);
       },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        await _upgradeSchema(db, oldVersion, newVersion);
+      },
       onOpen: (db) async {
         await _migrateActressesTable(db);
         await _createSettingsTable(db);
         await _createWorksTables(db);
         await _createOperationalTables(db);
+        await _createQueryIndexes(db);
       },
     );
     final factory = _databaseFactoryOverride;
@@ -408,6 +432,7 @@ class AppDatabase {
             version: options.version,
             onConfigure: options.onConfigure,
             onCreate: options.onCreate,
+            onUpgrade: options.onUpgrade,
             onOpen: options.onOpen,
           )
         : await factory.openDatabase(dbPath, options: options);
@@ -546,6 +571,36 @@ class AppDatabase {
         .map((column) => column['name']?.toString())
         .whereType<String>()
         .toSet();
+  }
+
+  Future<void> _upgradeSchema(Database db, int oldVersion, int newVersion) {
+    // Additive column/table repair runs from onOpen below. Keeping index
+    // creation there is important for legacy databases because onUpgrade is
+    // invoked before _migrateActressesTable has added birth_date.
+    return Future<void>.value();
+  }
+
+  /// Indexes used by the gallery and work list queries.
+  ///
+  /// All statements are idempotent because the application also repairs
+  /// additive schema drift when an existing database is opened.
+  Future<void> _createQueryIndexes(Database db) async {
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_actresses_name_nocase '
+      'ON actresses(name COLLATE NOCASE)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_actresses_modified_id '
+      'ON actresses(modified_at DESC, id DESC)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_actresses_birth_id '
+      'ON actresses(birth_date, id DESC)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_works_release_id '
+      'ON works(release_date DESC, id DESC)',
+    );
   }
 
   // 建立作品資料與女優、作品多對多關聯。
@@ -830,6 +885,18 @@ class AppDatabase {
         .toList();
   }
 
+  /// Typed boundary for gallery queries. The legacy string API remains for
+  /// import/export and older callers, while UI code can use stable enums.
+  Future<List<Map<String, Object?>>> getAllActressesByQuery(
+    ActressQuery query,
+  ) {
+    return getAllActresses(
+      searchKeyword: query.searchKeyword,
+      filterType: query.filter.storageValue,
+      sortBy: query.sort.storageValue,
+    );
+  }
+
   // 依 id 取得單筆收藏的詳細資料。
   Future<Map<String, Object?>?> getActressById(int actressId) async {
     final db = await database;
@@ -959,6 +1026,61 @@ class AppDatabase {
       ''',
       [actressId],
     );
+  }
+
+  /// Reads only the image references needed by scrape image persistence.
+  Future<WorkImagePaths?> getWorkImagePaths(int workId) async {
+    final db = await database;
+    final rows = await db.query(
+      'works',
+      columns: const ['card_image_path', 'detail_image_path'],
+      where: 'id = ?',
+      whereArgs: [workId],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : WorkImagePaths.fromRow(rows.single);
+  }
+
+  /// Updates only the managed image references for an existing work.
+  ///
+  /// This intentionally mirrors the non-clearing semantics of work upserts:
+  /// a failed download or an empty incoming path never removes a good path.
+  Future<void> updateWorkImagePaths({
+    required int workId,
+    String? cardImagePath,
+    String? detailImagePath,
+    bool missingOnly = false,
+  }) {
+    return runManagedImageLifecycle(() async {
+      String? clean(String? value) {
+        final trimmed = value?.trim();
+        return trimmed == null || trimmed.isEmpty ? null : trimmed;
+      }
+
+      final assignments = <String>[];
+      final values = <Object?>[];
+      for (final entry in <String, String?>{
+        'card_image_path': clean(cardImagePath),
+        'detail_image_path': clean(detailImagePath),
+      }.entries) {
+        if (missingOnly) {
+          assignments.add(
+            '${entry.key} = CASE '
+            "WHEN ${entry.key} IS NULL OR TRIM(CAST(${entry.key} AS TEXT)) = '' "
+            'THEN COALESCE(?, ${entry.key}) ELSE ${entry.key} END',
+          );
+        } else {
+          assignments.add('${entry.key} = COALESCE(?, ${entry.key})');
+        }
+        values.add(entry.value);
+      }
+      final db = await database;
+      await db.rawUpdate(
+        'UPDATE works SET ${assignments.join(', ')}, '
+        'modified_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [...values, workId],
+      );
+    });
   }
 
   // 依作品 id 取得詳細資料。
@@ -1233,7 +1355,8 @@ class AppDatabase {
     required String source,
     required Iterable<WorkPerformer> performers,
   }) async {
-    await executor.delete(
+    final batch = executor.batch();
+    batch.delete(
       'work_performers',
       where: 'work_id = ? AND source = ?',
       whereArgs: [workId, source],
@@ -1244,13 +1367,14 @@ class AppDatabase {
       if (name.isEmpty || !seen.add(name.toLowerCase())) {
         continue;
       }
-      await executor.insert('work_performers', {
+      batch.insert('work_performers', {
         'work_id': workId,
         'source': source,
         'name': name,
         'source_uri': performer.sourceUri?.toString(),
       });
     }
+    await batch.commit(noResult: true);
   }
 
   /// Merge legacy work rows that are known aliases of [canonicalCode].

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +5,7 @@ import 'package:avaca/l10n/app_localizations.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
 import '../components/app_snackbar.dart';
+import '../components/local_file_image.dart';
 import '../controllers/detail_controller.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
@@ -784,32 +784,28 @@ class _DetailViewState extends State<DetailView> {
     final imgPath = controller.actressData.imgPath;
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (imgPath.isEmpty) {
-      return Container(
-        key: const Key('detail-profile-image'),
-        width: imageSize,
-        height: imageSize,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Icon(
-          Icons.person,
-          size: 80,
-          color: colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-
     return ClipRRect(
       key: const Key('detail-profile-image'),
       borderRadius: BorderRadius.circular(20),
-      child: Image.file(
-        File(imgPath),
+      child: LocalFileImage(
+        path: imgPath,
         width: imageSize,
         height: imageSize,
         fit: BoxFit.cover,
+        placeholder: Container(
+          width: imageSize,
+          height: imageSize,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Icon(
+            Icons.person,
+            size: 80,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
       ),
     );
   }

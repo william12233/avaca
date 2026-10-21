@@ -18,6 +18,8 @@ class WorksController extends ChangeNotifier {
   Object? loadError;
   String _searchQuery = '';
   WorkStorageFilter _storageFilter = WorkStorageFilter.all;
+  final Map<int, String> _canonicalCodeByWorkId = <int, String>{};
+  final Set<int> _storedWorkIds = <int>{};
 
   String get searchQuery => _searchQuery;
   WorkStorageFilter get storageFilter => _storageFilter;
@@ -28,13 +30,9 @@ class WorksController extends ChangeNotifier {
     final filteredWorks = switch (_storageFilter) {
       WorkStorageFilter.all => works,
       WorkStorageFilter.stored =>
-        works
-            .where((work) => WorkStorageRecord.fromDatabase(work).isStored)
-            .toList(growable: false),
+        works.where(_isStored).toList(growable: false),
       WorkStorageFilter.notStored =>
-        works
-            .where((work) => !WorkStorageRecord.fromDatabase(work).isStored)
-            .toList(growable: false),
+        works.where((work) => !_isStored(work)).toList(growable: false),
     };
 
     if (rawQuery.isEmpty) {
@@ -49,8 +47,11 @@ class WorksController extends ChangeNotifier {
 
     return filteredWorks
         .where((work) {
-          final code = work['code']?.toString() ?? '';
-          return _canonicalizeWorkCode(code).contains(query);
+          final id = _workId(work);
+          final code = id == null
+              ? _canonicalizeWorkCode(work['code']?.toString() ?? '')
+              : (_canonicalCodeByWorkId[id] ?? '');
+          return code.contains(query);
         })
         .toList(growable: false);
   }
@@ -86,6 +87,7 @@ class WorksController extends ChangeNotifier {
             ? aliases.map((alias) => alias.toString()).toList(growable: false)
             : const [];
         works = await db.getWorksForActress(actressId);
+        _rebuildIndexes();
         status = WorksLoadStatus.loaded;
       }
     } catch (error) {
@@ -98,7 +100,34 @@ class WorksController extends ChangeNotifier {
 
   Future<void> reloadWorks() async {
     works = await db.getWorksForActress(actressId);
+    _rebuildIndexes();
     notifyListeners();
+  }
+
+  bool _isStored(Map<String, Object?> work) {
+    final id = _workId(work);
+    if (id != null) return _storedWorkIds.contains(id);
+    return WorkStorageRecord.fromDatabase(work).isStored;
+  }
+
+  int? _workId(Map<String, Object?> work) {
+    final value = work['id'];
+    return value is int ? value : int.tryParse(value?.toString() ?? '');
+  }
+
+  void _rebuildIndexes() {
+    _canonicalCodeByWorkId.clear();
+    _storedWorkIds.clear();
+    for (final work in works) {
+      final id = _workId(work);
+      if (id == null) continue;
+      _canonicalCodeByWorkId[id] = _canonicalizeWorkCode(
+        work['code']?.toString() ?? '',
+      );
+      if (WorkStorageRecord.fromDatabase(work).isStored) {
+        _storedWorkIds.add(id);
+      }
+    }
   }
 
   static String _canonicalizeWorkCode(String value) {

@@ -17,7 +17,15 @@ abstract interface class DataTransferPicker {
   });
 }
 
-class PlatformDataTransferPicker implements DataTransferPicker {
+abstract interface class DataTransferFilePicker {
+  Future<String?> saveExportFile({
+    required File file,
+    required String fileName,
+  });
+}
+
+class PlatformDataTransferPicker
+    implements DataTransferPicker, DataTransferFilePicker {
   const PlatformDataTransferPicker();
 
   @override
@@ -77,6 +85,22 @@ class PlatformDataTransferPicker implements DataTransferPicker {
     );
   }
 
+  @override
+  Future<String?> saveExportFile({
+    required File file,
+    required String fileName,
+  }) async {
+    final destination = await FilePicker.saveFile(
+      dialogTitle: 'Export AVACA data',
+      fileName: fileName,
+      type: FileType.custom,
+      allowedExtensions: const ['zip'],
+    );
+    if (destination == null || destination.isEmpty) return null;
+    await file.copy(destination);
+    return destination;
+  }
+
   Uint8List _bounded(Uint8List bytes) {
     if (bytes.length > DataTransferLimits.maxArchiveBytes) {
       throw const DataTransferException(
@@ -110,24 +134,38 @@ class DataTransferController extends ChangeNotifier {
     _setProgress(
       const DataTransferProgress(phase: DataTransferPhase.preparing),
     );
+    DataTransferFileExport? fileExport;
     try {
-      final export = await _service.buildExport(onProgress: _setProgress);
       final fileName = _suggestedFileName();
-      final savedPath = await _picker.saveExport(
-        bytes: export.bytes,
-        fileName: fileName,
-      );
+      String? savedPath;
+      DataTransferSummary? summary;
+      if (_picker is DataTransferFilePicker) {
+        savedPath = await _saveFileBackedExport(
+          _picker as DataTransferFilePicker,
+          fileName,
+          (value) => fileExport = value,
+        );
+        summary = fileExport?.summary;
+      } else {
+        final export = await _service.buildExport(onProgress: _setProgress);
+        savedPath = await _picker.saveExport(
+          bytes: export.bytes,
+          fileName: fileName,
+        );
+        summary = export.summary;
+      }
       if (savedPath == null) {
         return _finish(const DataTransferOperationResult(cancelled: true));
       }
+      final exportSummary = summary!;
       return _finish(
         DataTransferOperationResult(
           cancelled: false,
           summary: DataTransferSummary(
-            actresses: export.summary.actresses,
-            works: export.summary.works,
-            images: export.summary.images,
-            skippedImages: export.summary.skippedImages,
+            actresses: exportSummary.actresses,
+            works: exportSummary.works,
+            images: exportSummary.images,
+            skippedImages: exportSummary.skippedImages,
             destinationPath: savedPath,
           ),
         ),
@@ -143,7 +181,22 @@ class DataTransferController extends ChangeNotifier {
           error: DataTransferException('export_failed', error.toString()),
         ),
       );
+    } finally {
+      final file = fileExport?.file;
+      if (file != null && await file.exists()) {
+        await file.delete();
+      }
     }
+  }
+
+  Future<String?> _saveFileBackedExport(
+    DataTransferFilePicker picker,
+    String fileName,
+    void Function(DataTransferFileExport value) onBuilt,
+  ) async {
+    final export = await _service.buildExportFile(onProgress: _setProgress);
+    onBuilt(export);
+    return picker.saveExportFile(file: export.file, fileName: fileName);
   }
 
   Future<DataTransferOperationResult> importData({
