@@ -40,17 +40,18 @@ jobs:
             exit 1
           fi
 
-          version="$(printf '%s' "$tag" | sed 's/^v//')"
-          app_version="$(sed -n 's/^version:[[:space:]]*\([^+[:space:]]*\).*/\1/p' pubspec.yaml | head -n 1)"
-          if [[ -z "$app_version" || "$app_version" != "$version" ]]; then
-            echo "Tag $tag does not match pubspec.yaml base version $app_version" >&2
+          version="${tag#v}"
+          app_full_version="$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\).*/\1/p' pubspec.yaml | head -n 1)"
+          app_version="${app_full_version%%+*}"
+          version_code="${app_full_version#*+}"
+          if [[ -z "$app_full_version" || "$app_version" != "$version" ]]; then
+            echo "Tag $tag does not match pubspec.yaml version $app_full_version" >&2
             exit 1
           fi
 
-          if [[ "$version" == '0.8.0' ]]; then
-            version_code=30
-          else
-            version_code=$((GITHUB_RUN_NUMBER + 2020))
+          if [[ "$version_code" == "$app_full_version" || ! "$version_code" =~ ^[0-9]+$ ]]; then
+            echo "pubspec.yaml must provide a numeric Android build number: $app_full_version" >&2
+            exit 1
           fi
           if (( version_code < 30 )); then
             echo "Android versionCode is invalid: $version_code." >&2

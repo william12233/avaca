@@ -1,6 +1,7 @@
 # AVACA
 
-AVACA 是一個以本地資料為主的女優與作品收藏 App。
+AVACA 1.0.0 是一個以本地資料為主的女優與作品收藏 App；本版本恢復最後
+的收藏產品基線，不包含播放器、遠端 Server 或配對流程。
 
 ## Windows portable 版
 

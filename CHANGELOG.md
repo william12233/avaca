@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0 - 2026-10-21
+
+- Restored AVACA to the final local collection product baseline from 0.9.18.
+- Removed the player, remote Server, pairing, and native playback product
+  flows from the application and release surface.
+- Simplified releases to one Android ARM64 APK and one Windows portable ZIP,
+  each with a SHA-256 sidecar and a versioned GitHub Release asset name.
+
 ## 0.9.18 - 2026-08-27
 
 - Extended advanced scrape rules to support complete work codes and safe
