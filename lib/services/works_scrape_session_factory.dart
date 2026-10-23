@@ -130,6 +130,9 @@ class WorksScrapeSessionFactory {
               maxBytes: 5 * 1024 * 1024,
             ),
           ),
+          ScrapeSourceId.javdb => throw StateError(
+            'JAVDB cannot be used as the actress detail source.',
+          ),
         };
     final service = WorksScrapeService(
       db: db,

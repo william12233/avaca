@@ -90,7 +90,7 @@ class _HomeViewState extends State<HomeView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.leaderboard_outlined),
+                leading: const Icon(Icons.people_alt_outlined),
                 title: Text(l10n.actressDiscoveryRankingOption),
                 subtitle: Text(l10n.actressDiscoveryRankingOptionSubtitle),
                 onTap: () => Navigator.of(dialogContext).pop('discovery'),
@@ -114,7 +114,7 @@ class _HomeViewState extends State<HomeView> {
     );
     if (!mounted) return;
     if (choice == 'discovery') {
-      await Navigator.of(context).pushNamed('/actress-discovery');
+      await Navigator.of(context).pushNamed('/actress-ranking');
     } else if (choice == 'manual') {
       await controller.goAdd(context);
     }

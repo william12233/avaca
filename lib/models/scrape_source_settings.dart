@@ -6,7 +6,8 @@ enum ScrapeSourceId {
   javbus('javbus'),
   minnanoAv('minnanoAv'),
   avbase('avbase'),
-  avwiki('avwiki');
+  avwiki('avwiki'),
+  javdb('javdb');
 
   const ScrapeSourceId(this.storageValue);
 

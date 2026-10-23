@@ -16,33 +16,53 @@ final class ActressDiscoveryService {
   final ActressDiscoveryRegistry registry;
   final ActressDiscoveryCache cache;
 
-  List<ActressDiscoverySourceOption> get availableSources {
-    return registry.sources
-        .where(
-          (source) => source.supportsRanking && source.supportsPublisherFilter,
-        )
-        .map(
-          (source) => ActressDiscoverySourceOption(
-            id: source.id,
-            label: source.displayName,
-          ),
-        )
-        .toList(growable: false);
-  }
+  List<ActressDiscoverySourceOption> get availableSources => registry.sources
+      .where((source) => source.supportsTags || source.supportsSearch)
+      .map(
+        (source) => ActressDiscoverySourceOption(
+          id: source.id,
+          label: source.displayName,
+          supportsTags: source.supportsTags,
+          supportsSearch: source.supportsSearch,
+        ),
+      )
+      .toList(growable: false);
 
-  Future<ActressDiscoverySnapshot> loadRanking(
+  Future<List<ActressDiscoveryTag>> loadTags(
     ScrapeSourceId sourceId, {
     bool refresh = false,
   }) async {
     final source = _source(sourceId);
+    if (!source.supportsTags) return const [];
     if (!refresh) {
-      final cached = cache.rankingFor(sourceId);
+      final cached = cache.tagsFor(sourceId);
+      if (cached != null) return cached;
+    }
+    final tags = await source.fetchTags();
+    cache.storeTags(sourceId, tags);
+    return tags;
+  }
+
+  Future<ActressDiscoverySnapshot> loadTag(
+    ScrapeSourceId sourceId,
+    ActressDiscoveryTag tag, {
+    int page = 1,
+    bool refresh = false,
+  }) async {
+    final source = _source(sourceId);
+    if (!source.supportsTags) {
+      throw StateError(
+        'Source has no actress directory: ${source.displayName}',
+      );
+    }
+    if (!refresh) {
+      final cached = cache.listFor(sourceId, tag.key, page: page);
       if (cached != null) return _markCollected(cached);
     } else {
-      cache.clearRanking(sourceId);
+      cache.clearList(sourceId, tag.key, page: page);
     }
-    final snapshot = await source.fetchRanking();
-    cache.storeRanking(snapshot);
+    final snapshot = await source.fetchTag(tag, page: page);
+    cache.storeList(snapshot);
     return _markCollected(snapshot);
   }
 
@@ -52,8 +72,13 @@ final class ActressDiscoveryService {
     bool refresh = false,
   }) async {
     final trimmed = query.trim();
-    if (trimmed.isEmpty) return loadRanking(sourceId, refresh: refresh);
+    if (trimmed.isEmpty) {
+      throw ArgumentError.value(query, 'query', 'Must not be empty.');
+    }
     final source = _source(sourceId);
+    if (!source.supportsSearch) {
+      throw StateError('Source has no actress search: ${source.displayName}');
+    }
     if (!refresh) {
       final cached = cache.searchFor(sourceId, trimmed);
       if (cached != null) return _markCollected(cached);
@@ -65,9 +90,31 @@ final class ActressDiscoveryService {
     return _markCollected(snapshot);
   }
 
+  Future<ActressDiscoverySnapshot> refreshTag(
+    ScrapeSourceId sourceId,
+    ActressDiscoveryTag tag, {
+    int page = 1,
+  }) => loadTag(sourceId, tag, page: page, refresh: true);
+
+  // Compatibility for code from the 1.1 prototype. It now selects the first
+  // native tag and never calls a ranking endpoint.
+  @Deprecated('Use loadTags and loadTag.')
+  Future<ActressDiscoverySnapshot> loadRanking(
+    ScrapeSourceId sourceId, {
+    bool refresh = false,
+  }) async {
+    final tags = await loadTags(sourceId, refresh: refresh);
+    if (tags.isEmpty) {
+      throw StateError('Source has no actress directory.');
+    }
+    return loadTag(sourceId, tags.first, refresh: refresh);
+  }
+
+  @Deprecated('Use refreshTag.')
   Future<ActressDiscoverySnapshot> refreshRanking(ScrapeSourceId sourceId) =>
       loadRanking(sourceId, refresh: true);
 
+  @Deprecated('Use search.')
   Future<ActressDiscoverySnapshot> refreshSearch(
     ScrapeSourceId sourceId,
     String query,
@@ -75,9 +122,7 @@ final class ActressDiscoveryService {
 
   ActressDiscoverySource _source(ScrapeSourceId id) {
     final source = registry.byId(id);
-    if (source == null ||
-        !source.supportsRanking ||
-        !source.supportsPublisherFilter) {
+    if (source == null || (!source.supportsTags && !source.supportsSearch)) {
       throw StateError('Discovery source is not available: ${id.storageValue}');
     }
     return source;
@@ -105,8 +150,15 @@ final class ActressDiscoveryService {
 }
 
 final class ActressDiscoverySourceOption {
-  const ActressDiscoverySourceOption({required this.id, required this.label});
+  const ActressDiscoverySourceOption({
+    required this.id,
+    required this.label,
+    required this.supportsTags,
+    required this.supportsSearch,
+  });
 
   final ScrapeSourceId id;
   final String label;
+  final bool supportsTags;
+  final bool supportsSearch;
 }

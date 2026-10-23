@@ -75,6 +75,42 @@ void main() {
     expect(page.works.single.publisher, '測試發行商');
   });
 
+  test('parses native actress tags and an S1 actress list', () {
+    const source = '''
+      <title>「S1」AV女優一覧 1名 - みんなのAV.com</title>
+      <meta name="description" content="「S1」タグが付いたAV女優一覧。1名のAV女優を掲載。">
+      <link rel="next" href="/actress_list.php?tag_a_id=10093&amp;page=2">
+      <table class="tbllist">
+        <tr><td><a href="actress205870.html">
+          <img src="/p_actress_125_125/022/205870.jpg" alt="未歩なな">
+        </a></td><td><h2 class="ttl"><a href="actress205870.html">未歩なな</a></h2>
+          <a href="actress_list.php?tag_a_id=10093&amp;tag_name=S1">S1</a>
+        </td></tr>
+      </table>
+      <script type="application/ld+json">
+        {"@type":"CollectionPage","mainEntity":{"@type":"ItemList","itemListElement":[
+          {"@type":"ListItem","position":1,"item":{"@type":"Person","name":"未歩なな","url":"/actress205870.html"}}
+        ]}}
+      </script>
+    ''';
+    final parser = MinnanoHtmlParser();
+    final pageUri = Uri.parse(
+      'https://www.minnano-av.com/actress_list.php?tag_a_id=10093',
+    );
+
+    final tags = parser.parseActressTags(source, pageUri: pageUri);
+    final list = parser.parseActressList(source, pageUri: pageUri);
+
+    expect(tags.single.key, '10093');
+    expect(tags.single.label, 'S1');
+    expect(tags.single.count, 1);
+    expect(list, hasLength(1));
+    expect(list.single.name, '未歩なな');
+    expect(list.single.uri.path, '/actress205870.html');
+    expect(list.single.imageUri?.path, '/p_actress_125_125/022/205870.jpg');
+    expect(list.single.tags, ['S1']);
+  });
+
   test('parses Minnano work code, maker, performers, and package image', () {
     const source = '''
       <table class="prof-table">

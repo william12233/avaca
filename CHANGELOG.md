@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 - 2026-10-23
+
+- Reworked actress discovery into a source-native 女優榜 with source tabs,
+  native actress categories, pagination, keyword search, and multi-select
+  collection across Minnano AV, JavBus, AvBase, AV-Wiki, and JAVDB.
+- Removed artificial ranking numbers and publisher filtering from the actress
+  collection flow while matching the existing AVACA card and surface styling.
+- Added Minnano S1 discovery fallback and safe JAVDB availability handling for
+  Cloudflare or other blocked responses.
+
 ## 1.1.0 - 2026-10-23
 
 - Added an actress discovery page backed by the Minnano AV actress ranking,

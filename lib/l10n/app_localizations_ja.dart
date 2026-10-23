@@ -1257,16 +1257,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsScrapeJobsSubtitle => 'キュー、復旧、一時停止、失敗再試行を確認します。';
 
   @override
-  String get actressDiscoveryTitle => 'ランキングから選択';
+  String get actressDiscoveryTitle => '女優一覧';
 
   @override
   String get actressDiscoveryAddMethodTitle => '追加方法を選択';
 
   @override
-  String get actressDiscoveryRankingOption => 'ランキングから選択';
+  String get actressDiscoveryRankingOption => '女優一覧';
 
   @override
-  String get actressDiscoveryRankingOptionSubtitle => '人気ランキングや検索結果から選択します';
+  String get actressDiscoveryRankingOptionSubtitle =>
+      '各ソースの女優一覧・タグ・検索結果から選択します';
 
   @override
   String get actressDiscoveryManualOption => '手動で追加';
@@ -1275,13 +1276,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get actressDiscoverySource => 'ソース';
 
   @override
-  String get actressDiscoveryAllPublishers => 'すべてのメーカー';
+  String get actressDiscoveryAllPublishers => 'すべてのタグ';
 
   @override
   String get actressDiscoverySearchHint => 'このソースの女優を検索';
 
   @override
-  String get actressDiscoveryBackToRanking => '人気ランキングに戻る';
+  String get actressDiscoveryBackToRanking => '女優一覧に戻る';
 
   @override
   String get actressDiscoverySelectAll => '選択可能な女優をすべて選択';
@@ -1290,7 +1291,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get actressDiscoveryCollected => '登録済み';
 
   @override
-  String get actressDiscoveryPublisherUnavailable => 'メーカー情報なし';
+  String get actressDiscoveryPublisherUnavailable => 'タグ情報なし';
 
   @override
   String actressDiscoveryImportSummary(
@@ -1319,11 +1320,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get actressDiscoveryCapabilityAvailable => 'ランキング選択：利用可能（メーカー絞り込み）';
+  String get actressDiscoveryCapabilityAvailable => '女優一覧：ソースの一覧／検索を利用可能';
 
   @override
-  String get actressDiscoveryCapabilityUnavailable =>
-      'ランキング選択：ランキングとメーカー絞り込みが未対応';
+  String get actressDiscoveryCapabilityUnavailable => '女優一覧：検索のみ、または接続が必要';
 }
 
 /// The translations for Japanese, as used in Japan (`ja_JP`).
@@ -2579,16 +2579,17 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get settingsScrapeJobsSubtitle => 'キュー、復旧、一時停止、失敗再試行を確認します。';
 
   @override
-  String get actressDiscoveryTitle => 'ランキングから選択';
+  String get actressDiscoveryTitle => '女優一覧';
 
   @override
   String get actressDiscoveryAddMethodTitle => '追加方法を選択';
 
   @override
-  String get actressDiscoveryRankingOption => 'ランキングから選択';
+  String get actressDiscoveryRankingOption => '女優一覧';
 
   @override
-  String get actressDiscoveryRankingOptionSubtitle => '人気ランキングや検索結果から選択します';
+  String get actressDiscoveryRankingOptionSubtitle =>
+      '各ソースの女優一覧・タグ・検索結果から選択します';
 
   @override
   String get actressDiscoveryManualOption => '手動で追加';
@@ -2597,13 +2598,13 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get actressDiscoverySource => 'ソース';
 
   @override
-  String get actressDiscoveryAllPublishers => 'すべてのメーカー';
+  String get actressDiscoveryAllPublishers => 'すべてのタグ';
 
   @override
   String get actressDiscoverySearchHint => 'このソースの女優を検索';
 
   @override
-  String get actressDiscoveryBackToRanking => '人気ランキングに戻る';
+  String get actressDiscoveryBackToRanking => '女優一覧に戻る';
 
   @override
   String get actressDiscoverySelectAll => '選択可能な女優をすべて選択';
@@ -2612,7 +2613,7 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get actressDiscoveryCollected => '登録済み';
 
   @override
-  String get actressDiscoveryPublisherUnavailable => 'メーカー情報なし';
+  String get actressDiscoveryPublisherUnavailable => 'タグ情報なし';
 
   @override
   String actressDiscoveryImportSummary(
@@ -2641,9 +2642,8 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   }
 
   @override
-  String get actressDiscoveryCapabilityAvailable => 'ランキング選択：利用可能（メーカー絞り込み）';
+  String get actressDiscoveryCapabilityAvailable => '女優一覧：ソースの一覧／検索を利用可能';
 
   @override
-  String get actressDiscoveryCapabilityUnavailable =>
-      'ランキング選択：ランキングとメーカー絞り込みが未対応';
+  String get actressDiscoveryCapabilityUnavailable => '女優一覧：検索のみ、または接続が必要';
 }

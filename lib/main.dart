@@ -78,7 +78,9 @@ class _AvacaAppState extends State<AvacaApp> {
         widget.softwareUpdateController ??
         SoftwareUpdateController.forApp(db: widget.db);
     _scrapeJobCoordinator = ScrapeJobCoordinator(db: widget.db);
-    _actressDiscoveryRegistry = ActressDiscoveryRegistry();
+    _actressDiscoveryRegistry = ActressDiscoveryRegistry(
+      verificationHandler: _scrapeJobCoordinator.verificationHandler,
+    );
     _actressDiscoveryService = ActressDiscoveryService(
       db: widget.db,
       registry: _actressDiscoveryRegistry,
@@ -293,7 +295,7 @@ class _AvacaAppState extends State<AvacaApp> {
       return _page(AddView(db: widget.db));
     }
 
-    if (name == '/actress-discovery') {
+    if (name == '/actress-ranking' || name == '/actress-discovery') {
       return _page(
         ActressDiscoveryView(
           db: widget.db,

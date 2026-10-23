@@ -437,6 +437,7 @@ class _ScrapeJobDetailViewState extends State<ScrapeJobDetailView> {
       ScrapeSourceId.avbase => l10n.scrapeSourceAvBase,
       ScrapeSourceId.minnanoAv => l10n.scrapeSourceMinnanoAv,
       ScrapeSourceId.avwiki => l10n.scrapeSourceAvWiki,
+      ScrapeSourceId.javdb => 'JAVDB',
     };
     final pages = progress.totalKnown
         ? '${progress.current}/${progress.total}'

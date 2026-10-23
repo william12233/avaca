@@ -312,6 +312,57 @@ final class AvBaseHtmlParser {
     );
   }
 
+  AvBaseActressDirectoryPage parseActressDirectory(
+    String source, {
+    required Uri pageUri,
+    required int page,
+  }) {
+    final document = html.parse(source);
+    final result = <ScrapeActressSearchResult>[];
+    final seen = <String>{};
+    for (final anchor in document.querySelectorAll('a[href*="/talents/"]')) {
+      final href = _clean(anchor.attributes['href']);
+      final text = _clean(anchor.text);
+      if (href == null || text == null) continue;
+      final uri = pageUri.resolve(href);
+      if (!_isTalentProfileUri(uri, pageUri) || !seen.add(uri.toString())) {
+        continue;
+      }
+      final name = _clean(anchor.querySelector('ruby')?.text) ?? text;
+      final image = anchor.querySelector('img');
+      final rawImage = _clean(
+        image?.attributes['src'] ??
+            image?.attributes['data-src'] ??
+            image?.attributes['data-original'],
+      );
+      final imageUri = rawImage == null ? null : pageUri.resolve(rawImage);
+      result.add(
+        ScrapeActressSearchResult(
+          source: ScrapeSourceId.avbase,
+          name: name,
+          uri: uri,
+          imageUri: imageUri != null && _isAllowedAvatarUri(imageUri)
+              ? imageUri
+              : null,
+        ),
+      );
+    }
+    var maximum = page;
+    for (final anchor in document.querySelectorAll('a[href]')) {
+      final href = anchor.attributes['href'];
+      if (href == null) continue;
+      final value = int.tryParse(Uri.parse(href).queryParameters['page'] ?? '');
+      if (value != null && value > maximum) maximum = value;
+      final label = int.tryParse(anchor.text.trim());
+      if (label != null && label > maximum) maximum = label;
+    }
+    return AvBaseActressDirectoryPage(
+      items: List.unmodifiable(result),
+      page: page,
+      hasNext: maximum > page,
+    );
+  }
+
   Uri? findWorkUriByCode(
     String source, {
     required Uri pageUri,
@@ -327,6 +378,21 @@ final class AvBaseHtmlParser {
       if (_codeFromUri(uri) == expected) return uri;
     }
     return null;
+  }
+
+  bool _isTalentProfileUri(Uri uri, Uri pageUri) {
+    if (uri.scheme != 'https' ||
+        uri.userInfo.isNotEmpty ||
+        uri.host.toLowerCase() != pageUri.host.toLowerCase() ||
+        (uri.hasPort ? uri.port : 443) !=
+            (pageUri.hasPort ? pageUri.port : 443)) {
+      return false;
+    }
+    final segments = uri.pathSegments;
+    return segments.length == 2 &&
+        segments.first == 'talents' &&
+        segments.last.isNotEmpty &&
+        segments.last != 'recent';
   }
 
   Map<String, String> _profileFields(Document document) {

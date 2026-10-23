@@ -1,15 +1,25 @@
 import '../../models/scrape_source_settings.dart';
+import '../avbase/avbase_client.dart';
+import '../avbase/avbase_transport.dart';
+import '../avwiki/avwiki_client.dart';
+import '../avwiki/avwiki_transport.dart';
+import '../javbus/javbus_client.dart';
+import '../javbus/javbus_verification.dart';
+import '../javdb/javdb_client.dart';
 import '../minnano/minnano_client.dart';
 import '../minnano/minnano_transport.dart';
 import 'actress_discovery_source.dart';
+import 'avbase_actress_discovery_source.dart';
+import 'avwiki_actress_discovery_source.dart';
+import 'javbus_actress_discovery_source.dart';
+import 'javdb_actress_discovery_source.dart';
 import 'minnano_actress_discovery_source.dart';
 
-/// Builds only sources that satisfy discovery's complete capability contract.
-/// The other existing scrape sources remain available to the connection test
-/// and work/detail settings; they are not shown here until they expose both a
-/// ranking and a direct publisher filter.
+/// Creates the source-native actress catalog adapters.
 final class ActressDiscoveryRegistry {
-  ActressDiscoveryRegistry() : _sources = _createSources();
+  ActressDiscoveryRegistry({JavBusVerificationHandler? verificationHandler})
+    : _sources = _createSources(verificationHandler);
+
   final List<ActressDiscoverySource> _sources;
 
   List<ActressDiscoverySource> get sources => List.unmodifiable(_sources);
@@ -27,8 +37,28 @@ final class ActressDiscoveryRegistry {
     }
   }
 
-  static List<ActressDiscoverySource> _createSources() {
-    final client = MinnanoClient(transport: HttpMinnanoTransport());
-    return [MinnanoActressDiscoverySource(client: client)];
+  static List<ActressDiscoverySource> _createSources(
+    JavBusVerificationHandler? verificationHandler,
+  ) {
+    final javBusTransport = HttpJavBusTransport(
+      verificationHandler: verificationHandler,
+    );
+    return [
+      MinnanoActressDiscoverySource(
+        client: MinnanoClient(transport: HttpMinnanoTransport()),
+      ),
+      JavBusActressDiscoverySource(
+        client: JavBusClient(transport: javBusTransport),
+      ),
+      AvBaseActressDiscoverySource(
+        client: AvBaseClient(transport: HttpAvBaseTransport()),
+      ),
+      AvWikiActressDiscoverySource(
+        client: AvWikiClient(transport: HttpAvWikiTransport()),
+      ),
+      JavDbActressDiscoverySource(
+        client: JavDbClient(transport: HttpJavDbTransport()),
+      ),
+    ];
   }
 }

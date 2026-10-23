@@ -336,6 +336,8 @@ final class ActressImportService {
           AvWikiClient(transport: HttpAvWikiTransport()),
         );
         return _ActressDetailsSession(source: source);
+      case ScrapeSourceId.javdb:
+        throw StateError('JAVDB cannot be used as the actress detail source.');
     }
   }
 

@@ -87,6 +87,146 @@ final class MinnanoHtmlParser {
     return List.unmodifiable(fallback);
   }
 
+  /// Parses the native actress tag directory. This is intentionally separate
+  /// from the weekly ranking endpoint: tag membership is the source's actual
+  /// catalog navigation and remains useful even when the ranking changes.
+  List<MinnanoActressTag> parseActressTags(
+    String source, {
+    required Uri pageUri,
+  }) {
+    final document = html.parse(source);
+    final result = <MinnanoActressTag>[];
+    final seen = <String>{};
+
+    void addTag(String key, String label, Uri uri, int? count) {
+      final cleanKey = key.trim();
+      final cleanLabel = _beforeParenthesis(label) ?? _clean(label);
+      if (cleanKey.isEmpty || cleanLabel == null || cleanLabel.isEmpty) return;
+      if (!seen.add(cleanKey)) return;
+      result.add(
+        MinnanoActressTag(
+          key: cleanKey,
+          label: cleanLabel,
+          uri: uri,
+          count: count,
+        ),
+      );
+    }
+
+    for (final anchor in document.querySelectorAll(
+      'a[href*="actress_list.php"]',
+    )) {
+      final href = _clean(anchor.attributes['href']);
+      if (href == null) continue;
+      final uri = pageUri.resolve(href);
+      if (!_isMinnanoPageUri(uri) || uri.path != '/actress_list.php') continue;
+      final key = uri.queryParameters['tag_a_id'];
+      if (key == null || key.trim().isEmpty) continue;
+      final rawLabel = _clean(anchor.text);
+      if (rawLabel == null) continue;
+      final count = int.tryParse(
+        RegExp(r'[（(]\s*(\d+)\s*[名人]?\s*[）)]').firstMatch(rawLabel)?.group(1) ??
+            '',
+      );
+      addTag(key, rawLabel, uri, count);
+    }
+
+    // The current tag page can be sparse, so also derive its own tag from the
+    // title/meta description when no matching navigation link is present.
+    final currentId = pageUri.queryParameters['tag_a_id'];
+    if (currentId != null && currentId.trim().isNotEmpty) {
+      final title = _clean(document.querySelector('title')?.text);
+      final description = _clean(
+        document
+            .querySelector('meta[name="description"]')
+            ?.attributes['content'],
+      );
+      final label = _tagName(title) ?? _tagName(description);
+      if (label != null) {
+        final count = _countFromText(title) ?? _countFromText(description);
+        final existing = result.indexWhere((tag) => tag.key == currentId);
+        if (existing >= 0 && count != null) {
+          final previous = result[existing];
+          result[existing] = MinnanoActressTag(
+            key: previous.key,
+            label: previous.label,
+            uri: previous.uri,
+            count: count,
+          );
+        } else {
+          addTag(currentId, label, pageUri, count);
+        }
+      }
+    }
+
+    result.sort((a, b) => a.label.compareTo(b.label));
+    return List.unmodifiable(result);
+  }
+
+  List<MinnanoActressListItem> parseActressList(
+    String source, {
+    required Uri pageUri,
+  }) {
+    final document = html.parse(source);
+    final result = <MinnanoActressListItem>[];
+    final seen = <String>{};
+
+    void addItem({
+      required String name,
+      required Uri uri,
+      Uri? imageUri,
+      List<String> tags = const [],
+    }) {
+      if (!seen.add(uri.toString())) return;
+      result.add(
+        MinnanoActressListItem(
+          name: name,
+          uri: uri,
+          imageUri: imageUri,
+          tags: List.unmodifiable(tags),
+        ),
+      );
+    }
+
+    for (final row in document.querySelectorAll('table.tbllist tr')) {
+      final anchor = row.querySelector('a[href]');
+      final href = _clean(anchor?.attributes['href']);
+      if (href == null) continue;
+      final uri = pageUri.resolve(href);
+      if (!_isMinnanoActressUri(uri)) continue;
+      final name = _beforeParenthesis(
+        _clean(row.querySelector('h2')?.text ?? anchor?.text),
+      );
+      if (name == null || name.isEmpty) continue;
+      final image = _imageUri(
+        pageUri,
+        row.querySelector('img'),
+        allowedPathPrefix: '/p_actress_125_125/',
+      );
+      final tags = row
+          .querySelectorAll('a[href*="actress_list.php"]')
+          .map((tag) => _clean(tag.text))
+          .whereType<String>()
+          .toList(growable: false);
+      addItem(name: name, uri: uri, imageUri: image, tags: tags);
+    }
+
+    // Some list variants expose Person records only through JSON-LD.
+    for (final script in document.querySelectorAll(
+      'script[type="application/ld+json"]',
+    )) {
+      final raw = _clean(script.text);
+      if (raw == null) continue;
+      try {
+        final decoded = jsonDecode(raw);
+        _appendPersons(decoded, pageUri, addItem);
+      } on FormatException {
+        // A malformed optional JSON-LD block must not hide the HTML list.
+      }
+    }
+    return List.unmodifiable(result);
+  }
+
   MinnanoActressPage parseActressPage(String source, {required Uri pageUri}) {
     final document = html.parse(source);
     final profile = _profileTable(document);
@@ -150,7 +290,17 @@ final class MinnanoHtmlParser {
       }
       final name = _beforeParenthesis(_clean(anchor.text));
       if (name != null && name.isNotEmpty && seen.add(uri.toString())) {
-        results.add(ScrapeSearchResult(name: name, uri: uri));
+        results.add(
+          ScrapeSearchResult(
+            name: name,
+            uri: uri,
+            imageUri: _imageUri(
+              pageUri,
+              anchor.querySelector('img'),
+              allowedPathPrefix: '/p_actress_125_125/',
+            ),
+          ),
+        );
       }
     }
 
@@ -431,6 +581,60 @@ final class MinnanoHtmlParser {
     return _clean(image?.attributes['data-src'] ?? image?.attributes['src']);
   }
 
+  void _appendPersons(
+    Object? value,
+    Uri pageUri,
+    void Function({
+      required String name,
+      required Uri uri,
+      Uri? imageUri,
+      List<String> tags,
+    })
+    add,
+  ) {
+    if (value is List) {
+      for (final child in value) {
+        _appendPersons(child, pageUri, add);
+      }
+      return;
+    }
+    if (value is! Map) return;
+    final type = value['@type']?.toString().toLowerCase();
+    if (type == 'person') {
+      final name = _clean(value['name']?.toString());
+      final rawUrl = _clean(value['url']?.toString());
+      if (name != null && rawUrl != null) {
+        final uri = pageUri.resolve(rawUrl);
+        if (_isMinnanoActressUri(uri)) {
+          final rawImage = _clean(value['image']?.toString());
+          final image = rawImage == null
+              ? null
+              : _imageUri(
+                  pageUri,
+                  Element.tag('img')..attributes['src'] = rawImage,
+                  allowedPathPrefix: '/p_actress_125_125/',
+                );
+          add(name: name, uri: uri, imageUri: image);
+        }
+      }
+    }
+    for (final child in value.values) {
+      if (child is Map || child is List) _appendPersons(child, pageUri, add);
+    }
+  }
+
+  String? _tagName(String? raw) {
+    final value = _clean(raw);
+    if (value == null) return null;
+    final match = RegExp(r'[「『]\s*([^」』]+?)\s*[」』]').firstMatch(value);
+    return _clean(match?.group(1));
+  }
+
+  int? _countFromText(String? raw) {
+    final match = RegExp(r'(\d+)\s*名').firstMatch(raw ?? '');
+    return int.tryParse(match?.group(1) ?? '');
+  }
+
   String? _releaseText(Element row) {
     for (final cell in row.querySelectorAll('td')) {
       final text = _clean(cell.text);
@@ -557,8 +761,13 @@ final class _RankingJsonItem {
 }
 
 final class ScrapeSearchResult {
-  const ScrapeSearchResult({required this.name, required this.uri});
+  const ScrapeSearchResult({
+    required this.name,
+    required this.uri,
+    this.imageUri,
+  });
 
   final String name;
   final Uri uri;
+  final Uri? imageUri;
 }

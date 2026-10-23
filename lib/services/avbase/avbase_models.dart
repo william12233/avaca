@@ -16,6 +16,18 @@ final class AvBaseActressPage {
   final int pageCount;
 }
 
+final class AvBaseActressDirectoryPage {
+  const AvBaseActressDirectoryPage({
+    required this.items,
+    required this.page,
+    this.hasNext = false,
+  });
+
+  final List<ScrapeActressSearchResult> items;
+  final int page;
+  final bool hasNext;
+}
+
 final class AvBaseWorkSummary {
   const AvBaseWorkSummary({
     required this.code,

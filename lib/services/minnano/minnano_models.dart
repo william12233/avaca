@@ -34,6 +34,34 @@ final class MinnanoWorkSummary {
   final String? publisher;
 }
 
+final class MinnanoActressTag {
+  const MinnanoActressTag({
+    required this.key,
+    required this.label,
+    required this.uri,
+    this.count,
+  });
+
+  final String key;
+  final String label;
+  final Uri uri;
+  final int? count;
+}
+
+final class MinnanoActressListItem {
+  const MinnanoActressListItem({
+    required this.name,
+    required this.uri,
+    this.imageUri,
+    this.tags = const [],
+  });
+
+  final String name;
+  final Uri uri;
+  final Uri? imageUri;
+  final List<String> tags;
+}
+
 /// One entry from Minnano's source-native actress ranking page.
 final class MinnanoActressRankingItem {
   const MinnanoActressRankingItem({

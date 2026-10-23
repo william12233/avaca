@@ -27,6 +27,7 @@ import '../services/avwiki/avwiki_client.dart';
 import '../services/avwiki/avwiki_transport.dart';
 import '../services/javbus/javbus_client.dart';
 import '../services/javbus/javbus_verification.dart';
+import '../services/javdb/javdb_client.dart';
 import '../services/javbus/prefix_route_repository.dart';
 import '../services/minnano/minnano_client.dart';
 import '../services/minnano/minnano_transport.dart';
@@ -670,6 +671,13 @@ class _SettingsViewState extends State<SettingsView> {
         }
       case ScrapeSourceId.avwiki:
         final client = AvWikiClient(transport: HttpAvWikiTransport());
+        try {
+          await client.checkConnection();
+        } finally {
+          client.close();
+        }
+      case ScrapeSourceId.javdb:
+        final client = JavDbClient(transport: HttpJavDbTransport());
         try {
           await client.checkConnection();
         } finally {
@@ -1562,9 +1570,9 @@ class _ScrapeSourcesSettingsBodyState
   }
 
   String _discoveryCapabilityLabel(ScrapeSourceId source) {
-    return source == ScrapeSourceId.minnanoAv
-        ? AppLocalizations.of(context).actressDiscoveryCapabilityAvailable
-        : AppLocalizations.of(context).actressDiscoveryCapabilityUnavailable;
+    return source == ScrapeSourceId.avwiki
+        ? AppLocalizations.of(context).actressDiscoveryCapabilityUnavailable
+        : AppLocalizations.of(context).actressDiscoveryCapabilityAvailable;
   }
 
   String _sourceLabel(AppLocalizations localizations, ScrapeSourceId source) {
@@ -1573,6 +1581,7 @@ class _ScrapeSourcesSettingsBodyState
       ScrapeSourceId.javbus => localizations.scrapeSourceJavBus,
       ScrapeSourceId.avbase => localizations.scrapeSourceAvBase,
       ScrapeSourceId.avwiki => localizations.scrapeSourceAvWiki,
+      ScrapeSourceId.javdb => 'JAVDB',
     };
   }
 

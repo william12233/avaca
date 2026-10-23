@@ -1030,6 +1030,7 @@ class _JobObserver extends ScrapeRunObserver {
       'avbase' => 'AVBase',
       'avwiki' => 'AV-Wiki',
       'minnanoAv' => 'Minnano AV',
+      'javdb' => 'JAVDB',
       _ => source,
     };
   }

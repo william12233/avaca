@@ -1245,16 +1245,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsScrapeJobsSubtitle => '查看佇列、恢復、暫停與失敗重試。';
 
   @override
-  String get actressDiscoveryTitle => '排行選擇';
+  String get actressDiscoveryTitle => '女优榜';
 
   @override
   String get actressDiscoveryAddMethodTitle => '選擇新增方式';
 
   @override
-  String get actressDiscoveryRankingOption => '排行選擇';
+  String get actressDiscoveryRankingOption => '女优榜';
 
   @override
-  String get actressDiscoveryRankingOptionSubtitle => '從熱門排行或搜尋結果挑選女優';
+  String get actressDiscoveryRankingOptionSubtitle => '从来源原生列表、标签或搜索结果挑选女优';
 
   @override
   String get actressDiscoveryManualOption => '手動新增';
@@ -1263,13 +1263,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get actressDiscoverySource => '來源';
 
   @override
-  String get actressDiscoveryAllPublishers => '全部發行商';
+  String get actressDiscoveryAllPublishers => '全部标签';
 
   @override
   String get actressDiscoverySearchHint => '搜尋目前來源的女優';
 
   @override
-  String get actressDiscoveryBackToRanking => '回到熱門排行';
+  String get actressDiscoveryBackToRanking => '回到女优列表';
 
   @override
   String get actressDiscoverySelectAll => '全選可用女優';
@@ -1278,7 +1278,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get actressDiscoveryCollected => '已收藏';
 
   @override
-  String get actressDiscoveryPublisherUnavailable => '發行商資料未提供';
+  String get actressDiscoveryPublisherUnavailable => '来源未提供标签';
 
   @override
   String actressDiscoveryImportSummary(
@@ -1307,10 +1307,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get actressDiscoveryCapabilityAvailable => '排行選取：可用（含發行商篩選）';
+  String get actressDiscoveryCapabilityAvailable => '女优榜：可用来源原生列表／搜索';
 
   @override
-  String get actressDiscoveryCapabilityUnavailable => '排行選取：尚未提供完整排行與發行商篩選';
+  String get actressDiscoveryCapabilityUnavailable => '女优榜：仅支持搜索或需要连接';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -2554,16 +2554,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settingsScrapeJobsSubtitle => '查看队列、恢复、暂停与失败重试。';
 
   @override
-  String get actressDiscoveryTitle => '排行榜选择';
+  String get actressDiscoveryTitle => '女优榜';
 
   @override
   String get actressDiscoveryAddMethodTitle => '选择新增方式';
 
   @override
-  String get actressDiscoveryRankingOption => '排行榜选择';
+  String get actressDiscoveryRankingOption => '女优榜';
 
   @override
-  String get actressDiscoveryRankingOptionSubtitle => '从热门排行或搜索结果挑选女优';
+  String get actressDiscoveryRankingOptionSubtitle => '从来源原生列表、标签或搜索结果挑选女优';
 
   @override
   String get actressDiscoveryManualOption => '手动新增';
@@ -2572,13 +2572,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get actressDiscoverySource => '来源';
 
   @override
-  String get actressDiscoveryAllPublishers => '全部发行商';
+  String get actressDiscoveryAllPublishers => '全部标签';
 
   @override
   String get actressDiscoverySearchHint => '搜索当前来源的女优';
 
   @override
-  String get actressDiscoveryBackToRanking => '返回热门排行';
+  String get actressDiscoveryBackToRanking => '返回女优列表';
 
   @override
   String get actressDiscoverySelectAll => '全选可用女优';
@@ -2587,7 +2587,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get actressDiscoveryCollected => '已收藏';
 
   @override
-  String get actressDiscoveryPublisherUnavailable => '未提供发行商资料';
+  String get actressDiscoveryPublisherUnavailable => '来源未提供标签';
 
   @override
   String actressDiscoveryImportSummary(
@@ -2616,10 +2616,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get actressDiscoveryCapabilityAvailable => '排行榜选择：可用（含发行商筛选）';
+  String get actressDiscoveryCapabilityAvailable => '女优榜：可用来源原生列表／搜索';
 
   @override
-  String get actressDiscoveryCapabilityUnavailable => '排行榜选择：尚未提供完整排行与发行商筛选';
+  String get actressDiscoveryCapabilityUnavailable => '女优榜：仅支持搜索或需要连接';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3863,16 +3863,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settingsScrapeJobsSubtitle => '查看佇列、恢復、暫停與失敗重試。';
 
   @override
-  String get actressDiscoveryTitle => '排行選取';
+  String get actressDiscoveryTitle => '女優榜';
 
   @override
   String get actressDiscoveryAddMethodTitle => '選擇新增方式';
 
   @override
-  String get actressDiscoveryRankingOption => '排行選取';
+  String get actressDiscoveryRankingOption => '女優榜';
 
   @override
-  String get actressDiscoveryRankingOptionSubtitle => '從熱門排行或搜尋結果挑選女優';
+  String get actressDiscoveryRankingOptionSubtitle => '從來源原生列表、標籤或搜尋結果挑選女優';
 
   @override
   String get actressDiscoveryManualOption => '手動新增';
@@ -3881,13 +3881,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get actressDiscoverySource => '來源';
 
   @override
-  String get actressDiscoveryAllPublishers => '全部發行商';
+  String get actressDiscoveryAllPublishers => '全部標籤';
 
   @override
   String get actressDiscoverySearchHint => '搜尋目前來源的女優';
 
   @override
-  String get actressDiscoveryBackToRanking => '回到熱門排行';
+  String get actressDiscoveryBackToRanking => '回到女優列表';
 
   @override
   String get actressDiscoverySelectAll => '全選可用女優';
@@ -3896,7 +3896,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get actressDiscoveryCollected => '已收藏';
 
   @override
-  String get actressDiscoveryPublisherUnavailable => '發行商資料未提供';
+  String get actressDiscoveryPublisherUnavailable => '來源未提供標籤';
 
   @override
   String actressDiscoveryImportSummary(
@@ -3925,8 +3925,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get actressDiscoveryCapabilityAvailable => '排行選取：可用（含發行商篩選）';
+  String get actressDiscoveryCapabilityAvailable => '女優榜：可用來源原生列表／搜尋';
 
   @override
-  String get actressDiscoveryCapabilityUnavailable => '排行選取：尚未提供完整排行與發行商篩選';
+  String get actressDiscoveryCapabilityUnavailable => '女優榜：僅支援搜尋或需要連線';
 }

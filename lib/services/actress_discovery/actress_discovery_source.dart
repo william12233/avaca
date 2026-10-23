@@ -1,19 +1,28 @@
 import '../../models/scrape_source_settings.dart';
 import 'actress_discovery_models.dart';
 
-/// A source is listed in discovery only when it can provide both a
-/// source-native ranking and publisher metadata without crawling individual
-/// work detail pages.
+/// Contract for the source-native actress browser.
+///
+/// A source may expose categories, search, or both. It must never fabricate a
+/// ranking when its site only has a directory or search endpoint.
 abstract interface class ActressDiscoverySource {
   ScrapeSourceId get id;
 
   String get displayName;
 
-  bool get supportsRanking;
+  bool get supportsTags;
 
-  bool get supportsPublisherFilter;
+  bool get supportsSearch;
 
-  Future<ActressDiscoverySnapshot> fetchRanking();
+  /// Whether the source can safely be used as an image origin for this page.
+  bool acceptsImageUri(Uri uri);
+
+  Future<List<ActressDiscoveryTag>> fetchTags();
+
+  Future<ActressDiscoverySnapshot> fetchTag(
+    ActressDiscoveryTag tag, {
+    int page = 1,
+  });
 
   Future<ActressDiscoverySnapshot> search(String query);
 

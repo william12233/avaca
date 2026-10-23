@@ -25,9 +25,10 @@ final class ActressDiscoveryController extends ChangeNotifier {
   final ScrapeJobCoordinator scrapeJobCoordinator;
 
   ScrapeSourceId? selectedSource;
+  List<ActressDiscoveryTag> tags = const [];
+  ActressDiscoveryTag? selectedTag;
   ActressDiscoverySnapshot? snapshot;
   String query = '';
-  String selectedPublisher = '';
   bool isLoading = false;
   bool isImporting = false;
   Object? error;
@@ -36,36 +37,96 @@ final class ActressDiscoveryController extends ChangeNotifier {
 
   List<ActressDiscoverySourceOption> get sources => service.availableSources;
 
+  ActressDiscoverySourceOption? get selectedSourceOption {
+    final source = selectedSource;
+    if (source == null) return null;
+    for (final option in sources) {
+      if (option.id == source) return option;
+    }
+    return null;
+  }
+
   bool get isSearch => snapshot?.isSearch ?? query.trim().isNotEmpty;
 
-  List<String> get publisherOptions => snapshot?.publisherOptions ?? const [];
-
-  List<ActressDiscoveryItem> get visibleItems {
-    final items = snapshot?.items ?? const <ActressDiscoveryItem>[];
-    if (selectedPublisher.isEmpty) return items;
-    return items
-        .where((item) => item.publishers.contains(selectedPublisher))
-        .toList(growable: false);
-  }
+  List<ActressDiscoveryItem> get visibleItems =>
+      snapshot?.items ?? const <ActressDiscoveryItem>[];
 
   int get selectableCount =>
       visibleItems.where((item) => !item.alreadyCollected).length;
 
   int get selectedCount => selectedKeys.length;
 
+  bool get canLoadNext => snapshot?.hasNext == true && !isSearch;
+
   bool isSelected(ActressDiscoveryItem item) => selectedKeys.contains(item.key);
 
   Future<void> load({bool refresh = false}) async {
-    final source = selectedSource;
-    if (source == null) return;
+    final sourceId = selectedSource;
+    if (sourceId == null) return;
     isLoading = true;
     error = null;
     notifyListeners();
     try {
-      snapshot = await service.loadRanking(source, refresh: refresh);
+      tags = await service.loadTags(sourceId, refresh: refresh);
+      selectedTag = _preferredTag(tags);
       query = '';
-      selectedPublisher = '';
       selectedKeys.clear();
+      if (selectedTag != null) {
+        snapshot = await service.loadTag(
+          sourceId,
+          selectedTag!,
+          refresh: refresh,
+        );
+      } else {
+        snapshot = null;
+      }
+    } on Object catch (caught) {
+      error = caught;
+      snapshot = null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> selectTag(ActressDiscoveryTag tag) async {
+    final sourceId = selectedSource;
+    if (sourceId == null || isLoading) return;
+    selectedTag = tag;
+    query = '';
+    selectedKeys.clear();
+    isLoading = true;
+    error = null;
+    notifyListeners();
+    try {
+      snapshot = await service.loadTag(sourceId, tag);
+    } on Object catch (caught) {
+      error = caught;
+      snapshot = null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadNextPage() async {
+    final sourceId = selectedSource;
+    final tag = selectedTag;
+    final current = snapshot;
+    if (sourceId == null || tag == null || current == null || !canLoadNext) {
+      return;
+    }
+    isLoading = true;
+    error = null;
+    notifyListeners();
+    try {
+      final next = await service.loadTag(sourceId, tag, page: current.page + 1);
+      final keys = current.items.map((item) => item.key).toSet();
+      final combined = [
+        ...current.items,
+        ...next.items.where((item) => keys.add(item.key)),
+      ];
+      snapshot = next.copyWith(items: combined);
     } on Object catch (caught) {
       error = caught;
     } finally {
@@ -75,9 +136,9 @@ final class ActressDiscoveryController extends ChangeNotifier {
   }
 
   Future<void> search(String value, {bool refresh = false}) async {
-    final source = selectedSource;
+    final sourceId = selectedSource;
     final trimmed = value.trim();
-    if (source == null) return;
+    if (sourceId == null) return;
     if (trimmed.isEmpty) {
       await load(refresh: refresh);
       return;
@@ -85,13 +146,13 @@ final class ActressDiscoveryController extends ChangeNotifier {
     isLoading = true;
     error = null;
     query = trimmed;
+    selectedKeys.clear();
     notifyListeners();
     try {
-      snapshot = await service.search(source, trimmed, refresh: refresh);
-      selectedPublisher = '';
-      selectedKeys.clear();
+      snapshot = await service.search(sourceId, trimmed, refresh: refresh);
     } on Object catch (caught) {
       error = caught;
+      snapshot = null;
     } finally {
       isLoading = false;
       notifyListeners();
@@ -109,20 +170,14 @@ final class ActressDiscoveryController extends ChangeNotifier {
   Future<void> selectSource(ScrapeSourceId source) async {
     if (selectedSource == source) return;
     selectedSource = source;
+    tags = const [];
+    selectedTag = null;
     snapshot = null;
     query = '';
-    selectedPublisher = '';
     selectedKeys.clear();
+    error = null;
     notifyListeners();
     await load();
-  }
-
-  void selectPublisher(String publisher) {
-    selectedPublisher = publisher;
-    selectedKeys.removeWhere(
-      (key) => !visibleItems.any((item) => item.key == key),
-    );
-    notifyListeners();
   }
 
   void toggleSelection(ActressDiscoveryItem item) {
@@ -148,7 +203,8 @@ final class ActressDiscoveryController extends ChangeNotifier {
         .where((item) => selectedKeys.contains(item.key))
         .where((item) => !item.alreadyCollected)
         .toList(growable: false);
-    if (selected.isEmpty || selectedSource == null) return null;
+    final sourceId = selectedSource;
+    if (selected.isEmpty || sourceId == null) return null;
 
     isImporting = true;
     error = null;
@@ -161,11 +217,11 @@ final class ActressDiscoveryController extends ChangeNotifier {
       );
       lastImport = result;
       selectedKeys.clear();
-      snapshot = snapshot == null
-          ? null
-          : (snapshot!.isSearch
-                ? await service.search(selectedSource!, query)
-                : await service.loadRanking(selectedSource!));
+      if (snapshot != null) {
+        snapshot = isSearch
+            ? await service.search(sourceId, query)
+            : await service.loadTag(sourceId, selectedTag!);
+      }
       return result;
     } on Object catch (caught) {
       error = caught;
@@ -197,6 +253,13 @@ final class ActressDiscoveryController extends ChangeNotifier {
       sourceSettings: settings,
     );
     return jobs.length;
+  }
+
+  ActressDiscoveryTag? _preferredTag(List<ActressDiscoveryTag> values) {
+    for (final tag in values) {
+      if (tag.isDefault) return tag;
+    }
+    return values.isEmpty ? null : values.first;
   }
 
   Future<ScrapeSourceSettings> _sourceSettings() async {

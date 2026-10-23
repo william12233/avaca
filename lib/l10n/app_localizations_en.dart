@@ -1294,17 +1294,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Inspect queue, recovery, pause, and failed-work retry.';
 
   @override
-  String get actressDiscoveryTitle => 'Choose actresses';
+  String get actressDiscoveryTitle => 'Actress directory';
 
   @override
   String get actressDiscoveryAddMethodTitle => 'Choose how to add';
 
   @override
-  String get actressDiscoveryRankingOption => 'Browse rankings';
+  String get actressDiscoveryRankingOption => 'Actress directory';
 
   @override
   String get actressDiscoveryRankingOptionSubtitle =>
-      'Pick from popular rankings or search results';
+      'Browse native source lists, tags, or search results';
 
   @override
   String get actressDiscoveryManualOption => 'Add manually';
@@ -1313,13 +1313,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actressDiscoverySource => 'Source';
 
   @override
-  String get actressDiscoveryAllPublishers => 'All publishers';
+  String get actressDiscoveryAllPublishers => 'All tags';
 
   @override
   String get actressDiscoverySearchHint => 'Search actresses on this source';
 
   @override
-  String get actressDiscoveryBackToRanking => 'Back to popular ranking';
+  String get actressDiscoveryBackToRanking => 'Back to actress lists';
 
   @override
   String get actressDiscoverySelectAll => 'Select all available';
@@ -1328,8 +1328,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actressDiscoveryCollected => 'Collected';
 
   @override
-  String get actressDiscoveryPublisherUnavailable =>
-      'Publisher data unavailable';
+  String get actressDiscoveryPublisherUnavailable => 'No source tags';
 
   @override
   String actressDiscoveryImportSummary(
@@ -1360,9 +1359,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actressDiscoveryCapabilityAvailable =>
-      'Ranking picker: available (publisher filter)';
+      'Actress directory: native lists/search available';
 
   @override
   String get actressDiscoveryCapabilityUnavailable =>
-      'Ranking picker: full ranking and publisher filter unavailable';
+      'Actress directory: search-only or connection required';
 }

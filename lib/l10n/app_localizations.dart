@@ -2429,7 +2429,7 @@ abstract class AppLocalizations {
   /// No description provided for @actressDiscoveryTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'排行選取'**
+  /// **'女優榜'**
   String get actressDiscoveryTitle;
 
   /// No description provided for @actressDiscoveryAddMethodTitle.
@@ -2441,13 +2441,13 @@ abstract class AppLocalizations {
   /// No description provided for @actressDiscoveryRankingOption.
   ///
   /// In zh_TW, this message translates to:
-  /// **'排行選取'**
+  /// **'女優榜'**
   String get actressDiscoveryRankingOption;
 
   /// No description provided for @actressDiscoveryRankingOptionSubtitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'從熱門排行或搜尋結果挑選女優'**
+  /// **'從來源原生列表、標籤或搜尋結果挑選女優'**
   String get actressDiscoveryRankingOptionSubtitle;
 
   /// No description provided for @actressDiscoveryManualOption.
@@ -2465,7 +2465,7 @@ abstract class AppLocalizations {
   /// No description provided for @actressDiscoveryAllPublishers.
   ///
   /// In zh_TW, this message translates to:
-  /// **'全部發行商'**
+  /// **'全部標籤'**
   String get actressDiscoveryAllPublishers;
 
   /// No description provided for @actressDiscoverySearchHint.
@@ -2477,7 +2477,7 @@ abstract class AppLocalizations {
   /// No description provided for @actressDiscoveryBackToRanking.
   ///
   /// In zh_TW, this message translates to:
-  /// **'回到熱門排行'**
+  /// **'回到女優列表'**
   String get actressDiscoveryBackToRanking;
 
   /// No description provided for @actressDiscoverySelectAll.
@@ -2495,7 +2495,7 @@ abstract class AppLocalizations {
   /// No description provided for @actressDiscoveryPublisherUnavailable.
   ///
   /// In zh_TW, this message translates to:
-  /// **'發行商資料未提供'**
+  /// **'來源未提供標籤'**
   String get actressDiscoveryPublisherUnavailable;
 
   /// No description provided for @actressDiscoveryImportSummary.
@@ -2536,13 +2536,13 @@ abstract class AppLocalizations {
   /// No description provided for @actressDiscoveryCapabilityAvailable.
   ///
   /// In zh_TW, this message translates to:
-  /// **'排行選取：可用（含發行商篩選）'**
+  /// **'女優榜：可用來源原生列表／搜尋'**
   String get actressDiscoveryCapabilityAvailable;
 
   /// No description provided for @actressDiscoveryCapabilityUnavailable.
   ///
   /// In zh_TW, this message translates to:
-  /// **'排行選取：尚未提供完整排行與發行商篩選'**
+  /// **'女優榜：僅支援搜尋或需要連線'**
   String get actressDiscoveryCapabilityUnavailable;
 }
 
