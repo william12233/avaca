@@ -80,44 +80,7 @@ class _HomeViewState extends State<HomeView> {
 
   Future<void> goAdd() async {
     _dismissKeyboard();
-    final l10n = AppLocalizations.of(context);
-    final choice = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.actressDiscoveryAddMethodTitle),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.people_alt_outlined),
-                title: Text(l10n.actressDiscoveryRankingOption),
-                subtitle: Text(l10n.actressDiscoveryRankingOptionSubtitle),
-                onTap: () => Navigator.of(dialogContext).pop('discovery'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.edit_outlined),
-                title: Text(l10n.actressDiscoveryManualOption),
-                subtitle: Text(l10n.addTitle),
-                onTap: () => Navigator.of(dialogContext).pop('manual'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(AppLocalizations.of(context).cancel),
-            ),
-          ],
-        );
-      },
-    );
-    if (!mounted) return;
-    if (choice == 'discovery') {
-      await Navigator.of(context).pushNamed('/actress-ranking');
-    } else if (choice == 'manual') {
-      await controller.goAdd(context);
-    }
+    await controller.goAdd(context);
     if (mounted) {
       refreshGallery();
     }

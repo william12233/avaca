@@ -26,90 +26,6 @@ final class MinnanoClient {
     await _transport.get(_baseUri);
   }
 
-  Future<List<MinnanoActressRankingItem>> fetchActressRanking({
-    int page = 1,
-  }) async {
-    if (page < 1) {
-      throw ArgumentError.value(page, 'page', 'Must be positive.');
-    }
-    final uri = _baseUri.replace(
-      path: '/ranking_actress.php',
-      queryParameters: page == 1
-          ? <String, String>{}
-          : <String, String>{'page': '$page'},
-    );
-    final source = await _transport.get(uri);
-    return _parser.parseActressRanking(source, pageUri: uri);
-  }
-
-  Future<List<MinnanoActressTag>> fetchActressTags() async {
-    final uri = _baseUri.replace(path: '/actress_list.html');
-    final source = await _transport.get(uri);
-    final parsed = _parser.parseActressTags(source, pageUri: uri).toList();
-    // S1 is a native tag page, but it is not guaranteed to be linked from the
-    // first page of the general actress directory. Keep it discoverable and
-    // recover its live count when the optional request works.
-    final s1Index = parsed.indexWhere((tag) => tag.key == '10093');
-    if (s1Index < 0 || parsed[s1Index].count == null) {
-      final s1Uri = _baseUri.replace(
-        path: '/actress_list.php',
-        queryParameters: {'tag_a_id': '10093'},
-      );
-      try {
-        final s1Tag = (await fetchActressTagsFrom(
-          s1Uri,
-        )).where((tag) => tag.key == '10093').firstOrNull;
-        if (s1Tag != null) {
-          if (s1Index >= 0) {
-            parsed[s1Index] = s1Tag;
-          } else {
-            parsed.add(s1Tag);
-          }
-        } else if (s1Index < 0) {
-          parsed.add(MinnanoActressTag(key: '10093', label: 'S1', uri: s1Uri));
-        }
-      } on Object {
-        if (s1Index < 0) {
-          parsed.add(MinnanoActressTag(key: '10093', label: 'S1', uri: s1Uri));
-        }
-      }
-    }
-    return [MinnanoActressTag(key: 'all', label: '全部女優', uri: uri), ...parsed];
-  }
-
-  Future<List<MinnanoActressTag>> fetchActressTagsFrom(Uri uri) async {
-    _validateNavigationUri(uri);
-    final source = await _transport.get(uri);
-    return _parser.parseActressTags(source, pageUri: uri);
-  }
-
-  Future<MinnanoActressListPage> fetchActressList(
-    Uri uri, {
-    int page = 1,
-  }) async {
-    if (page < 1) {
-      throw ArgumentError.value(page, 'page', 'Must be positive.');
-    }
-    _validateNavigationUri(uri);
-    final pageUri = page == 1
-        ? uri
-        : uri.replace(
-            queryParameters: {...uri.queryParameters, 'page': '$page'},
-          );
-    final source = await _transport.get(pageUri);
-    final items = _parser.parseActressList(source, pageUri: pageUri);
-    final tags = _parser.parseActressTags(source, pageUri: pageUri);
-    final hasNext = pageUri.queryParameters['page'] != null
-        ? source.contains('page=${page + 1}')
-        : source.contains('rel="next"') || source.contains('page=2');
-    return MinnanoActressListPage(
-      items: items,
-      tags: tags,
-      page: page,
-      hasNext: hasNext,
-    );
-  }
-
   Future<List<ScrapeSearchResult>> searchActresses(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
@@ -217,20 +133,6 @@ final class MinnanoClient {
       throw const MinnanoUnsafeUriException();
     }
   }
-}
-
-final class MinnanoActressListPage {
-  const MinnanoActressListPage({
-    required this.items,
-    this.tags = const [],
-    required this.page,
-    this.hasNext = false,
-  });
-
-  final List<MinnanoActressListItem> items;
-  final List<MinnanoActressTag> tags;
-  final int page;
-  final bool hasNext;
 }
 
 final class MinnanoPageLimitException implements Exception {

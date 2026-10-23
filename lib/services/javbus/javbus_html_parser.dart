@@ -371,38 +371,10 @@ class JavBusHtmlParser {
           return JavBusActressSearchResult(
             name: name,
             uri: pageUri.resolve(element.attributes['href'] ?? ''),
-            imageUri: _resolveAvatar(
-              pageUri,
-              element.querySelector('img')?.attributes['src'] ??
-                  element.querySelector('img')?.attributes['data-src'],
-            ),
           );
         })
         .where((result) => result.name.isNotEmpty)
         .toList(growable: false);
-  }
-
-  JavBusActressDirectoryPage parseActressDirectory(
-    String source, {
-    required Uri pageUri,
-    required int page,
-  }) {
-    final document = html.parse(source);
-    final items = parseActressSearchResults(source, pageUri: pageUri);
-    var maximum = page;
-    for (final anchor in document.querySelectorAll('a[href]')) {
-      final href = anchor.attributes['href'];
-      if (href == null) continue;
-      final value = int.tryParse(Uri.parse(href).queryParameters['page'] ?? '');
-      if (value != null && value > maximum) maximum = value;
-      final label = int.tryParse(anchor.text.trim());
-      if (label != null && label > maximum) maximum = label;
-    }
-    return JavBusActressDirectoryPage(
-      items: items,
-      page: page,
-      hasNext: maximum > page,
-    );
   }
 
   JavBusWorkSummary? _parseWorkSummary(Element element, Uri pageUri) {

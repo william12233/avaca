@@ -317,7 +317,7 @@ void main() {
       find.byKey(const ValueKey('scrape-source-status-avwiki')),
       findsOneWidget,
     );
-    expect(find.text('Not tested'), findsNWidgets(5));
+    expect(find.text('Not tested'), findsNWidgets(4));
 
     await tester.tap(find.byKey(const ValueKey('scrape-source-retest-button')));
     await tester.pumpAndSettle();
@@ -327,9 +327,8 @@ void main() {
       ScrapeSourceId.javbus,
       ScrapeSourceId.avbase,
       ScrapeSourceId.avwiki,
-      ScrapeSourceId.javdb,
     ]);
-    expect(find.text('Connected'), findsNWidgets(4));
+    expect(find.text('Connected'), findsNWidgets(3));
     expect(find.text('Verification required'), findsOneWidget);
   });
 

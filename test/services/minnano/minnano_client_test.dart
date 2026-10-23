@@ -12,46 +12,6 @@ void main() {
     expect(transport.requested, [Uri.parse('https://www.minnano-av.com/')]);
   });
 
-  test('fetches the actress ranking endpoint once', () async {
-    final transport = _RecordingMinnanoTransport();
-    final client = MinnanoClient(transport: transport);
-
-    final ranking = await client.fetchActressRanking();
-
-    expect(ranking.single.name, '甲女');
-    expect(transport.requested.single.path, '/ranking_actress.php');
-  });
-
-  test('fetches the native actress directory instead of a ranking', () async {
-    final transport = _RecordingMinnanoTransport();
-    final client = MinnanoClient(transport: transport);
-
-    final tags = await client.fetchActressTags();
-    final list = await client.fetchActressList(
-      Uri.parse('https://www.minnano-av.com/actress_list.php?tag_a_id=10093'),
-    );
-
-    expect(tags.first.key, 'all');
-    expect(transport.requested[0].path, '/actress_list.html');
-    expect(transport.requested[1].queryParameters['tag_a_id'], '10093');
-    expect(list.items.single.name, '未歩なな');
-  });
-
-  test('keeps S1 discoverable when its native page is empty', () async {
-    final transport = _EmptyMinnanoTransport();
-    final client = MinnanoClient(transport: transport);
-
-    final tags = await client.fetchActressTags();
-
-    expect(tags.map((tag) => tag.key), contains('10093'));
-    expect(
-      transport.requested,
-      contains(
-        Uri.parse('https://www.minnano-av.com/actress_list.php?tag_a_id=10093'),
-      ),
-    );
-  });
-
   test('uses the real search form and actress.php pagination shape', () async {
     final transport = _RecordingMinnanoTransport();
     final client = MinnanoClient(transport: transport);
@@ -109,16 +69,6 @@ void main() {
   );
 }
 
-final class _EmptyMinnanoTransport implements MinnanoTransport {
-  final requested = <Uri>[];
-
-  @override
-  Future<String> get(Uri uri) async {
-    requested.add(uri);
-    return '<html><body></body></html>';
-  }
-}
-
 final class _RecordingMinnanoTransport implements MinnanoTransport {
   final requested = <Uri>[];
 
@@ -136,30 +86,6 @@ final class _RecordingMinnanoTransport implements MinnanoTransport {
         ''';
       }
       return '<a href="actress618082.html">小湊よつ葉</a>';
-    }
-    if (uri.path == '/ranking_actress.php') {
-      return '''
-        <script type="application/ld+json">
-          {"@type":"ItemList","itemListElement":[
-            {"@type":"ListItem","position":1,"url":"/actress1.html","name":"甲女"}
-          ]}
-        </script>
-        <table class="tbllist"><tr><td>1</td><td>
-          <a href="actress1.html"><img src="/p_actress_125_125/001/1.jpg">甲女</a>
-        </td></tr></table>
-      ''';
-    }
-    if (uri.path == '/actress_list.html') {
-      return '<a href="actress_list.php?tag_a_id=10093">S1</a>';
-    }
-    if (uri.path == '/actress_list.php') {
-      return '''
-        <title>「S1」AV女優一覧 1名</title>
-        <link rel="next" href="/actress_list.php?tag_a_id=10093&amp;page=2">
-        <table class="tbllist"><tr><td><a href="actress205870.html">
-          <img src="/p_actress_125_125/022/205870.jpg">
-        </a></td><td><h2><a href="actress205870.html">未歩なな</a></h2></td></tr></table>
-      ''';
     }
     if (uri.path == '/actress618082.html') {
       return _actressPage(

@@ -13,13 +13,10 @@ import 'core/config.dart';
 import 'core/database.dart';
 import 'core/keyboard_dismiss_navigator_observer.dart';
 import 'core/resource_policy.dart';
-import 'services/actress_discovery/actress_discovery_service.dart';
-import 'services/actress_import_service.dart';
 import 'services/scrape_job_coordinator.dart';
 import 'services/update_cache_service.dart';
 import 'services/update_startup_marker.dart';
 import 'views/add_view.dart';
-import 'views/actress_discovery_view.dart';
 import 'views/data_health_view.dart';
 import 'views/detail_view.dart';
 import 'views/home_view.dart';
@@ -99,8 +96,6 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
   late final SoftwareUpdateController _softwareUpdateController;
   late final DataTransferController _dataTransferController;
   late final ScrapeJobCoordinator _scrapeJobCoordinator;
-  late final ActressDiscoveryService _actressDiscoveryService;
-  late final ActressImportService _actressImportService;
   late final UpdateCacheService _updateCacheService;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   bool _automaticUpdateStarted = false;
@@ -113,8 +108,6 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
         ref.read(softwareUpdateControllerProvider);
     _dataTransferController = ref.read(dataTransferControllerProvider);
     _scrapeJobCoordinator = ref.read(scrapeJobCoordinatorProvider);
-    _actressDiscoveryService = ref.read(actressDiscoveryServiceProvider);
-    _actressImportService = ref.read(actressImportServiceProvider);
     _updateCacheService = ref.read(updateCacheServiceProvider);
     unawaited(
       _scrapeJobCoordinator.initialize().catchError((Object error) {
@@ -309,17 +302,6 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
 
     if (name == '/add') {
       return _page(AddView(db: widget.db));
-    }
-
-    if (name == '/actress-ranking' || name == '/actress-discovery') {
-      return _page(
-        ActressDiscoveryView(
-          db: widget.db,
-          discoveryService: _actressDiscoveryService,
-          importService: _actressImportService,
-          scrapeJobCoordinator: _scrapeJobCoordinator,
-        ),
-      );
     }
 
     if (name == '/settings') {

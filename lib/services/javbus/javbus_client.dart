@@ -266,23 +266,6 @@ class JavBusClient {
     return _parser.parseActressSearchResults(source, pageUri: uri);
   }
 
-  Future<JavBusActressDirectoryPage> fetchActressDirectory(
-    Uri directoryUri, {
-    int page = 1,
-  }) async {
-    if (page < 1) {
-      throw ArgumentError.value(page, 'page', 'Must be positive.');
-    }
-    _validateNavigationUri(directoryUri);
-    final uri = page == 1
-        ? directoryUri
-        : directoryUri.replace(
-            queryParameters: {...directoryUri.queryParameters, 'page': '$page'},
-          );
-    final source = await _transport.get(uri);
-    return _parser.parseActressDirectory(source, pageUri: uri, page: page);
-  }
-
   Future<JavBusActressPage> fetchActressPage(Uri uri) async {
     _validateNavigationUri(uri);
     final source = await _transport.get(uri);

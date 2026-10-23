@@ -4,10 +4,6 @@ import '../controllers/data_transfer_controller.dart';
 import '../controllers/settings_controller.dart';
 import '../controllers/software_update_controller.dart';
 import '../core/database.dart';
-import '../services/actress_discovery/actress_discovery_cache.dart';
-import '../services/actress_discovery/actress_discovery_registry.dart';
-import '../services/actress_discovery/actress_discovery_service.dart';
-import '../services/actress_import_service.dart';
 import '../services/data_transfer_service.dart';
 import '../services/scrape_job_coordinator.dart';
 import '../services/software_update_installer.dart';
@@ -82,36 +78,3 @@ final scrapeJobCoordinatorProvider = Provider<ScrapeJobCoordinator>((ref) {
   });
   return coordinator;
 });
-
-final actressDiscoveryRegistryProvider = Provider<ActressDiscoveryRegistry>((
-  ref,
-) {
-  final registry = ActressDiscoveryRegistry(
-    verificationHandler: ref
-        .read(scrapeJobCoordinatorProvider)
-        .verificationHandler,
-  );
-  ref.onDispose(registry.close);
-  return registry;
-});
-
-final actressDiscoveryCacheProvider = Provider<ActressDiscoveryCache>(
-  (ref) => ActressDiscoveryCache(),
-);
-
-final actressDiscoveryServiceProvider = Provider<ActressDiscoveryService>(
-  (ref) => ActressDiscoveryService(
-    db: ref.read(appDatabaseProvider),
-    registry: ref.read(actressDiscoveryRegistryProvider),
-    cache: ref.read(actressDiscoveryCacheProvider),
-  ),
-);
-
-final actressImportServiceProvider = Provider<ActressImportService>(
-  (ref) => ActressImportService(
-    db: ref.read(appDatabaseProvider),
-    verificationHandler: ref
-        .read(scrapeJobCoordinatorProvider)
-        .verificationHandler,
-  ),
-);

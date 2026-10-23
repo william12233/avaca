@@ -220,13 +220,11 @@ final class ScrapeActressSearchResult {
     required this.source,
     required this.name,
     required this.uri,
-    this.imageUri,
   });
 
   final ScrapeSourceId source;
   final String name;
   final Uri uri;
-  final Uri? imageUri;
 }
 
 final class ScrapeActressPage {
