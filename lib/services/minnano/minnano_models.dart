@@ -21,12 +21,31 @@ final class MinnanoWorkSummary {
     required this.detailUri,
     this.releaseDate,
     this.imageUri,
+    this.publisher,
   });
 
   final String? code;
   final String title;
   final Uri detailUri;
   final String? releaseDate;
+  final Uri? imageUri;
+
+  /// The maker/label printed on the actress work list, when available.
+  final String? publisher;
+}
+
+/// One entry from Minnano's source-native actress ranking page.
+final class MinnanoActressRankingItem {
+  const MinnanoActressRankingItem({
+    required this.rank,
+    required this.name,
+    required this.uri,
+    this.imageUri,
+  });
+
+  final int rank;
+  final String name;
+  final Uri uri;
   final Uri? imageUri;
 }
 

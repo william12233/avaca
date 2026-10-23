@@ -1292,4 +1292,77 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsScrapeJobsSubtitle =>
       'Inspect queue, recovery, pause, and failed-work retry.';
+
+  @override
+  String get actressDiscoveryTitle => 'Choose actresses';
+
+  @override
+  String get actressDiscoveryAddMethodTitle => 'Choose how to add';
+
+  @override
+  String get actressDiscoveryRankingOption => 'Browse rankings';
+
+  @override
+  String get actressDiscoveryRankingOptionSubtitle =>
+      'Pick from popular rankings or search results';
+
+  @override
+  String get actressDiscoveryManualOption => 'Add manually';
+
+  @override
+  String get actressDiscoverySource => 'Source';
+
+  @override
+  String get actressDiscoveryAllPublishers => 'All publishers';
+
+  @override
+  String get actressDiscoverySearchHint => 'Search actresses on this source';
+
+  @override
+  String get actressDiscoveryBackToRanking => 'Back to popular ranking';
+
+  @override
+  String get actressDiscoverySelectAll => 'Select all available';
+
+  @override
+  String get actressDiscoveryCollected => 'Collected';
+
+  @override
+  String get actressDiscoveryPublisherUnavailable =>
+      'Publisher data unavailable';
+
+  @override
+  String actressDiscoveryImportSummary(
+    int added,
+    int skipped,
+    int incomplete,
+    int failed,
+  ) {
+    return 'Added $added, skipped $skipped, incomplete $incomplete, failed $failed.';
+  }
+
+  @override
+  String get actressDiscoveryImportQuestion =>
+      'Use the current settings to batch fetch works for these actresses?';
+
+  @override
+  String get actressDiscoveryBatchScrape => 'Batch fetch works';
+
+  @override
+  String actressDiscoverySelectedCount(int count) {
+    return 'Collect $count';
+  }
+
+  @override
+  String actressDiscoveryBatchQueued(int count) {
+    return 'Queued $count work scrape jobs';
+  }
+
+  @override
+  String get actressDiscoveryCapabilityAvailable =>
+      'Ranking picker: available (publisher filter)';
+
+  @override
+  String get actressDiscoveryCapabilityUnavailable =>
+      'Ranking picker: full ranking and publisher filter unavailable';
 }

@@ -1255,6 +1255,75 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsScrapeJobsSubtitle => 'キュー、復旧、一時停止、失敗再試行を確認します。';
+
+  @override
+  String get actressDiscoveryTitle => 'ランキングから選択';
+
+  @override
+  String get actressDiscoveryAddMethodTitle => '追加方法を選択';
+
+  @override
+  String get actressDiscoveryRankingOption => 'ランキングから選択';
+
+  @override
+  String get actressDiscoveryRankingOptionSubtitle => '人気ランキングや検索結果から選択します';
+
+  @override
+  String get actressDiscoveryManualOption => '手動で追加';
+
+  @override
+  String get actressDiscoverySource => 'ソース';
+
+  @override
+  String get actressDiscoveryAllPublishers => 'すべてのメーカー';
+
+  @override
+  String get actressDiscoverySearchHint => 'このソースの女優を検索';
+
+  @override
+  String get actressDiscoveryBackToRanking => '人気ランキングに戻る';
+
+  @override
+  String get actressDiscoverySelectAll => '選択可能な女優をすべて選択';
+
+  @override
+  String get actressDiscoveryCollected => '登録済み';
+
+  @override
+  String get actressDiscoveryPublisherUnavailable => 'メーカー情報なし';
+
+  @override
+  String actressDiscoveryImportSummary(
+    int added,
+    int skipped,
+    int incomplete,
+    int failed,
+  ) {
+    return '追加 $added 人、スキップ $skipped 人、不完全 $incomplete 人、失敗 $failed 人。';
+  }
+
+  @override
+  String get actressDiscoveryImportQuestion => '現在の設定で、これらの女優の作品を一括取得しますか？';
+
+  @override
+  String get actressDiscoveryBatchScrape => '作品を一括取得';
+
+  @override
+  String actressDiscoverySelectedCount(int count) {
+    return '$count 人を登録';
+  }
+
+  @override
+  String actressDiscoveryBatchQueued(int count) {
+    return '作品スクレイプジョブを $count 件追加しました';
+  }
+
+  @override
+  String get actressDiscoveryCapabilityAvailable => 'ランキング選択：利用可能（メーカー絞り込み）';
+
+  @override
+  String get actressDiscoveryCapabilityUnavailable =>
+      'ランキング選択：ランキングとメーカー絞り込みが未対応';
 }
 
 /// The translations for Japanese, as used in Japan (`ja_JP`).
@@ -2508,4 +2577,73 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
 
   @override
   String get settingsScrapeJobsSubtitle => 'キュー、復旧、一時停止、失敗再試行を確認します。';
+
+  @override
+  String get actressDiscoveryTitle => 'ランキングから選択';
+
+  @override
+  String get actressDiscoveryAddMethodTitle => '追加方法を選択';
+
+  @override
+  String get actressDiscoveryRankingOption => 'ランキングから選択';
+
+  @override
+  String get actressDiscoveryRankingOptionSubtitle => '人気ランキングや検索結果から選択します';
+
+  @override
+  String get actressDiscoveryManualOption => '手動で追加';
+
+  @override
+  String get actressDiscoverySource => 'ソース';
+
+  @override
+  String get actressDiscoveryAllPublishers => 'すべてのメーカー';
+
+  @override
+  String get actressDiscoverySearchHint => 'このソースの女優を検索';
+
+  @override
+  String get actressDiscoveryBackToRanking => '人気ランキングに戻る';
+
+  @override
+  String get actressDiscoverySelectAll => '選択可能な女優をすべて選択';
+
+  @override
+  String get actressDiscoveryCollected => '登録済み';
+
+  @override
+  String get actressDiscoveryPublisherUnavailable => 'メーカー情報なし';
+
+  @override
+  String actressDiscoveryImportSummary(
+    int added,
+    int skipped,
+    int incomplete,
+    int failed,
+  ) {
+    return '追加 $added 人、スキップ $skipped 人、不完全 $incomplete 人、失敗 $failed 人。';
+  }
+
+  @override
+  String get actressDiscoveryImportQuestion => '現在の設定で、これらの女優の作品を一括取得しますか？';
+
+  @override
+  String get actressDiscoveryBatchScrape => '作品を一括取得';
+
+  @override
+  String actressDiscoverySelectedCount(int count) {
+    return '$count 人を登録';
+  }
+
+  @override
+  String actressDiscoveryBatchQueued(int count) {
+    return '作品スクレイプジョブを $count 件追加しました';
+  }
+
+  @override
+  String get actressDiscoveryCapabilityAvailable => 'ランキング選択：利用可能（メーカー絞り込み）';
+
+  @override
+  String get actressDiscoveryCapabilityUnavailable =>
+      'ランキング選択：ランキングとメーカー絞り込みが未対応';
 }

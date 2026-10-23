@@ -26,6 +26,22 @@ final class MinnanoClient {
     await _transport.get(_baseUri);
   }
 
+  Future<List<MinnanoActressRankingItem>> fetchActressRanking({
+    int page = 1,
+  }) async {
+    if (page < 1) {
+      throw ArgumentError.value(page, 'page', 'Must be positive.');
+    }
+    final uri = _baseUri.replace(
+      path: '/ranking_actress.php',
+      queryParameters: page == 1
+          ? <String, String>{}
+          : <String, String>{'page': '$page'},
+    );
+    final source = await _transport.get(uri);
+    return _parser.parseActressRanking(source, pageUri: uri);
+  }
+
   Future<List<ScrapeSearchResult>> searchActresses(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {

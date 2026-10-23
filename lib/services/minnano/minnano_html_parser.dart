@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html;
 
@@ -14,7 +16,75 @@ final class MinnanoHtmlParser {
         .querySelectorAll('table.tbllist.av tr')
         .map((row) => _parseWorkSummary(row, pageUri))
         .whereType<MinnanoWorkSummary>()
-        .toList(growable: false);
+        .toList();
+  }
+
+  /// Parses Minnano's source-native ranking order.
+  ///
+  /// The JSON-LD ItemList is authoritative for rank and the visible table is
+  /// used to recover the source-provided avatar URL.  Keeping these two
+  /// inputs separate makes the parser resilient to display-only markup
+  /// changes while preserving the order users see on Minnano.
+  List<MinnanoActressRankingItem> parseActressRanking(
+    String source, {
+    required Uri pageUri,
+  }) {
+    final document = html.parse(source);
+    final visible = <String, _RankingMarkup>{};
+    for (final row in document.querySelectorAll('table.tbllist tr')) {
+      final anchor = row.querySelector('a[href]');
+      final href = _clean(anchor?.attributes['href']);
+      if (href == null) continue;
+      final uri = pageUri.resolve(href);
+      if (!_isMinnanoActressUri(uri)) continue;
+      final name = _beforeParenthesis(_clean(anchor?.text));
+      if (name == null || name.isEmpty) continue;
+      final image = _imageUri(
+        pageUri,
+        row.querySelector('img'),
+        allowedPathPrefix: '/p_actress_125_125/',
+      );
+      final rank = _rankFromRow(row);
+      visible[uri.toString()] = _RankingMarkup(
+        name: name,
+        imageUri: image,
+        rank: rank,
+      );
+    }
+
+    final jsonItems = _rankingItemsFromJsonLd(document, pageUri);
+    final result = <MinnanoActressRankingItem>[];
+    for (var index = 0; index < jsonItems.length; index++) {
+      final item = jsonItems[index];
+      final markup = visible[item.uri.toString()];
+      result.add(
+        MinnanoActressRankingItem(
+          rank: item.rank > 0 ? item.rank : index + 1,
+          name: item.name,
+          uri: item.uri,
+          imageUri: markup?.imageUri,
+        ),
+      );
+    }
+    if (result.isNotEmpty) return List.unmodifiable(result);
+
+    final fallback = visible.entries
+        .map(
+          (entry) => MinnanoActressRankingItem(
+            rank: entry.value.rank ?? 0,
+            name: entry.value.name,
+            uri: Uri.parse(entry.key),
+            imageUri: entry.value.imageUri,
+          ),
+        )
+        .toList(growable: true);
+    fallback.sort((a, b) {
+      if (a.rank == 0 && b.rank == 0) return 0;
+      if (a.rank == 0) return 1;
+      if (b.rank == 0) return -1;
+      return a.rank.compareTo(b.rank);
+    });
+    return List.unmodifiable(fallback);
   }
 
   MinnanoActressPage parseActressPage(String source, {required Uri pageUri}) {
@@ -220,7 +290,87 @@ final class MinnanoHtmlParser {
       detailUri: detailUri,
       releaseDate: _date(_releaseText(row)),
       imageUri: _imageUri(pageUri, image, allowedPathPrefix: '/p_package/'),
+      publisher: _workListPublisher(row),
     );
+  }
+
+  String? _workListPublisher(Element row) {
+    final labels = row.querySelectorAll('p.cast');
+    for (final label in labels.reversed) {
+      if (label.querySelector('a') != null) continue;
+      final value = _clean(label.text);
+      if (value != null) return value;
+    }
+    return null;
+  }
+
+  int? _rankFromRow(Element row) {
+    for (final cell in row.querySelectorAll('td, th')) {
+      final value = int.tryParse(cell.text.trim());
+      if (value != null && value > 0 && value <= 1000) return value;
+    }
+    return null;
+  }
+
+  List<_RankingJsonItem> _rankingItemsFromJsonLd(
+    Document document,
+    Uri pageUri,
+  ) {
+    final result = <_RankingJsonItem>[];
+    for (final script in document.querySelectorAll(
+      'script[type="application/ld+json"]',
+    )) {
+      final raw = script.text.trim();
+      if (raw.isEmpty) continue;
+      Object? decoded;
+      try {
+        decoded = jsonDecode(raw);
+      } on FormatException {
+        continue;
+      }
+      final lists = <Map<dynamic, dynamic>>[];
+      void collect(Object? value) {
+        if (value is Map) {
+          if (value['@type'] == 'ItemList') {
+            lists.add(value);
+          }
+          final graph = value['@graph'];
+          if (graph is Iterable) {
+            for (final item in graph) {
+              collect(item);
+            }
+          }
+        } else if (value is Iterable) {
+          for (final item in value) {
+            collect(item);
+          }
+        }
+      }
+
+      collect(decoded);
+      for (final list in lists) {
+        final entries = list['itemListElement'];
+        if (entries is! Iterable) continue;
+        for (final entry in entries) {
+          if (entry is! Map) continue;
+          final href = _clean(entry['url']?.toString());
+          final name = _beforeParenthesis(_clean(entry['name']?.toString()));
+          if (href == null || name == null || name.isEmpty) continue;
+          final uri = pageUri.resolve(href);
+          if (!_isMinnanoActressUri(uri)) continue;
+          final rank = int.tryParse(entry['position']?.toString() ?? '') ?? 0;
+          result.add(_RankingJsonItem(rank: rank, name: name, uri: uri));
+        }
+      }
+    }
+    result.sort((a, b) {
+      if (a.rank == 0 && b.rank == 0) return 0;
+      if (a.rank == 0) return 1;
+      if (b.rank == 0) return -1;
+      return a.rank.compareTo(b.rank);
+    });
+    final seen = <String>{};
+    return result.where((item) => seen.add(item.uri.toString())).toList();
   }
 
   String? _rowLabel(Element row) {
@@ -384,6 +534,26 @@ final class MinnanoHtmlParser {
       caseSensitive: false,
     ).hasMatch(path);
   }
+}
+
+final class _RankingMarkup {
+  const _RankingMarkup({required this.name, this.imageUri, this.rank});
+
+  final String name;
+  final Uri? imageUri;
+  final int? rank;
+}
+
+final class _RankingJsonItem {
+  const _RankingJsonItem({
+    required this.rank,
+    required this.name,
+    required this.uri,
+  });
+
+  final int rank;
+  final String name;
+  final Uri uri;
 }
 
 final class ScrapeSearchResult {

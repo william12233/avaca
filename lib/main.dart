@@ -11,6 +11,10 @@ import 'controllers/software_update_controller.dart';
 import 'services/update_cache_service.dart';
 import 'services/update_startup_marker.dart';
 import 'services/scrape_job_coordinator.dart';
+import 'services/actress_discovery/actress_discovery_cache.dart';
+import 'services/actress_discovery/actress_discovery_registry.dart';
+import 'services/actress_discovery/actress_discovery_service.dart';
+import 'services/actress_import_service.dart';
 import 'views/add_view.dart';
 import 'views/data_health_view.dart';
 import 'views/detail_view.dart';
@@ -20,6 +24,7 @@ import 'views/software_update_view.dart';
 import 'views/works_view.dart';
 import 'views/scrape_job_detail_view.dart';
 import 'views/scrape_jobs_view.dart';
+import 'views/actress_discovery_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +63,9 @@ class _AvacaAppState extends State<AvacaApp> {
   late final SoftwareUpdateController _softwareUpdateController;
   late final bool _ownsSoftwareUpdateController;
   late final ScrapeJobCoordinator _scrapeJobCoordinator;
+  late final ActressDiscoveryRegistry _actressDiscoveryRegistry;
+  late final ActressDiscoveryService _actressDiscoveryService;
+  final ActressDiscoveryCache _actressDiscoveryCache = ActressDiscoveryCache();
   final UpdateCacheService _updateCacheService = UpdateCacheService();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   bool _automaticUpdateStarted = false;
@@ -70,6 +78,12 @@ class _AvacaAppState extends State<AvacaApp> {
         widget.softwareUpdateController ??
         SoftwareUpdateController.forApp(db: widget.db);
     _scrapeJobCoordinator = ScrapeJobCoordinator(db: widget.db);
+    _actressDiscoveryRegistry = ActressDiscoveryRegistry();
+    _actressDiscoveryService = ActressDiscoveryService(
+      db: widget.db,
+      registry: _actressDiscoveryRegistry,
+      cache: _actressDiscoveryCache,
+    );
     unawaited(
       _scrapeJobCoordinator.initialize().catchError((Object error) {
         debugPrint('Scrape job coordinator initialization failed: $error');
@@ -83,6 +97,7 @@ class _AvacaAppState extends State<AvacaApp> {
     if (_ownsSoftwareUpdateController) _softwareUpdateController.dispose();
     _scrapeJobCoordinator.rulesRepository.close();
     _scrapeJobCoordinator.dispose();
+    _actressDiscoveryRegistry.close();
     super.dispose();
   }
 
@@ -276,6 +291,20 @@ class _AvacaAppState extends State<AvacaApp> {
 
     if (name == '/add') {
       return _page(AddView(db: widget.db));
+    }
+
+    if (name == '/actress-discovery') {
+      return _page(
+        ActressDiscoveryView(
+          db: widget.db,
+          discoveryService: _actressDiscoveryService,
+          importService: ActressImportService(
+            db: widget.db,
+            verificationHandler: _scrapeJobCoordinator.verificationHandler,
+          ),
+          scrapeJobCoordinator: _scrapeJobCoordinator,
+        ),
+      );
     }
 
     if (name == '/settings') {

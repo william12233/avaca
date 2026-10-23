@@ -1243,6 +1243,74 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsScrapeJobsSubtitle => '查看佇列、恢復、暫停與失敗重試。';
+
+  @override
+  String get actressDiscoveryTitle => '排行選擇';
+
+  @override
+  String get actressDiscoveryAddMethodTitle => '選擇新增方式';
+
+  @override
+  String get actressDiscoveryRankingOption => '排行選擇';
+
+  @override
+  String get actressDiscoveryRankingOptionSubtitle => '從熱門排行或搜尋結果挑選女優';
+
+  @override
+  String get actressDiscoveryManualOption => '手動新增';
+
+  @override
+  String get actressDiscoverySource => '來源';
+
+  @override
+  String get actressDiscoveryAllPublishers => '全部發行商';
+
+  @override
+  String get actressDiscoverySearchHint => '搜尋目前來源的女優';
+
+  @override
+  String get actressDiscoveryBackToRanking => '回到熱門排行';
+
+  @override
+  String get actressDiscoverySelectAll => '全選可用女優';
+
+  @override
+  String get actressDiscoveryCollected => '已收藏';
+
+  @override
+  String get actressDiscoveryPublisherUnavailable => '發行商資料未提供';
+
+  @override
+  String actressDiscoveryImportSummary(
+    int added,
+    int skipped,
+    int incomplete,
+    int failed,
+  ) {
+    return '新增 $added 位，已略過 $skipped 位，資料不完整 $incomplete 位，失敗 $failed 位。';
+  }
+
+  @override
+  String get actressDiscoveryImportQuestion => '要使用目前設定批次取得這些女優的作品嗎？';
+
+  @override
+  String get actressDiscoveryBatchScrape => '批次取得作品';
+
+  @override
+  String actressDiscoverySelectedCount(int count) {
+    return '收藏 $count 位';
+  }
+
+  @override
+  String actressDiscoveryBatchQueued(int count) {
+    return '已加入 $count 個作品刮削工作';
+  }
+
+  @override
+  String get actressDiscoveryCapabilityAvailable => '排行選取：可用（含發行商篩選）';
+
+  @override
+  String get actressDiscoveryCapabilityUnavailable => '排行選取：尚未提供完整排行與發行商篩選';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -2484,6 +2552,74 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsScrapeJobsSubtitle => '查看队列、恢复、暂停与失败重试。';
+
+  @override
+  String get actressDiscoveryTitle => '排行榜选择';
+
+  @override
+  String get actressDiscoveryAddMethodTitle => '选择新增方式';
+
+  @override
+  String get actressDiscoveryRankingOption => '排行榜选择';
+
+  @override
+  String get actressDiscoveryRankingOptionSubtitle => '从热门排行或搜索结果挑选女优';
+
+  @override
+  String get actressDiscoveryManualOption => '手动新增';
+
+  @override
+  String get actressDiscoverySource => '来源';
+
+  @override
+  String get actressDiscoveryAllPublishers => '全部发行商';
+
+  @override
+  String get actressDiscoverySearchHint => '搜索当前来源的女优';
+
+  @override
+  String get actressDiscoveryBackToRanking => '返回热门排行';
+
+  @override
+  String get actressDiscoverySelectAll => '全选可用女优';
+
+  @override
+  String get actressDiscoveryCollected => '已收藏';
+
+  @override
+  String get actressDiscoveryPublisherUnavailable => '未提供发行商资料';
+
+  @override
+  String actressDiscoveryImportSummary(
+    int added,
+    int skipped,
+    int incomplete,
+    int failed,
+  ) {
+    return '新增 $added 位，已跳过 $skipped 位，资料不完整 $incomplete 位，失败 $failed 位。';
+  }
+
+  @override
+  String get actressDiscoveryImportQuestion => '要使用当前设置批量取得这些女优的作品吗？';
+
+  @override
+  String get actressDiscoveryBatchScrape => '批量取得作品';
+
+  @override
+  String actressDiscoverySelectedCount(int count) {
+    return '收藏 $count 位';
+  }
+
+  @override
+  String actressDiscoveryBatchQueued(int count) {
+    return '已加入 $count 个作品刮削任务';
+  }
+
+  @override
+  String get actressDiscoveryCapabilityAvailable => '排行榜选择：可用（含发行商筛选）';
+
+  @override
+  String get actressDiscoveryCapabilityUnavailable => '排行榜选择：尚未提供完整排行与发行商筛选';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3725,4 +3861,72 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsScrapeJobsSubtitle => '查看佇列、恢復、暫停與失敗重試。';
+
+  @override
+  String get actressDiscoveryTitle => '排行選取';
+
+  @override
+  String get actressDiscoveryAddMethodTitle => '選擇新增方式';
+
+  @override
+  String get actressDiscoveryRankingOption => '排行選取';
+
+  @override
+  String get actressDiscoveryRankingOptionSubtitle => '從熱門排行或搜尋結果挑選女優';
+
+  @override
+  String get actressDiscoveryManualOption => '手動新增';
+
+  @override
+  String get actressDiscoverySource => '來源';
+
+  @override
+  String get actressDiscoveryAllPublishers => '全部發行商';
+
+  @override
+  String get actressDiscoverySearchHint => '搜尋目前來源的女優';
+
+  @override
+  String get actressDiscoveryBackToRanking => '回到熱門排行';
+
+  @override
+  String get actressDiscoverySelectAll => '全選可用女優';
+
+  @override
+  String get actressDiscoveryCollected => '已收藏';
+
+  @override
+  String get actressDiscoveryPublisherUnavailable => '發行商資料未提供';
+
+  @override
+  String actressDiscoveryImportSummary(
+    int added,
+    int skipped,
+    int incomplete,
+    int failed,
+  ) {
+    return '新增 $added 位，已略過 $skipped 位，資料不完整 $incomplete 位，失敗 $failed 位。';
+  }
+
+  @override
+  String get actressDiscoveryImportQuestion => '要使用目前設定批次取得這些女優的作品嗎？';
+
+  @override
+  String get actressDiscoveryBatchScrape => '批次取得作品';
+
+  @override
+  String actressDiscoverySelectedCount(int count) {
+    return '收藏 $count 位';
+  }
+
+  @override
+  String actressDiscoveryBatchQueued(int count) {
+    return '已加入 $count 個作品刮削工作';
+  }
+
+  @override
+  String get actressDiscoveryCapabilityAvailable => '排行選取：可用（含發行商篩選）';
+
+  @override
+  String get actressDiscoveryCapabilityUnavailable => '排行選取：尚未提供完整排行與發行商篩選';
 }

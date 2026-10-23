@@ -37,6 +37,44 @@ void main() {
     expect(page.works.single.code, isNull);
   });
 
+  test('parses source-native actress ranking order and profile publishers', () {
+    const rankingSource = '''
+      <script type="application/ld+json">
+        {"@type":"ItemList","itemListElement":[
+          {"@type":"ListItem","position":2,"url":"/actress2.html","name":"乙女"},
+          {"@type":"ListItem","position":1,"url":"/actress1.html","name":"甲女"}
+        ]}
+      </script>
+      <table class="tbllist">
+        <tr><td>1</td><td><a href="actress1.html"><img src="/p_actress_125_125/001/1.jpg">甲女</a></td></tr>
+        <tr><td>2</td><td><a href="actress2.html"><img src="/p_actress_125_125/002/2.jpg">乙女</a></td></tr>
+      </table>
+    ''';
+    final parser = MinnanoHtmlParser();
+    final ranking = parser.parseActressRanking(
+      rankingSource,
+      pageUri: Uri.parse('https://www.minnano-av.com/ranking_actress.php'),
+    );
+
+    expect(ranking.map((item) => item.name), ['甲女', '乙女']);
+    expect(ranking.first.rank, 1);
+    expect(
+      ranking.first.imageUri?.toString(),
+      'https://www.minnano-av.com/p_actress_125_125/001/1.jpg',
+    );
+
+    final page = parser.parseActressPage('''
+        <h2>甲女</h2>
+        <table><tr><td><span>生年月日</span><p>2000年01月01日</p></td></tr></table>
+        <table class="tbllist av">
+          <tr><td><a href="av1.html"><h3 class="ttl">作品</h3></a></td>
+          <td><p class="cast"><a href="actress1.html">甲女</a></p>
+          <p class="cast">測試發行商</p></td></tr>
+        </table>
+      ''', pageUri: Uri.parse('https://www.minnano-av.com/actress1.html'));
+    expect(page.works.single.publisher, '測試發行商');
+  });
+
   test('parses Minnano work code, maker, performers, and package image', () {
     const source = '''
       <table class="prof-table">

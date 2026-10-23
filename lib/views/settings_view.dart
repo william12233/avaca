@@ -1549,6 +1549,7 @@ class _ScrapeSourcesSettingsBodyState
     return ListTile(
       key: ValueKey('scrape-source-status-${source.name}'),
       title: Text(_sourceLabel(localizations, source)),
+      subtitle: Text(_discoveryCapabilityLabel(source)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1558,6 +1559,12 @@ class _ScrapeSourcesSettingsBodyState
         ],
       ),
     );
+  }
+
+  String _discoveryCapabilityLabel(ScrapeSourceId source) {
+    return source == ScrapeSourceId.minnanoAv
+        ? AppLocalizations.of(context).actressDiscoveryCapabilityAvailable
+        : AppLocalizations.of(context).actressDiscoveryCapabilityUnavailable;
   }
 
   String _sourceLabel(AppLocalizations localizations, ScrapeSourceId source) {

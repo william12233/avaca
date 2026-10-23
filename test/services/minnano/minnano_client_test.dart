@@ -12,6 +12,16 @@ void main() {
     expect(transport.requested, [Uri.parse('https://www.minnano-av.com/')]);
   });
 
+  test('fetches the actress ranking endpoint once', () async {
+    final transport = _RecordingMinnanoTransport();
+    final client = MinnanoClient(transport: transport);
+
+    final ranking = await client.fetchActressRanking();
+
+    expect(ranking.single.name, '甲女');
+    expect(transport.requested.single.path, '/ranking_actress.php');
+  });
+
   test('uses the real search form and actress.php pagination shape', () async {
     final transport = _RecordingMinnanoTransport();
     final client = MinnanoClient(transport: transport);
@@ -86,6 +96,18 @@ final class _RecordingMinnanoTransport implements MinnanoTransport {
         ''';
       }
       return '<a href="actress618082.html">小湊よつ葉</a>';
+    }
+    if (uri.path == '/ranking_actress.php') {
+      return '''
+        <script type="application/ld+json">
+          {"@type":"ItemList","itemListElement":[
+            {"@type":"ListItem","position":1,"url":"/actress1.html","name":"甲女"}
+          ]}
+        </script>
+        <table class="tbllist"><tr><td>1</td><td>
+          <a href="actress1.html"><img src="/p_actress_125_125/001/1.jpg">甲女</a>
+        </td></tr></table>
+      ''';
     }
     if (uri.path == '/actress618082.html') {
       return _actressPage(

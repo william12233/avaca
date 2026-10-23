@@ -359,6 +359,29 @@ class ScrapeJobCoordinator extends ChangeNotifier {
     return job;
   }
 
+  /// Enqueues one work-scrape job for each newly imported actress while
+  /// preserving the same stored options, source priority, and rule snapshot
+  /// used by the existing single-actress flow.
+  Future<List<ScrapeJob>> enqueueBatch({
+    required Iterable<({int actressId, String actressName})> actresses,
+    required WorkScrapeOptions options,
+    required ScrapeSourceSettings sourceSettings,
+  }) async {
+    await initialize();
+    final jobs = <ScrapeJob>[];
+    for (final actress in actresses) {
+      jobs.add(
+        await enqueue(
+          actressId: actress.actressId,
+          actressName: actress.actressName,
+          options: options,
+          sourceSettings: sourceSettings,
+        ),
+      );
+    }
+    return List.unmodifiable(jobs);
+  }
+
   Future<void> pause(String jobId) async {
     _tokens[jobId]?.pause();
     _emitChanged();

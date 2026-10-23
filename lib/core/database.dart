@@ -830,6 +830,20 @@ class AppDatabase {
         .toList();
   }
 
+  /// Finds a saved actress by canonical name without changing the existing
+  /// schema.  Discovery uses this helper to disable duplicates before import.
+  Future<int?> findActressIdByName(String name) async {
+    final value = name.trim();
+    if (value.isEmpty) return null;
+    final db = await database;
+    final rows = await db.rawQuery(
+      'SELECT id FROM actresses '
+      'WHERE lower(trim(name)) = lower(trim(?)) LIMIT 1',
+      [value],
+    );
+    return rows.isEmpty ? null : (rows.first['id'] as num?)?.toInt();
+  }
+
   // 依 id 取得單筆收藏的詳細資料。
   Future<Map<String, Object?>?> getActressById(int actressId) async {
     final db = await database;
@@ -1543,6 +1557,60 @@ class AppDatabase {
         birthDate: normalizedBirthDate.value,
       ),
     );
+  }
+
+  /// Inserts a new actress and returns its database id.
+  ///
+  /// This is intentionally additive: the existing boolean [addActress]
+  /// contract remains unchanged for the manual-add flow.
+  Future<int?> addActressAndGetId({
+    required String name,
+    String? imgPath,
+    String mainType = '',
+    String tags = '',
+    String memo = '',
+    String? birthDate,
+  }) async {
+    final normalizedName = name.trim();
+    final normalizedBirthDate = _normalizeBirthDate(birthDate);
+    if (normalizedName.isEmpty || !normalizedBirthDate.valid) {
+      return null;
+    }
+    return runManagedImageLifecycle(
+      () => _addActressAndGetId(
+        name: normalizedName,
+        imgPath: imgPath,
+        mainType: mainType,
+        tags: tags,
+        memo: memo,
+        birthDate: normalizedBirthDate.value,
+      ),
+    );
+  }
+
+  Future<int?> _addActressAndGetId({
+    required String name,
+    required String? imgPath,
+    required String mainType,
+    required String tags,
+    required String memo,
+    required String? birthDate,
+  }) async {
+    try {
+      final db = await database;
+      final id = await db.rawInsert(
+        '''
+        INSERT INTO actresses (
+          name, img_path, main_type, tags, memo, birth_date, modified_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ''',
+        [name, imgPath, mainType, tags, memo, birthDate],
+      );
+      return id > 0 ? id : null;
+    } on DatabaseException {
+      return null;
+    }
   }
 
   Future<bool> _addActress({

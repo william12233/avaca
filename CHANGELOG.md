@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 - 2026-10-23
+
+- Added an actress discovery page backed by the Minnano AV actress ranking,
+  with keyword search, publisher filtering, ranking refresh, and multi-select
+  import.
+- Added duplicate-aware actress importing that uses the configured actress
+  detail source and can queue work scraping for the selected actresses.
+- Added localized discovery UI and source capability status in Settings.
+
 ## 1.0.0 - 2026-10-21
 
 - Restored AVACA to the final local collection product baseline from 0.9.18.
