@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0 - 2026-10-23
+
+- Added visible update download percentage, byte counts, and live progress in
+  both the Settings page and update dialog.
+- Reworked update archive extraction and data transfer to use bounded streaming
+  paths, preserving checksum, archive safety, and database formats.
+- Centralized dependency lifecycles with Riverpod and bounded image/cache
+  resources to reduce memory use and concurrent download pressure.
+
 ## 1.2.1 - 2026-10-23
 
 - Returned the Add action to the original manual actress-input flow.
