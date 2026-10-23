@@ -37,12 +37,16 @@ class SoftwareUpdateController extends ChangeNotifier {
   SoftwareRelease? latestRelease;
   ReleaseAsset? latestAsset;
   SoftwareUpdateException? error;
-  double? downloadProgress;
+  DownloadProgress? downloadProgress;
   bool autoCheckUpdates = true;
 
   Future<SoftwareUpdateResult>? _checkFuture;
   Future<SoftwareInstallResult?>? _installFuture;
   SoftwareUpdateResult? _lastResult;
+  DateTime? _lastProgressNotificationAt;
+  int? _lastProgressPercentage;
+
+  SoftwareUpdateResult? get currentResult => _lastResult;
 
   bool get isBusy =>
       status == UpdateStatus.checking ||
@@ -161,15 +165,34 @@ class SoftwareUpdateController extends ChangeNotifier {
   ) async {
     status = UpdateStatus.downloading;
     error = null;
-    downloadProgress = null;
+    downloadProgress = DownloadProgress(
+      receivedBytes: 0,
+      totalBytes: result.asset?.size,
+    );
+    _lastProgressNotificationAt = null;
+    _lastProgressPercentage = null;
     notifyListeners();
 
     try {
       final downloaded = await _service.download(
         result,
-        onProgress: (received, total) {
-          downloadProgress = total <= 0 ? null : received / total;
-          notifyListeners();
+        onProgress: (progress) {
+          downloadProgress = progress;
+          final percentage = progress.percentage;
+          final now = DateTime.now();
+          final elapsed = _lastProgressNotificationAt == null
+              ? const Duration(days: 1)
+              : now.difference(_lastProgressNotificationAt!);
+          final isFinal =
+              progress.hasTotal &&
+              progress.receivedBytes >= progress.totalBytes!;
+          if (isFinal ||
+              percentage != null && percentage != _lastProgressPercentage ||
+              elapsed >= const Duration(milliseconds: 100)) {
+            _lastProgressNotificationAt = now;
+            _lastProgressPercentage = percentage;
+            notifyListeners();
+          }
         },
       );
       status = UpdateStatus.verifying;

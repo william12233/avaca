@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:image/image.dart' as image;
 
@@ -54,7 +53,7 @@ final class HttpScrapeImageUriDownloader implements ScrapeImageUriDownloader {
         response.bodyBytes.isEmpty) {
       return false;
     }
-    final bytes = Uint8List.fromList(response.bodyBytes);
+    final bytes = response.bytes;
     if (!isSafeDecodableImage(bytes)) {
       return false;
     }

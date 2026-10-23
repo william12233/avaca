@@ -80,7 +80,15 @@ void main() {
         expect(result.status, UpdateStatus.updateAvailable);
         expect(result.asset?.name, 'avaca-0.8.2-arm64-v8a.apk');
 
-        final downloaded = await service.download(result);
+        final progress = <DownloadProgress>[];
+        final downloaded = await service.download(
+          result,
+          onProgress: progress.add,
+        );
+        expect(progress.first.receivedBytes, 0);
+        expect(progress.first.totalBytes, bytes.length);
+        expect(progress.last.receivedBytes, bytes.length);
+        expect(progress.last.percentage, 100);
         expect(await downloaded.file.readAsBytes(), bytes);
         expect(await downloaded.file.exists(), isTrue);
       },

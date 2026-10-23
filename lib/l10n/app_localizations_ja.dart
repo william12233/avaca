@@ -806,6 +806,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get downloadingUpdate => '更新をダウンロード中…';
 
   @override
+  String updateDownloadProgress(Object percent, Object received, Object total) {
+    return '更新をダウンロード中: $percent% ($received / $total)';
+  }
+
+  @override
+  String updateDownloadProgressUnknownTotal(Object received) {
+    return 'ダウンロード済み $received';
+  }
+
+  @override
   String get verifyingUpdate => '更新を検証中…';
 
   @override
@@ -2126,6 +2136,16 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
 
   @override
   String get downloadingUpdate => '更新をダウンロード中…';
+
+  @override
+  String updateDownloadProgress(Object percent, Object received, Object total) {
+    return '更新をダウンロード中: $percent% ($received / $total)';
+  }
+
+  @override
+  String updateDownloadProgressUnknownTotal(Object received) {
+    return 'ダウンロード済み $received';
+  }
 
   @override
   String get verifyingUpdate => '更新を検証中…';

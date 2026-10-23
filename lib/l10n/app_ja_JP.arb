@@ -291,6 +291,8 @@
   "checkForUpdates": "更新を確認",
   "checkingForUpdates": "更新を確認中…",
   "downloadingUpdate": "更新をダウンロード中…",
+  "updateDownloadProgress": "更新をダウンロード中: {percent}% ({received} / {total})",
+  "updateDownloadProgressUnknownTotal": "ダウンロード済み {received}",
   "verifyingUpdate": "更新を検証中…",
   "installingUpdate": "インストールを開始中…",
   "updateAvailable": "新しいバージョンがあります",

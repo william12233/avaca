@@ -21,10 +21,15 @@ typedef DataTransferProgressCallback =
     void Function(DataTransferProgress progress);
 
 class DataTransferExport {
-  const DataTransferExport({required this.bytes, required this.summary});
+  const DataTransferExport({
+    required this.bytes,
+    required this.summary,
+    this.filePath,
+  });
 
   final Uint8List bytes;
   final DataTransferSummary summary;
+  final String? filePath;
 }
 
 class DataTransferService {
@@ -35,6 +40,7 @@ class DataTransferService {
 
   Future<DataTransferExport> buildExport({
     DataTransferProgressCallback? onProgress,
+    String? outputPath,
   }) async {
     onProgress?.call(
       const DataTransferProgress(phase: DataTransferPhase.preparing),
@@ -144,8 +150,8 @@ class DataTransferService {
                 '${_supportedExtension(file.path)}';
       final existing = imageBySource[sourceKey];
       if (existing == null) {
-        final bytes = await file.readAsBytes();
-        if (bytes.length > DataTransferLimits.maxSingleEntryBytes) {
+        final size = await file.length();
+        if (size > DataTransferLimits.maxSingleEntryBytes) {
           throw const DataTransferException(
             'archive_too_large',
             'A referenced image exceeds the portable archive limit.',
@@ -154,8 +160,9 @@ class DataTransferService {
         imageBySource[sourceKey] = _ExportImage(
           sourceKey: sourceKey,
           extension: _supportedExtension(file.path),
-          bytes: Uint8List.fromList(bytes),
-          sha256: sha256.convert(bytes).toString(),
+          filePath: file.path,
+          size: size,
+          sha256: await _sha256File(file),
           preferredFileName: preferredFileName,
         );
       } else if (existing.preferredFileName == null &&
@@ -323,7 +330,7 @@ class DataTransferService {
         DataTransferAsset(
           id: archiveId,
           path: image.archivePath!,
-          size: image.bytes.length,
+          size: image.size,
           sha256: image.sha256,
         ),
       );
@@ -398,7 +405,7 @@ class DataTransferService {
     }
     var totalBytes = manifestBytes.length;
     for (final image in sortedAssets) {
-      totalBytes += image.bytes.length;
+      totalBytes += image.size;
       if (totalBytes > DataTransferLimits.maxTotalUncompressedBytes) {
         throw const DataTransferException(
           'archive_too_large',
@@ -416,27 +423,52 @@ class DataTransferService {
     );
     final archive = Archive()
       ..addFile(ArchiveFile.bytes('manifest.json', manifestBytes));
-    for (var index = 0; index < sortedAssets.length; index++) {
-      final image = sortedAssets[index];
-      archive.addFile(ArchiveFile.bytes(image.archivePath!, image.bytes));
-      onProgress?.call(
-        DataTransferProgress(
-          phase: DataTransferPhase.writing,
-          completed: index + 1,
-          total: sortedAssets.length,
-        ),
-      );
-    }
-    final encoded = ZipEncoder().encode(archive);
-    return DataTransferExport(
-      bytes: Uint8List.fromList(encoded),
-      summary: DataTransferSummary(
+    final imageInputs = <InputFileStream>[];
+    try {
+      for (var index = 0; index < sortedAssets.length; index++) {
+        final image = sortedAssets[index];
+        final input = InputFileStream(image.filePath);
+        imageInputs.add(input);
+        archive.addFile(ArchiveFile.stream(image.archivePath!, input));
+        onProgress?.call(
+          DataTransferProgress(
+            phase: DataTransferPhase.writing,
+            completed: index + 1,
+            total: sortedAssets.length,
+          ),
+        );
+      }
+      final summary = DataTransferSummary(
         actresses: exportedActresses.length,
         works: exportedWorks.length,
         images: exportedAssets.length,
         skippedImages: skippedImages,
-      ),
-    );
+      );
+      if (outputPath != null) {
+        final output = OutputFileStream(outputPath);
+        try {
+          ZipEncoder().encodeStream(archive, output);
+        } finally {
+          await output.close();
+        }
+        return DataTransferExport(
+          bytes: Uint8List(0),
+          filePath: outputPath,
+          summary: summary,
+        );
+      }
+      final encoded = ZipEncoder().encodeBytes(archive);
+      return DataTransferExport(bytes: encoded, summary: summary);
+    } finally {
+      for (final input in imageInputs) {
+        await input.close();
+      }
+    }
+  }
+
+  Future<String> _sha256File(File file) async {
+    final digest = await sha256.bind(file.openRead()).single;
+    return digest.toString();
   }
 
   Future<DataTransferOperationResult> importArchive({
@@ -455,7 +487,127 @@ class DataTransferService {
         const DataTransferProgress(phase: DataTransferPhase.preparing),
       );
       final prepared = await _prepareImport(bytes);
-      final resolutions = <String, DataTransferDuplicateResolution>{};
+      final operationId =
+          'transfer-${DateTime.now().toUtc().microsecondsSinceEpoch}';
+      final directory = Directory(
+        path.join(db.imgDir, '.imports', operationId),
+      );
+      await directory.create(recursive: true);
+      return await _writePreparedImport(
+        prepared: prepared,
+        directory: directory,
+        resolveDuplicate: resolveDuplicate,
+        onProgress: onProgress,
+      );
+    } on DataTransferCancelled {
+      return const DataTransferOperationResult(cancelled: true);
+    } on DataTransferException catch (error) {
+      return DataTransferOperationResult(cancelled: false, error: error);
+    } on FormatException catch (error) {
+      return DataTransferOperationResult(
+        cancelled: false,
+        error: DataTransferException('invalid_archive', error.message),
+      );
+    } on Object catch (error) {
+      return DataTransferOperationResult(
+        cancelled: false,
+        error: DataTransferException('transfer_failed', error.toString()),
+      );
+    }
+  }
+
+  Future<DataTransferOperationResult> importArchiveFile({
+    required File file,
+    DataTransferDuplicateResolver? resolveDuplicate,
+    DataTransferProgressCallback? onProgress,
+  }) async {
+    Directory? directory;
+    var committed = false;
+    try {
+      if (!await file.exists()) {
+        throw const DataTransferException(
+          'file_unreadable',
+          'The selected ZIP could not be read.',
+        );
+      }
+      if (await file.length() > DataTransferLimits.maxArchiveBytes) {
+        throw const DataTransferException(
+          'archive_too_large',
+          'The selected ZIP exceeds the supported size.',
+        );
+      }
+      onProgress?.call(
+        const DataTransferProgress(phase: DataTransferPhase.preparing),
+      );
+      final operationId =
+          'transfer-${DateTime.now().toUtc().microsecondsSinceEpoch}';
+      directory = Directory(path.join(db.imgDir, '.imports', operationId));
+      await directory.create(recursive: true);
+      final input = InputFileStream(file.path);
+      try {
+        final decoder = ZipDecoder();
+        final archive = decoder.decodeStream(input, verify: true);
+        final prepared = await _prepareImportArchive(
+          archive: archive,
+          decoder: decoder,
+          readAsset: (asset, entry) async {
+            final staged = File(
+              path.join(
+                directory!.path,
+                'source-${asset.id}${_supportedExtension(asset.path)}',
+              ),
+            );
+            final output = OutputFileStream(staged.path);
+            try {
+              entry.writeContent(output, freeMemory: true);
+            } finally {
+              await output.close();
+            }
+            return _PreparedAssetContent(path: staged.path);
+          },
+        );
+        final result = await _writePreparedImport(
+          prepared: prepared,
+          directory: directory,
+          resolveDuplicate: resolveDuplicate,
+          onProgress: onProgress,
+          onCommitted: () => committed = true,
+        );
+        return result;
+      } finally {
+        await input.close();
+      }
+    } on DataTransferCancelled {
+      return const DataTransferOperationResult(cancelled: true);
+    } on DataTransferException catch (error) {
+      return DataTransferOperationResult(cancelled: false, error: error);
+    } on FormatException catch (error) {
+      return DataTransferOperationResult(
+        cancelled: false,
+        error: DataTransferException('invalid_archive', error.message),
+      );
+    } on Object catch (error) {
+      return DataTransferOperationResult(
+        cancelled: false,
+        error: DataTransferException('transfer_failed', error.toString()),
+      );
+    } finally {
+      if (!committed && directory != null && await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    }
+  }
+
+  Future<DataTransferOperationResult> _writePreparedImport({
+    required _PreparedImport prepared,
+    required Directory directory,
+    required DataTransferDuplicateResolver? resolveDuplicate,
+    required DataTransferProgressCallback? onProgress,
+    void Function()? onCommitted,
+  }) async {
+    final resolutions = <String, DataTransferDuplicateResolution>{};
+    var committed = false;
+    try {
       for (final candidate in prepared.duplicates) {
         onProgress?.call(
           const DataTransferProgress(
@@ -475,12 +627,6 @@ class DataTransferService {
         resolutions[candidate.imported.id] = resolution;
       }
 
-      final operationId =
-          'transfer-${DateTime.now().toUtc().microsecondsSinceEpoch}';
-      final directory = Directory(
-        path.join(db.imgDir, '.imports', operationId),
-      );
-      await directory.create(recursive: true);
       final localAssetPaths = <String, String>{};
       final preferredImportFileNames = <String, String>{};
       for (final work in prepared.manifest.works) {
@@ -507,63 +653,64 @@ class DataTransferService {
         }
       }
       final stagedFileNames = <String>{};
-      var committed = false;
-      try {
+      onProgress?.call(
+        DataTransferProgress(
+          phase: DataTransferPhase.writing,
+          completed: 0,
+          total: prepared.manifest.assets.length,
+        ),
+      );
+      for (var index = 0; index < prepared.manifest.assets.length; index++) {
+        final asset = prepared.manifest.assets[index];
+        final extension = _supportedExtension(asset.path);
+        final preferredFileName = preferredImportFileNames[asset.id];
+        var stagedFileName = preferredFileName == null
+            ? path.basename(asset.path)
+            : '${path.basenameWithoutExtension(preferredFileName)}$extension';
+        if (!stagedFileNames.add(stagedFileName.toLowerCase())) {
+          stagedFileName = 'asset-$index$extension';
+          var collision = 1;
+          while (!stagedFileNames.add(stagedFileName.toLowerCase())) {
+            stagedFileName = 'asset-$index-$collision$extension';
+            collision++;
+          }
+        }
+        final target = File(path.join(directory.path, stagedFileName));
+        final sourcePath = prepared.assetPaths[asset.id];
+        if (sourcePath != null) {
+          await File(sourcePath).rename(target.path);
+        } else {
+          final bytes = prepared.assetBytes[asset.id];
+          if (bytes == null) {
+            throw const DataTransferException(
+              'corrupt_archive',
+              'An asset could not be staged.',
+            );
+          }
+          await target.writeAsBytes(bytes, flush: true);
+        }
+        localAssetPaths[asset.id] = target.path;
         onProgress?.call(
           DataTransferProgress(
             phase: DataTransferPhase.writing,
-            completed: 0,
+            completed: index + 1,
             total: prepared.manifest.assets.length,
           ),
         );
-        for (var index = 0; index < prepared.manifest.assets.length; index++) {
-          final asset = prepared.manifest.assets[index];
-          final extension = _supportedExtension(asset.path);
-          final preferredFileName = preferredImportFileNames[asset.id];
-          var stagedFileName = preferredFileName == null
-              ? path.basename(asset.path)
-              : '${path.basenameWithoutExtension(preferredFileName)}$extension';
-          if (!stagedFileNames.add(stagedFileName.toLowerCase())) {
-            stagedFileName = 'asset-$index$extension';
-            var collision = 1;
-            while (!stagedFileNames.add(stagedFileName.toLowerCase())) {
-              stagedFileName = 'asset-$index-$collision$extension';
-              collision++;
-            }
-          }
-          final target = File(path.join(directory.path, stagedFileName));
-          await target.writeAsBytes(
-            prepared.assetBytes[asset.id]!,
-            flush: true,
-          );
-          localAssetPaths[asset.id] = target.path;
-          onProgress?.call(
-            DataTransferProgress(
-              phase: DataTransferPhase.writing,
-              completed: index + 1,
-              total: prepared.manifest.assets.length,
-            ),
-          );
-        }
-
-        await db.runDataTransferTransaction((transaction) async {
-          await _commitImport(
-            transaction,
-            prepared,
-            localAssetPaths,
-            resolutions,
-          );
-        });
-        committed = true;
-        await _cleanupUnreferencedImportAssets(directory, localAssetPaths);
-        await db.flushDataTransferFileDeletions();
-      } catch (_) {
-        if (!committed && await directory.exists()) {
-          await directory.delete(recursive: true);
-        }
-        rethrow;
       }
 
+      await db.runDataTransferTransaction((transaction) async {
+        await _commitImport(
+          transaction,
+          prepared,
+          localAssetPaths,
+          resolutions,
+        );
+      });
+      committed = true;
+      onCommitted?.call();
+      await _cleanupUnreferencedImportAssets(directory, localAssetPaths);
+      await db.flushDataTransferFileDeletions();
       return DataTransferOperationResult(
         cancelled: false,
         summary: DataTransferSummary(
@@ -573,26 +720,34 @@ class DataTransferService {
           duplicatesResolved: resolutions.length,
         ),
       );
-    } on DataTransferCancelled {
-      return const DataTransferOperationResult(cancelled: true);
-    } on DataTransferException catch (error) {
-      return DataTransferOperationResult(cancelled: false, error: error);
-    } on FormatException catch (error) {
-      return DataTransferOperationResult(
-        cancelled: false,
-        error: DataTransferException('invalid_archive', error.message),
-      );
-    } on Object catch (error) {
-      return DataTransferOperationResult(
-        cancelled: false,
-        error: DataTransferException('transfer_failed', error.toString()),
-      );
+    } finally {
+      if (!committed && await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
     }
   }
 
   Future<_PreparedImport> _prepareImport(Uint8List bytes) async {
     final decoder = ZipDecoder();
     final archive = decoder.decodeBytes(bytes, verify: true);
+    return _prepareImportArchive(
+      archive: archive,
+      decoder: decoder,
+      readAsset: (asset, entry) async {
+        return _PreparedAssetContent(bytes: entry.readBytes());
+      },
+    );
+  }
+
+  Future<_PreparedImport> _prepareImportArchive({
+    required Archive archive,
+    required ZipDecoder decoder,
+    required Future<_PreparedAssetContent> Function(
+      DataTransferAsset asset,
+      ArchiveFile entry,
+    )
+    readAsset,
+  }) async {
     final headers = decoder.directory.fileHeaders;
     if (headers.length > DataTransferLimits.maxEntries) {
       throw const DataTransferException(
@@ -716,6 +871,7 @@ class DataTransferService {
     }
 
     final assetBytes = <String, Uint8List>{};
+    final assetPaths = <String, String>{};
     var totalBytes = manifestBytes.length;
     for (final asset in manifest.assets) {
       final entry = entries[asset.path];
@@ -725,27 +881,39 @@ class DataTransferService {
           'A manifest asset is missing from the ZIP.',
         );
       }
-      final payload = entry.readBytes();
-      if (payload == null || payload.length != asset.size) {
+      final preparedAsset = await readAsset(asset, entry);
+      final payload = preparedAsset.bytes;
+      final assetPath = preparedAsset.path;
+      final actualSize =
+          payload?.length ??
+          (assetPath == null ? -1 : await File(assetPath).length());
+      if (actualSize != asset.size) {
         throw const DataTransferException(
           'corrupt_archive',
           'An asset size does not match its manifest.',
         );
       }
-      totalBytes += payload.length;
+      totalBytes += actualSize;
       if (totalBytes > DataTransferLimits.maxTotalUncompressedBytes) {
         throw const DataTransferException(
           'archive_too_large',
           'The ZIP expands beyond the supported size.',
         );
       }
-      if (sha256.convert(payload).toString() != asset.sha256) {
+      final actualSha256 = payload == null
+          ? await _sha256File(File(assetPath!))
+          : sha256.convert(payload).toString();
+      if (actualSha256 != asset.sha256) {
         throw const DataTransferException(
           'corrupt_archive',
           'An asset checksum does not match its manifest.',
         );
       }
-      assetBytes[asset.id] = Uint8List.fromList(payload);
+      if (payload != null) {
+        assetBytes[asset.id] = payload;
+      } else {
+        assetPaths[asset.id] = assetPath!;
+      }
     }
 
     for (final entry in entries.values) {
@@ -790,6 +958,13 @@ class DataTransferService {
       if (existing == null) continue;
       final existingId = _asInt(existing['id']);
       if (existingId == null) continue;
+      final avatarAssetId = actress.avatarAssetId;
+      final importedAvatarBytes = avatarAssetId == null
+          ? null
+          : assetBytes[avatarAssetId] ??
+                (assetPaths[avatarAssetId] == null
+                    ? null
+                    : await File(assetPaths[avatarAssetId]!).readAsBytes());
       duplicates.add(
         DataTransferDuplicateCandidate(
           imported: actress,
@@ -798,9 +973,7 @@ class DataTransferService {
           existingImagePath: existing['img_path']?.toString(),
           existingWorkCount: workCounts[existingId] ?? 0,
           importedWorkCount: importedWorkCounts[actress.id] ?? 0,
-          importedAvatarBytes: actress.avatarAssetId == null
-              ? null
-              : assetBytes[actress.avatarAssetId!],
+          importedAvatarBytes: importedAvatarBytes,
         ),
       );
     }
@@ -808,6 +981,7 @@ class DataTransferService {
     return _PreparedImport(
       manifest: manifest,
       assetBytes: assetBytes,
+      assetPaths: assetPaths,
       duplicates: List.unmodifiable(duplicates),
     );
   }
@@ -1188,15 +1362,24 @@ class DataTransferService {
   }
 }
 
+class _PreparedAssetContent {
+  const _PreparedAssetContent({this.bytes, this.path});
+
+  final Uint8List? bytes;
+  final String? path;
+}
+
 class _PreparedImport {
   const _PreparedImport({
     required this.manifest,
     required this.assetBytes,
+    required this.assetPaths,
     required this.duplicates,
   });
 
   final DataTransferManifest manifest;
   final Map<String, Uint8List> assetBytes;
+  final Map<String, String> assetPaths;
   final List<DataTransferDuplicateCandidate> duplicates;
 }
 
@@ -1272,14 +1455,16 @@ class _ExportImage {
   _ExportImage({
     required this.sourceKey,
     required this.extension,
-    required this.bytes,
+    required this.filePath,
+    required this.size,
     required this.sha256,
     this.preferredFileName,
   });
 
   final String sourceKey;
   final String extension;
-  final Uint8List bytes;
+  final String filePath;
+  final int size;
   final String sha256;
   String? preferredFileName;
   String? archivePath;

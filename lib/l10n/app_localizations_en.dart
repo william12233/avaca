@@ -829,6 +829,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadingUpdate => 'Downloading update…';
 
   @override
+  String updateDownloadProgress(Object percent, Object received, Object total) {
+    return 'Downloading update: $percent% ($received / $total)';
+  }
+
+  @override
+  String updateDownloadProgressUnknownTotal(Object received) {
+    return 'Downloaded $received';
+  }
+
+  @override
   String get verifyingUpdate => 'Verifying update…';
 
   @override

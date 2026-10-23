@@ -292,6 +292,8 @@
   "checkForUpdates": "检查更新",
   "checkingForUpdates": "正在检查更新…",
   "downloadingUpdate": "正在下载更新…",
+  "updateDownloadProgress": "正在下载更新：{percent}%（{received} / {total}）",
+  "updateDownloadProgressUnknownTotal": "已下载 {received}",
   "verifyingUpdate": "正在验证更新…",
   "installingUpdate": "正在启动安装…",
   "updateAvailable": "有新版本可用",

@@ -19,6 +19,12 @@ class BinaryResponse {
 
   final int statusCode;
   final List<int> bodyBytes;
+
+  Uint8List get bytes {
+    return bodyBytes is Uint8List
+        ? bodyBytes as Uint8List
+        : Uint8List.fromList(bodyBytes);
+  }
 }
 
 abstract interface class BinaryTransport {
@@ -479,10 +485,7 @@ class WorkImageDownloader {
         statusCode: response.statusCode,
       );
     }
-    return WorkImageRouteProbeResult(
-      bytes: Uint8List.fromList(response.bodyBytes),
-      sourceUri: uri,
-    );
+    return WorkImageRouteProbeResult(bytes: response.bytes, sourceUri: uri);
   }
 
   DownloadedWorkImage _downloaded(WorkImageRouteProbeResult result) {
@@ -536,7 +539,7 @@ class WorkImageDownloader {
       return false;
     }
     try {
-      final bytes = Uint8List.fromList(response.bodyBytes);
+      final bytes = response.bytes;
       if (!isSafeDecodableImage(bytes)) {
         return false;
       }

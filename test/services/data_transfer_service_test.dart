@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:avaca/core/database.dart';
+import 'package:crypto/crypto.dart';
 import 'package:avaca/models/data_transfer_manifest.dart';
 import 'package:avaca/models/work_storage.dart';
 import 'package:avaca/models/data_transfer_models.dart';
@@ -194,6 +195,62 @@ void main() {
         'existing',
       );
       expect(await target.getWorkCountForActress(targetActorId), 1);
+    },
+  );
+
+  test(
+    'imports a file-backed archive without loading its assets map',
+    () async {
+      final assetBytes = Uint8List.fromList([1, 2, 3, 4]);
+      final manifest = DataTransferManifest(
+        exportedAt: DateTime.utc(2026, 1, 1).toIso8601String(),
+        actresses: const [
+          DataTransferActress(
+            id: 'a000001',
+            name: 'Streamed Actor',
+            avatarAssetId: 'asset000001',
+            birthDate: null,
+            mainType: null,
+            tags: null,
+            memo: null,
+            height: null,
+            weight: null,
+            bwh: null,
+            cup: null,
+            aliases: [],
+          ),
+        ],
+        works: const [],
+        relations: const [],
+        assets: [
+          DataTransferAsset(
+            id: 'asset000001',
+            path: 'assets/avatar.jpg',
+            size: assetBytes.length,
+            sha256: sha256.convert(assetBytes).toString(),
+          ),
+        ],
+      );
+      final bytes = Uint8List.fromList(
+        ZipEncoder().encode(
+          Archive()
+            ..addFile(ArchiveFile.string('manifest.json', manifest.encode()))
+            ..addFile(ArchiveFile.bytes('assets/avatar.jpg', assetBytes)),
+        ),
+      );
+      final archivePath = path.join(sourceDirectory.path, 'streamed.zip');
+      await File(archivePath).writeAsBytes(bytes);
+
+      final result = await DataTransferService(
+        db: target,
+      ).importArchiveFile(file: File(archivePath));
+
+      expect(result.succeeded, isTrue);
+      final imported = (await target.getAllActresses()).single;
+      expect(
+        await File(imported['img_path'] as String).readAsBytes(),
+        assetBytes,
+      );
     },
   );
 

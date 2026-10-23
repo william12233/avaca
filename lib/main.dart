@@ -1,33 +1,39 @@
-import 'dart:convert';
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'dart:convert';
+
 import 'package:avaca/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app/app_providers.dart';
+import 'controllers/data_transfer_controller.dart';
+import 'controllers/software_update_controller.dart';
 import 'core/config.dart';
 import 'core/database.dart';
 import 'core/keyboard_dismiss_navigator_observer.dart';
-import 'controllers/software_update_controller.dart';
-import 'services/update_cache_service.dart';
-import 'services/update_startup_marker.dart';
-import 'services/scrape_job_coordinator.dart';
-import 'services/actress_discovery/actress_discovery_cache.dart';
-import 'services/actress_discovery/actress_discovery_registry.dart';
+import 'core/resource_policy.dart';
 import 'services/actress_discovery/actress_discovery_service.dart';
 import 'services/actress_import_service.dart';
+import 'services/scrape_job_coordinator.dart';
+import 'services/update_cache_service.dart';
+import 'services/update_startup_marker.dart';
 import 'views/add_view.dart';
+import 'views/actress_discovery_view.dart';
 import 'views/data_health_view.dart';
 import 'views/detail_view.dart';
 import 'views/home_view.dart';
+import 'views/scrape_job_detail_view.dart';
+import 'views/scrape_jobs_view.dart';
 import 'views/settings_view.dart';
 import 'views/software_update_view.dart';
 import 'views/works_view.dart';
-import 'views/scrape_job_detail_view.dart';
-import 'views/scrape_jobs_view.dart';
-import 'views/actress_discovery_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final imageCache = PaintingBinding.instance.imageCache;
+  imageCache.maximumSize = ResourcePolicy.imageCacheEntries;
+  imageCache.maximumSizeBytes = ResourcePolicy.imageCacheBytes;
 
   final db = AppDatabase();
   await db.init();
@@ -36,7 +42,7 @@ Future<void> main() async {
   runApp(AvacaApp(db: db, enableAutomaticUpdateCheck: true));
 }
 
-class AvacaApp extends StatefulWidget {
+class AvacaApp extends StatelessWidget {
   const AvacaApp({
     super.key,
     required this.db,
@@ -49,10 +55,40 @@ class AvacaApp extends StatefulWidget {
   final bool enableAutomaticUpdateCheck;
 
   @override
-  State<AvacaApp> createState() => _AvacaAppState();
+  Widget build(BuildContext context) {
+    return ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        if (softwareUpdateController != null)
+          softwareUpdateControllerProvider.overrideWithValue(
+            softwareUpdateController!,
+          ),
+      ],
+      child: _AvacaAppContent(
+        db: db,
+        softwareUpdateController: softwareUpdateController,
+        enableAutomaticUpdateCheck: enableAutomaticUpdateCheck,
+      ),
+    );
+  }
 }
 
-class _AvacaAppState extends State<AvacaApp> {
+class _AvacaAppContent extends ConsumerStatefulWidget {
+  const _AvacaAppContent({
+    required this.db,
+    required this.softwareUpdateController,
+    required this.enableAutomaticUpdateCheck,
+  });
+
+  final AppDatabase db;
+  final SoftwareUpdateController? softwareUpdateController;
+  final bool enableAutomaticUpdateCheck;
+
+  @override
+  ConsumerState<_AvacaAppContent> createState() => _AvacaAppState();
+}
+
+class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
   final KeyboardDismissNavigatorObserver _keyboardObserver =
       KeyboardDismissNavigatorObserver();
   ThemeMode _themeMode = ThemeMode.system;
@@ -61,31 +97,25 @@ class _AvacaAppState extends State<AvacaApp> {
   Locale? _locale;
   bool _ready = false;
   late final SoftwareUpdateController _softwareUpdateController;
-  late final bool _ownsSoftwareUpdateController;
+  late final DataTransferController _dataTransferController;
   late final ScrapeJobCoordinator _scrapeJobCoordinator;
-  late final ActressDiscoveryRegistry _actressDiscoveryRegistry;
   late final ActressDiscoveryService _actressDiscoveryService;
-  final ActressDiscoveryCache _actressDiscoveryCache = ActressDiscoveryCache();
-  final UpdateCacheService _updateCacheService = UpdateCacheService();
+  late final ActressImportService _actressImportService;
+  late final UpdateCacheService _updateCacheService;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   bool _automaticUpdateStarted = false;
 
   @override
   void initState() {
     super.initState();
-    _ownsSoftwareUpdateController = widget.softwareUpdateController == null;
     _softwareUpdateController =
         widget.softwareUpdateController ??
-        SoftwareUpdateController.forApp(db: widget.db);
-    _scrapeJobCoordinator = ScrapeJobCoordinator(db: widget.db);
-    _actressDiscoveryRegistry = ActressDiscoveryRegistry(
-      verificationHandler: _scrapeJobCoordinator.verificationHandler,
-    );
-    _actressDiscoveryService = ActressDiscoveryService(
-      db: widget.db,
-      registry: _actressDiscoveryRegistry,
-      cache: _actressDiscoveryCache,
-    );
+        ref.read(softwareUpdateControllerProvider);
+    _dataTransferController = ref.read(dataTransferControllerProvider);
+    _scrapeJobCoordinator = ref.read(scrapeJobCoordinatorProvider);
+    _actressDiscoveryService = ref.read(actressDiscoveryServiceProvider);
+    _actressImportService = ref.read(actressImportServiceProvider);
+    _updateCacheService = ref.read(updateCacheServiceProvider);
     unawaited(
       _scrapeJobCoordinator.initialize().catchError((Object error) {
         debugPrint('Scrape job coordinator initialization failed: $error');
@@ -94,16 +124,6 @@ class _AvacaAppState extends State<AvacaApp> {
     unawaited(_restoreThemeState());
   }
 
-  @override
-  void dispose() {
-    if (_ownsSoftwareUpdateController) _softwareUpdateController.dispose();
-    _scrapeJobCoordinator.rulesRepository.close();
-    _scrapeJobCoordinator.dispose();
-    _actressDiscoveryRegistry.close();
-    super.dispose();
-  }
-
-  // 啟動時讀取上次儲存的主題與語言設定。
   Future<void> _restoreThemeState() async {
     var modeString = 'system';
     var pureBlack = false;
@@ -216,7 +236,6 @@ class _AvacaAppState extends State<AvacaApp> {
     );
   }
 
-  // 將儲存的文字設定轉回 Flutter 使用的主題模式。
   ThemeMode _themeModeFromString(String modeString) {
     return switch (modeString) {
       'light' => ThemeMode.light,
@@ -226,7 +245,6 @@ class _AvacaAppState extends State<AvacaApp> {
     };
   }
 
-  // 將儲存的語言設定轉回 Flutter 使用的 Locale。
   Locale? _localeFromString(String localeString) {
     return switch (localeString) {
       'zh_TW' => const Locale('zh', 'TW'),
@@ -237,7 +255,6 @@ class _AvacaAppState extends State<AvacaApp> {
     };
   }
 
-  // 依照目前主題狀態建立亮色或暗色 ThemeData。
   ThemeData _buildThemeData({
     required AppThemeMode mode,
     required Brightness brightness,
@@ -258,7 +275,6 @@ class _AvacaAppState extends State<AvacaApp> {
     );
   }
 
-  // 將自訂色票補齊成 AppPalette，缺少的顏色會沿用預設色票。
   AppPalette? _buildCustomPalette({
     required Map<String, Color>? customColors,
     required AppPalette fallback,
@@ -300,10 +316,7 @@ class _AvacaAppState extends State<AvacaApp> {
         ActressDiscoveryView(
           db: widget.db,
           discoveryService: _actressDiscoveryService,
-          importService: ActressImportService(
-            db: widget.db,
-            verificationHandler: _scrapeJobCoordinator.verificationHandler,
-          ),
+          importService: _actressImportService,
           scrapeJobCoordinator: _scrapeJobCoordinator,
         ),
       );
@@ -314,6 +327,7 @@ class _AvacaAppState extends State<AvacaApp> {
         SettingsView(
           db: widget.db,
           scrapeJobCoordinator: _scrapeJobCoordinator,
+          transferController: _dataTransferController,
           softwareUpdateController: _softwareUpdateController,
           onThemeChanged: (mode, pureBlack, custom) {
             setState(() {

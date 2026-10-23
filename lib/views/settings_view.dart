@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:avaca/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:avaca/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../app/app_providers.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
 import '../components/javbus_verification_dialog.dart';
@@ -19,7 +22,6 @@ import '../models/data_transfer_models.dart';
 import '../models/scrape_exclusion_policy.dart';
 import '../models/scrape_source_settings.dart';
 import '../models/work_scrape_options.dart';
-import '../services/data_transfer_service.dart';
 import '../services/scrape_job_coordinator.dart';
 import '../services/avbase/avbase_client.dart';
 import '../services/avbase/avbase_transport.dart';
@@ -193,7 +195,7 @@ class _SettingsTapFeedbackState extends State<_SettingsTapFeedback> {
   }
 }
 
-class SettingsView extends StatefulWidget {
+class SettingsView extends StatelessWidget {
   const SettingsView({
     super.key,
     required this.db,
@@ -223,10 +225,60 @@ class SettingsView extends StatefulWidget {
   final ScrapeJobCoordinator? scrapeJobCoordinator;
 
   @override
-  State<SettingsView> createState() => _SettingsViewState();
+  Widget build(BuildContext context) {
+    final overrides = [
+      appDatabaseProvider.overrideWithValue(db),
+      if (transferController != null)
+        dataTransferControllerProvider.overrideWithValue(transferController!),
+      if (softwareUpdateController != null)
+        softwareUpdateControllerProvider.overrideWithValue(
+          softwareUpdateController!,
+        ),
+    ];
+    return ProviderScope(
+      overrides: overrides,
+      child: _SettingsViewContent(
+        db: db,
+        onThemeChanged: onThemeChanged,
+        onLocaleChanged: onLocaleChanged,
+        prefixRouteFilePicker: prefixRouteFilePicker,
+        externalUrlLauncher: externalUrlLauncher,
+        scrapeSourceConnectionTester: scrapeSourceConnectionTester,
+        scrapeJobCoordinator: scrapeJobCoordinator,
+      ),
+    );
+  }
 }
 
-class _SettingsViewState extends State<SettingsView> {
+class _SettingsViewContent extends ConsumerStatefulWidget {
+  const _SettingsViewContent({
+    required this.db,
+    required this.onThemeChanged,
+    required this.onLocaleChanged,
+    this.prefixRouteFilePicker,
+    required this.externalUrlLauncher,
+    this.scrapeSourceConnectionTester,
+    this.scrapeJobCoordinator,
+  });
+
+  final AppDatabase db;
+  final void Function(
+    ThemeMode themeMode,
+    bool isPureBlack,
+    Map<String, Color>? customColors,
+  )
+  onThemeChanged;
+  final void Function(Locale? locale) onLocaleChanged;
+  final PrefixRouteFilePicker? prefixRouteFilePicker;
+  final ExternalUrlLauncher externalUrlLauncher;
+  final ScrapeSourceConnectionTester? scrapeSourceConnectionTester;
+  final ScrapeJobCoordinator? scrapeJobCoordinator;
+
+  @override
+  ConsumerState<_SettingsViewContent> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   static const double _settingsCardRadius = 12;
   static final Uri _githubUri = Uri.parse(
     'https://github.com/william12233/avaca',
@@ -242,39 +294,25 @@ class _SettingsViewState extends State<SettingsView> {
 
   late final SettingsController controller;
   late final DataTransferController dataTransferController;
-  late final bool _ownsDataTransferController;
   late final SoftwareUpdateController updateController;
-  late final bool _ownsSoftwareUpdateController;
 
   @override
   void initState() {
     super.initState();
-    controller = SettingsController(db: widget.db);
-    _ownsDataTransferController = widget.transferController == null;
-    dataTransferController =
-        widget.transferController ??
-        DataTransferController(service: DataTransferService(db: widget.db));
-    _ownsSoftwareUpdateController = widget.softwareUpdateController == null;
-    updateController =
-        widget.softwareUpdateController ??
-        SoftwareUpdateController.forApp(db: widget.db);
-    // 載入目前儲存的外觀設定
+    controller = ref.read(settingsControllerProvider);
+    dataTransferController = ref.read(dataTransferControllerProvider);
+    updateController = ref.read(softwareUpdateControllerProvider);
     controller.loadFromPrefs();
     controller.loadCustomTheme();
-    // 監聽設定變更並同步更新畫面
     controller.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
     controller.removeListener(_onControllerChanged);
-    controller.dispose();
-    if (_ownsDataTransferController) dataTransferController.dispose();
-    if (_ownsSoftwareUpdateController) updateController.dispose();
     super.dispose();
   }
 
-  // 將 controller 的外觀與語言狀態同步給外層，並重建目前畫面
   void _onControllerChanged() {
     if (!mounted) return;
     widget.onThemeChanged(

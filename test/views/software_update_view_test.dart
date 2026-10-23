@@ -173,7 +173,7 @@ Future<SoftwareUpdateController> _buildController({
     platformOverride: SoftwareUpdatePlatform.android,
     architectureOverride: 'arm64-v8a',
     downloadOverride: (result, {onProgress}) async {
-      onProgress?.call(1, 1);
+      onProgress?.call(const DownloadProgress(receivedBytes: 1, totalBytes: 1));
       return download;
     },
   );

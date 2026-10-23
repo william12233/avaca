@@ -178,6 +178,22 @@ enum UpdateFailureReason {
   notSupported,
 }
 
+class DownloadProgress {
+  const DownloadProgress({required this.receivedBytes, this.totalBytes});
+
+  final int receivedBytes;
+  final int? totalBytes;
+
+  bool get hasTotal => totalBytes != null && totalBytes! > 0;
+
+  double? get fraction {
+    if (!hasTotal) return null;
+    return (receivedBytes / totalBytes!).clamp(0, 1).toDouble();
+  }
+
+  int? get percentage => fraction == null ? null : (fraction! * 100).round();
+}
+
 class SoftwareUpdateException implements Exception {
   const SoftwareUpdateException(this.reason, this.message);
 

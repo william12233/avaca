@@ -12,7 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/software_update_models.dart';
 import 'app_version_provider.dart';
 
-typedef UpdateProgressCallback = void Function(int received, int total);
+typedef UpdateProgressCallback = void Function(DownloadProgress progress);
 
 /// GitHub Release client for the two self-update targets supported by AVACA.
 ///
@@ -181,6 +181,9 @@ class SoftwareUpdateService {
       final digestInput = sha256.startChunkedConversion(digestSink);
       final output = outputFile.openWrite();
       var received = 0;
+      onProgress?.call(
+        DownloadProgress(receivedBytes: 0, totalBytes: asset.size),
+      );
       try {
         await for (final chunk in response.stream) {
           received += chunk.length;
@@ -192,7 +195,9 @@ class SoftwareUpdateService {
           }
           digestInput.add(chunk);
           output.add(chunk);
-          onProgress?.call(received, asset.size);
+          onProgress?.call(
+            DownloadProgress(receivedBytes: received, totalBytes: asset.size),
+          );
         }
       } finally {
         digestInput.close();
@@ -252,10 +257,10 @@ class SoftwareUpdateService {
     Directory stagingDirectory,
     SemanticVersion expectedVersion,
   ) async {
+    final input = InputFileStream(archiveFile.path);
     try {
-      final bytes = await archiveFile.readAsBytes();
       final decoder = ZipDecoder();
-      final archive = decoder.decodeBytes(bytes, verify: true);
+      final archive = decoder.decodeStream(input, verify: true);
       final headers = decoder.directory.fileHeaders;
       if (headers.length > _windowsMaxArchiveEntries) {
         throw const SoftwareUpdateException(
@@ -315,18 +320,22 @@ class SoftwareUpdateService {
           );
         }
 
-        final payload = entry.readBytes();
-        if (payload == null || payload.length != entry.size) {
+        final target = File(
+          path.joinAll(<String>[extractRoot.path, ...name.split('/')]),
+        );
+        await target.parent.create(recursive: true);
+        final output = OutputFileStream(target.path);
+        try {
+          entry.writeContent(output, freeMemory: true);
+        } finally {
+          await output.close();
+        }
+        if (output.length != entry.size) {
           throw const SoftwareUpdateException(
             UpdateFailureReason.integrity,
             'The Windows update ZIP contains a corrupt entry.',
           );
         }
-        final target = File(
-          path.joinAll(<String>[extractRoot.path, ...name.split('/')]),
-        );
-        await target.parent.create(recursive: true);
-        await target.writeAsBytes(payload, flush: true);
       }
 
       final executable = File(path.join(extractRoot.path, 'avaca.exe'));
@@ -356,6 +365,8 @@ class SoftwareUpdateService {
         UpdateFailureReason.integrity,
         'The Windows update ZIP could not be prepared: $error',
       );
+    } finally {
+      await input.close();
     }
   }
 

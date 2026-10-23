@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
 
 import '../controllers/software_update_controller.dart';
 import '../models/software_update_models.dart';
@@ -116,58 +116,86 @@ Future<void> showSoftwareUpdateDialog(
   await showDialog<void>(
     context: context,
     builder: (dialogContext) {
-      final canUpdate = result.hasUpdate && result.asset != null;
-      return AlertDialog(
-        title: Text(_dialogTitle(localizations, result.status)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (result.release != null) ...[
-              Text(
-                '${localizations.currentVersion}: '
-                '${result.current.version}',
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${localizations.latestVersion}: '
-                '${result.release!.version}',
-              ),
-              const SizedBox(height: 8),
-            ],
-            Text(_dialogMessage(localizations, result)),
-            if (canUpdate) ...[
-              const SizedBox(height: 8),
-              Text(
-                localizations.updateDataPreserved,
-                style: Theme.of(dialogContext).textTheme.bodySmall,
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(localizations.updateLater),
-          ),
-          if (canUpdate)
-            FilledButton(
-              key: const ValueKey('software-update-now'),
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                final installResult = await controller.update();
-                if (!context.mounted || installResult?.started == true) return;
-                await _showInstallFailure(
-                  context,
-                  controller,
-                  installResult?.requiresUserAction == true,
-                );
-              },
-              child: Text(localizations.updateNow),
+      return ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) {
+          final liveResult = controller.currentResult ?? result;
+          final canUpdate =
+              liveResult.hasUpdate &&
+              liveResult.asset != null &&
+              !controller.isBusy;
+          return AlertDialog(
+            title: Text(_dialogTitle(localizations, liveResult.status)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (liveResult.release != null) ...[
+                  Text(
+                    '${localizations.currentVersion}: '
+                    '${liveResult.current.version}',
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${localizations.latestVersion}: '
+                    '${liveResult.release!.version}',
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (controller.isBusy)
+                  _StatusMessage(controller: controller)
+                else
+                  Text(_dialogMessage(localizations, liveResult)),
+                if (canUpdate) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    localizations.updateDataPreserved,
+                    style: Theme.of(dialogContext).textTheme.bodySmall,
+                  ),
+                ],
+              ],
             ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: controller.isBusy
+                    ? null
+                    : () => Navigator.pop(dialogContext),
+                child: Text(localizations.updateLater),
+              ),
+              if (canUpdate)
+                FilledButton(
+                  key: const ValueKey('software-update-now'),
+                  onPressed: () => unawaited(
+                    _startUpdate(context, dialogContext, controller),
+                  ),
+                  child: Text(localizations.updateNow),
+                ),
+            ],
+          );
+        },
       );
     },
+  );
+}
+
+Future<void> _startUpdate(
+  BuildContext pageContext,
+  BuildContext dialogContext,
+  SoftwareUpdateController controller,
+) async {
+  final installResult = await controller.update();
+  if (!pageContext.mounted || installResult?.started == true) {
+    if (installResult?.started == true && dialogContext.mounted) {
+      Navigator.pop(dialogContext);
+    }
+    return;
+  }
+  if (!dialogContext.mounted) return;
+  Navigator.pop(dialogContext);
+  await _showInstallFailure(
+    pageContext,
+    controller,
+    installResult?.requiresUserAction == true,
   );
 }
 
@@ -272,11 +300,40 @@ class _StatusMessage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(message),
-        if (progress != null) ...[
+        if (progress != null &&
+            (controller.status == UpdateStatus.downloading ||
+                controller.status == UpdateStatus.verifying)) ...[
           const SizedBox(height: 8),
-          LinearProgressIndicator(value: progress.clamp(0, 1)),
+          Text(_progressLabel(localizations, progress)),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(value: progress.fraction),
         ],
       ],
     );
   }
+}
+
+String _progressLabel(
+  AppLocalizations localizations,
+  DownloadProgress progress,
+) {
+  final received = _formatBytes(progress.receivedBytes);
+  final total = progress.totalBytes;
+  if (total == null || total <= 0) {
+    return localizations.updateDownloadProgressUnknownTotal(received);
+  }
+  return localizations.updateDownloadProgress(
+    progress.percentage ?? 0,
+    received,
+    _formatBytes(total),
+  );
+}
+
+String _formatBytes(int bytes) {
+  if (bytes < 1024) return '$bytes B';
+  final kib = bytes / 1024;
+  if (kib < 1024) return '${kib.toStringAsFixed(1)} KB';
+  final mib = kib / 1024;
+  if (mib < 1024) return '${mib.toStringAsFixed(1)} MB';
+  return '${(mib / 1024).toStringAsFixed(1)} GB';
 }

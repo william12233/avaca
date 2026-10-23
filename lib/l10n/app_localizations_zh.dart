@@ -802,6 +802,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadingUpdate => '正在下載更新…';
 
   @override
+  String updateDownloadProgress(Object percent, Object received, Object total) {
+    return '正在下載更新：$percent%（$received / $total）';
+  }
+
+  @override
+  String updateDownloadProgressUnknownTotal(Object received) {
+    return '已下載 $received';
+  }
+
+  @override
   String get verifyingUpdate => '正在驗證更新…';
 
   @override
@@ -2111,6 +2121,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get downloadingUpdate => '正在下载更新…';
 
   @override
+  String updateDownloadProgress(Object percent, Object received, Object total) {
+    return '正在下载更新：$percent%（$received / $total）';
+  }
+
+  @override
+  String updateDownloadProgressUnknownTotal(Object received) {
+    return '已下载 $received';
+  }
+
+  @override
   String get verifyingUpdate => '正在验证更新…';
 
   @override
@@ -3418,6 +3438,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get downloadingUpdate => '正在下載更新…';
+
+  @override
+  String updateDownloadProgress(Object percent, Object received, Object total) {
+    return '正在下載更新：$percent%（$received / $total）';
+  }
+
+  @override
+  String updateDownloadProgressUnknownTotal(Object received) {
+    return '已下載 $received';
+  }
 
   @override
   String get verifyingUpdate => '正在驗證更新…';

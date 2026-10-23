@@ -292,6 +292,8 @@
   "checkForUpdates": "Check for updates",
   "checkingForUpdates": "Checking for updates…",
   "downloadingUpdate": "Downloading update…",
+  "updateDownloadProgress": "Downloading update: {percent}% ({received} / {total})",
+  "updateDownloadProgressUnknownTotal": "Downloaded {received}",
   "verifyingUpdate": "Verifying update…",
   "installingUpdate": "Starting installation…",
   "updateAvailable": "Update available",

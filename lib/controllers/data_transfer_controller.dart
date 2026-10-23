@@ -17,8 +17,48 @@ abstract interface class DataTransferPicker {
   });
 }
 
-class PlatformDataTransferPicker implements DataTransferPicker {
+abstract interface class DataTransferExportPathPicker {
+  bool get supportsFilePaths;
+
+  Future<String?> chooseExportPath({required String fileName});
+}
+
+abstract interface class DataTransferImportPathPicker {
+  bool get supportsFilePaths;
+
+  Future<String?> chooseImportPath();
+}
+
+class PlatformDataTransferPicker
+    implements
+        DataTransferPicker,
+        DataTransferExportPathPicker,
+        DataTransferImportPathPicker {
   const PlatformDataTransferPicker();
+
+  @override
+  bool get supportsFilePaths => !Platform.isAndroid && !Platform.isIOS;
+
+  @override
+  Future<String?> chooseImportPath() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['zip'],
+      withData: false,
+      withReadStream: false,
+    );
+    return result?.files.single.path;
+  }
+
+  @override
+  Future<String?> chooseExportPath({required String fileName}) {
+    return FilePicker.saveFile(
+      dialogTitle: 'Export AVACA data',
+      fileName: fileName,
+      type: FileType.custom,
+      allowedExtensions: const ['zip'],
+    );
+  }
 
   @override
   Future<Uint8List?> pickImport() async {
@@ -38,7 +78,7 @@ class PlatformDataTransferPicker implements DataTransferPicker {
     final filePath = file.path;
     if (filePath != null && filePath.isNotEmpty) {
       final bytes = await File(filePath).readAsBytes();
-      return _bounded(Uint8List.fromList(bytes));
+      return _bounded(bytes);
     }
     if (file.bytes != null) return _bounded(file.bytes!);
     final stream = file.readStream;
@@ -111,8 +151,35 @@ class DataTransferController extends ChangeNotifier {
       const DataTransferProgress(phase: DataTransferPhase.preparing),
     );
     try {
-      final export = await _service.buildExport(onProgress: _setProgress);
       final fileName = _suggestedFileName();
+      final pathPicker = _picker is DataTransferExportPathPicker
+          ? _picker as DataTransferExportPathPicker
+          : null;
+      if (pathPicker?.supportsFilePaths == true) {
+        final savedPath = await pathPicker!.chooseExportPath(
+          fileName: fileName,
+        );
+        if (savedPath == null) {
+          return _finish(const DataTransferOperationResult(cancelled: true));
+        }
+        final export = await _service.buildExport(
+          onProgress: _setProgress,
+          outputPath: savedPath,
+        );
+        return _finish(
+          DataTransferOperationResult(
+            cancelled: false,
+            summary: DataTransferSummary(
+              actresses: export.summary.actresses,
+              works: export.summary.works,
+              images: export.summary.images,
+              skippedImages: export.summary.skippedImages,
+              destinationPath: savedPath,
+            ),
+          ),
+        );
+      }
+      final export = await _service.buildExport(onProgress: _setProgress);
       final savedPath = await _picker.saveExport(
         bytes: export.bytes,
         fileName: fileName,
@@ -155,6 +222,21 @@ class DataTransferController extends ChangeNotifier {
       const DataTransferProgress(phase: DataTransferPhase.preparing),
     );
     try {
+      final pathPicker = _picker is DataTransferImportPathPicker
+          ? _picker as DataTransferImportPathPicker
+          : null;
+      if (pathPicker?.supportsFilePaths == true) {
+        final selectedPath = await pathPicker!.chooseImportPath();
+        if (selectedPath == null) {
+          return _finish(const DataTransferOperationResult(cancelled: true));
+        }
+        final result = await _service.importArchiveFile(
+          file: File(selectedPath),
+          resolveDuplicate: resolveDuplicate,
+          onProgress: _setProgress,
+        );
+        return _finish(result);
+      }
       final bytes = await _picker.pickImport();
       if (bytes == null) {
         return _finish(const DataTransferOperationResult(cancelled: true));

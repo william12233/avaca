@@ -1627,6 +1627,18 @@ abstract class AppLocalizations {
   /// **'正在下載更新…'**
   String get downloadingUpdate;
 
+  /// No description provided for @updateDownloadProgress.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'正在下載更新：{percent}%（{received} / {total}）'**
+  String updateDownloadProgress(Object percent, Object received, Object total);
+
+  /// No description provided for @updateDownloadProgressUnknownTotal.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已下載 {received}'**
+  String updateDownloadProgressUnknownTotal(Object received);
+
   /// No description provided for @verifyingUpdate.
   ///
   /// In zh_TW, this message translates to:

@@ -40,4 +40,33 @@ void main() {
     cache.clearAll();
     expect(cache.searchFor(ScrapeSourceId.minnanoAv, '測試'), isNull);
   });
+
+  test('bounds list and search entries with recent-use eviction', () {
+    final cache = ActressDiscoveryCache(maxListEntries: 2, maxSearchEntries: 2);
+    ActressDiscoverySnapshot snapshot({int page = 1, String? query}) {
+      return ActressDiscoverySnapshot(
+        source: ScrapeSourceId.minnanoAv,
+        items: [item],
+        fetchedAt: DateTime(2026, 1, page),
+        page: page,
+        query: query,
+        isSearch: query != null,
+      );
+    }
+
+    cache.storeList(snapshot(page: 1));
+    cache.storeList(snapshot(page: 2));
+    expect(
+      cache.listFor(ScrapeSourceId.minnanoAv, 'default', page: 1),
+      isNotNull,
+    );
+    cache.storeList(snapshot(page: 3));
+    expect(cache.listFor(ScrapeSourceId.minnanoAv, 'default', page: 2), isNull);
+
+    cache.storeSearch(snapshot(query: 'one'));
+    cache.storeSearch(snapshot(query: 'two'));
+    expect(cache.searchFor(ScrapeSourceId.minnanoAv, 'one'), isNotNull);
+    cache.storeSearch(snapshot(query: 'three'));
+    expect(cache.searchFor(ScrapeSourceId.minnanoAv, 'two'), isNull);
+  });
 }

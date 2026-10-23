@@ -1,10 +1,11 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:path/path.dart' as path;
 
 import '../core/database.dart';
+import '../core/resource_policy.dart';
 import '../models/scrape_source_settings.dart';
 import '../models/scrape_exclusion_policy.dart';
 import '../models/scrape_rules.dart';
@@ -56,7 +57,7 @@ class HttpActressImageDownloader implements ActressImageDownloader {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw WorksScrapeException('Actress image request failed: $uri');
     }
-    final bytes = Uint8List.fromList(response.bodyBytes);
+    final bytes = response.bytes;
     if (!isSafeDecodableImage(bytes)) {
       throw WorksScrapeException('Actress image is invalid: $uri');
     }
@@ -301,6 +302,9 @@ class WorksScrapeService {
   final ScrapeImageUriDownloader? imageUriDownloader;
   final String imageDirectory;
   final Duration javBusDetailDelay;
+  final _AsyncSemaphore _imageSemaphore = _AsyncSemaphore(
+    ResourcePolicy.maxConcurrentImageDownloads,
+  );
   ScrapeRunObserver? _observer;
   final Map<ScrapeSourceId, WorksScrapeSourceProgress> _sourceProgress = {};
   ScrapeSourceId? _detailsSource;
@@ -2378,12 +2382,14 @@ class WorksScrapeService {
           return imageStatus;
         }
         final version = DateTime.now().microsecondsSinceEpoch;
-        imagePath = await actressImageDownloader.download(
-          avatar,
-          path.join(
-            imageDirectory,
-            'actresses',
-            'actress_${actressId}_$version.jpg',
+        imagePath = await _imageSemaphore.withPermit(
+          () => actressImageDownloader.download(
+            avatar,
+            path.join(
+              imageDirectory,
+              'actresses',
+              'actress_${actressId}_$version.jpg',
+            ),
           ),
         );
         imageStatus = ActressImageSyncStatus.replaced;
@@ -2618,13 +2624,15 @@ class WorksScrapeService {
     // and avatar sources only; never use their jacket/gallery URI as a work
     // image or as a fallback here.
     try {
-      await workImageDownloader.downloadToFile(
-        code: details.code,
-        studio: details.studio,
-        publisher: details.publisher,
-        originalImageEvidenceUris: details.originalImageEvidenceUris,
-        variant: variant,
-        targetPath: targetPath,
+      await _imageSemaphore.withPermit(
+        () => workImageDownloader.downloadToFile(
+          code: details.code,
+          studio: details.studio,
+          publisher: details.publisher,
+          originalImageEvidenceUris: details.originalImageEvidenceUris,
+          variant: variant,
+          targetPath: targetPath,
+        ),
       );
       return _WorkImageResult(path: targetPath);
     } catch (_) {
@@ -2982,4 +2990,38 @@ final class _SourceDetailScheduler {
 
 class _ScrapeCancelled implements Exception {
   const _ScrapeCancelled();
+}
+
+final class _AsyncSemaphore {
+  _AsyncSemaphore(this._available) : assert(_available > 0);
+
+  int _available;
+  final Queue<Completer<void>> _waiters = Queue<Completer<void>>();
+
+  Future<T> withPermit<T>(Future<T> Function() action) async {
+    await _acquire();
+    try {
+      return await action();
+    } finally {
+      _release();
+    }
+  }
+
+  Future<void> _acquire() {
+    if (_available > 0) {
+      _available--;
+      return Future<void>.value();
+    }
+    final waiter = Completer<void>();
+    _waiters.addLast(waiter);
+    return waiter.future;
+  }
+
+  void _release() {
+    if (_waiters.isEmpty) {
+      _available++;
+      return;
+    }
+    _waiters.removeFirst().complete();
+  }
 }
