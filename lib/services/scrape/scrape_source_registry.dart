@@ -8,7 +8,6 @@ class ScrapeSourceRegistry {
     ScrapeSourceId.javbus,
     ScrapeSourceId.avbase,
     ScrapeSourceId.avwiki,
-    ScrapeSourceId.javdb,
   ];
 
   static const List<ScrapeSourceId> worksSources = [

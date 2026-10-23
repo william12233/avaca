@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1 - 2026-10-23
+
+- Returned the Add action to the original manual actress-input flow.
+- Removed the actress discovery/榜單 experiment and its additional source
+  integrations, keeping the existing collection and scraping workflows.
+
 ## 1.2.0 - 2026-10-23
 
 - Reworked actress discovery into a source-native 女優榜 with source tabs,

@@ -986,9 +986,6 @@ class _WorksViewState extends State<WorksView> {
               maxBytes: 5 * 1024 * 1024,
             ),
           ),
-          ScrapeSourceId.javdb => throw StateError(
-            'JAVDB cannot be used as the actress detail source.',
-          ),
         };
     final service = WorksScrapeService(
       db: widget.db,
@@ -2119,7 +2116,6 @@ String _scrapeSourceLabel(AppLocalizations l10n, ScrapeSourceId source) {
     ScrapeSourceId.minnanoAv => l10n.scrapeSourceMinnanoAv,
     ScrapeSourceId.avbase => l10n.scrapeSourceAvBase,
     ScrapeSourceId.avwiki => l10n.scrapeSourceAvWiki,
-    ScrapeSourceId.javdb => 'JAVDB',
   };
 }
 

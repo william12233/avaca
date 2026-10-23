@@ -15,27 +15,10 @@ class JavBusActressPage {
 }
 
 class JavBusActressSearchResult {
-  const JavBusActressSearchResult({
-    required this.name,
-    required this.uri,
-    this.imageUri,
-  });
+  const JavBusActressSearchResult({required this.name, required this.uri});
 
   final String name;
   final Uri uri;
-  final Uri? imageUri;
-}
-
-final class JavBusActressDirectoryPage {
-  const JavBusActressDirectoryPage({
-    required this.items,
-    required this.page,
-    this.hasNext = false,
-  });
-
-  final List<JavBusActressSearchResult> items;
-  final int page;
-  final bool hasNext;
 }
 
 class JavBusWorkSummary {
