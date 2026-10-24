@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.2 - 2026-10-24
+
+- Reorganized Settings into five focused categories so data, scraping, update,
+  and about actions stay together.
+- Standardized same-page controls to a shared 48px height and replaced static
+  explanatory copy with compact help indicators that support tap and hover.
+- Unified popup and dropdown surfaces with the app shape tokens, shortened the
+  website connection test copy, and added localized regression coverage.
+
 ## 1.3.1 - 2026-10-24
 
 - Unified rounded corners for cards, inputs, dialogs, bottom sheets, and

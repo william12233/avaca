@@ -631,6 +631,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDataTransferTitle => 'Data transfer';
 
   @override
+  String get settingsDataManagementTitle => 'Data management';
+
+  @override
   String get settingsDataTransferSubtitle =>
       'Back up or restore actors, works, details, and images as a ZIP.';
 
@@ -720,7 +723,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Data transfer failed. Existing data was not changed.';
 
   @override
-  String get otherSettings => 'Other';
+  String get settingsSystemAndAboutTitle => 'System & About';
 
   @override
   String get about => 'About';
@@ -769,8 +772,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scrapeSourceConnectionTitle => 'Scrape source connections';
 
   @override
-  String get scrapeSourceConnectionSubtitle =>
-      'View the added scrape websites, test their connections, and complete verification here.';
+  String get scrapeSourceConnectionSubtitle => 'Website connection test';
 
   @override
   String get scrapeSourceRetest => 'Retest connections';

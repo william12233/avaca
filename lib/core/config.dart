@@ -233,6 +233,8 @@ class AppTheme {
       listTileTheme: _listTileTheme(palette),
       dialogTheme: _dialogTheme(palette),
       bottomSheetTheme: _bottomSheetTheme(palette),
+      popupMenuTheme: _popupMenuTheme(palette),
+      tooltipTheme: _tooltipTheme(palette),
       navigationBarTheme: _navigationBarTheme(palette),
       snackBarTheme: _snackBarTheme(palette),
     );
@@ -456,6 +458,33 @@ class AppTheme {
           top: Radius.circular(AppShapeTokens.dialogRadius),
         ),
       ),
+    );
+  }
+
+  static PopupMenuThemeData _popupMenuTheme(AppPalette palette) {
+    return PopupMenuThemeData(
+      color: palette.surfaceContainer,
+      elevation: 3,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppShapeTokens.popupMenuRadius),
+      ),
+    );
+  }
+
+  static TooltipThemeData _tooltipTheme(AppPalette palette) {
+    return TooltipThemeData(
+      triggerMode: TooltipTriggerMode.tap,
+      waitDuration: const Duration(milliseconds: 300),
+      showDuration: const Duration(seconds: 4),
+      exitDuration: const Duration(milliseconds: 100),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      constraints: const BoxConstraints(maxWidth: 280),
+      decoration: BoxDecoration(
+        color: palette.onSurface,
+        borderRadius: BorderRadius.circular(AppShapeTokens.defaultCardRadius),
+      ),
+      textStyle: _appTextStyle(color: palette.surface, fontSize: 13),
     );
   }
 

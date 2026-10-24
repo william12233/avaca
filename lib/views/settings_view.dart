@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/app_providers.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
+import '../components/app_help_tooltip.dart';
 import '../components/javbus_verification_dialog.dart';
 import '../controllers/data_transfer_controller.dart';
 import '../controllers/prefix_route_file_transfer.dart';
@@ -55,6 +56,29 @@ Future<bool> _launchExternalUrl(Uri uri) {
   return launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
+AppLayoutTokens _settingsTokensForContext(BuildContext context) {
+  return AppLayoutPolicy.resolve(
+    BoxConstraints.tightFor(width: MediaQuery.sizeOf(context).width),
+  );
+}
+
+Widget _settingsOptionTitle(
+  BuildContext context, {
+  required String title,
+  String? helpText,
+}) {
+  if (helpText == null || helpText.isEmpty) {
+    return Text(title);
+  }
+  return Row(
+    children: [
+      AppHelpTooltip(message: helpText),
+      const SizedBox(width: 4),
+      Expanded(child: Text(title)),
+    ],
+  );
+}
+
 class _SettingsInteractionTheme extends StatelessWidget {
   const _SettingsInteractionTheme({required this.child});
 
@@ -75,6 +99,7 @@ class _SettingsInteractionTheme extends StatelessWidget {
       }
       return null;
     });
+    final minimumButtonSize = WidgetStatePropertyAll<Size>(const Size(0, 48));
 
     return Theme(
       data: base.copyWith(
@@ -85,15 +110,34 @@ class _SettingsInteractionTheme extends StatelessWidget {
           style:
               base.textButtonTheme.style?.copyWith(
                 overlayColor: overlayColor,
+                minimumSize: minimumButtonSize,
               ) ??
-              ButtonStyle(overlayColor: overlayColor),
+              ButtonStyle(
+                overlayColor: overlayColor,
+                minimumSize: minimumButtonSize,
+              ),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style:
               base.filledButtonTheme.style?.copyWith(
                 overlayColor: overlayColor,
+                minimumSize: minimumButtonSize,
               ) ??
-              ButtonStyle(overlayColor: overlayColor),
+              ButtonStyle(
+                overlayColor: overlayColor,
+                minimumSize: minimumButtonSize,
+              ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style:
+              base.outlinedButtonTheme.style?.copyWith(
+                overlayColor: overlayColor,
+                minimumSize: minimumButtonSize,
+              ) ??
+              ButtonStyle(
+                overlayColor: overlayColor,
+                minimumSize: minimumButtonSize,
+              ),
         ),
         iconButtonTheme: IconButtonThemeData(
           style:
@@ -398,37 +442,25 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
             const SizedBox(height: 8),
             _categoryCard(
               tokens: tokens,
-              feedbackId: 'category-data-transfer',
-              icon: Icons.import_export,
-              title: AppLocalizations.of(context).settingsDataTransferTitle,
+              feedbackId: 'category-data-management',
+              icon: Icons.storage_outlined,
+              title: AppLocalizations.of(context).settingsDataManagementTitle,
               onTap: () => _openCategory(
                 titleBuilder: (context) =>
-                    AppLocalizations.of(context).settingsDataTransferTitle,
-                bodyBuilder: _buildDataTransferSettings,
+                    AppLocalizations.of(context).settingsDataManagementTitle,
+                bodyBuilder: _buildDataManagementSettings,
               ),
             ),
             const SizedBox(height: 8),
             _categoryCard(
               tokens: tokens,
-              feedbackId: 'category-data-health',
-              icon: Icons.monitor_heart_outlined,
-              title: AppLocalizations.of(context).settingsDataHealthTitle,
-              onTap: () => Navigator.of(context).push<void>(
-                MaterialPageRoute(
-                  builder: (_) => DataHealthView(db: widget.db),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            _categoryCard(
-              tokens: tokens,
-              feedbackId: 'category-other',
-              icon: Icons.more_horiz,
-              title: AppLocalizations.of(context).otherSettings,
+              feedbackId: 'category-system-about',
+              icon: Icons.settings_outlined,
+              title: AppLocalizations.of(context).settingsSystemAndAboutTitle,
               onTap: () => _openCategory(
                 titleBuilder: (context) =>
-                    AppLocalizations.of(context).otherSettings,
-                bodyBuilder: _buildOtherSettings,
+                    AppLocalizations.of(context).settingsSystemAndAboutTitle,
+                bodyBuilder: _buildSystemAndAboutSettings,
               ),
             ),
           ],
@@ -454,7 +486,12 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         color: colorScheme.surfaceContainerHighest,
         elevation: 0,
         shape: _settingsCardShape(),
-        child: ListTile(leading: Icon(icon), title: Text(title), onTap: onTap),
+        child: ListTile(
+          minTileHeight: tokens.controlHeight,
+          leading: Icon(icon),
+          title: Text(title),
+          onTap: onTap,
+        ),
       ),
     );
   }
@@ -477,7 +514,8 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
 
   Future<void> _openCategory({
     required String Function(BuildContext context) titleBuilder,
-    required Widget Function(BuildContext context) bodyBuilder,
+    required Widget Function(BuildContext context, AppLayoutTokens tokens)
+    bodyBuilder,
   }) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute(
@@ -490,25 +528,28 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     );
   }
 
-  Widget _buildThemeAndColors(BuildContext context) {
+  Widget _buildThemeAndColors(BuildContext context, AppLayoutTokens tokens) {
     return ListView(
       padding: EdgeInsets.zero,
-      children: [_themeModeSelector(context)],
+      children: [_themeModeSelector(context, tokens)],
     );
   }
 
-  Widget _buildInterfaceSettings(BuildContext context) {
+  Widget _buildInterfaceSettings(BuildContext context, AppLayoutTokens tokens) {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        _languageSelector(context),
+        _languageSelector(context, tokens),
         const SizedBox(height: 12),
-        _worksPageSizeSelector(context),
+        _worksPageSizeSelector(context, tokens),
       ],
     );
   }
 
-  Widget _buildDataTransferSettings(BuildContext context) {
+  Widget _buildDataManagementSettings(
+    BuildContext context,
+    AppLayoutTokens tokens,
+  ) {
     return ListenableBuilder(
       listenable: dataTransferController,
       builder: (context, _) {
@@ -524,35 +565,45 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         return ListView(
           padding: EdgeInsets.zero,
           children: [
-            Text(
-              localizations.settingsDataTransferSubtitle,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
             _settingsActionCard(
+              tokens: tokens,
               context: context,
               feedbackId: 'data-transfer-export',
               icon: Icons.file_upload_outlined,
               title: localizations.dataTransferExportTitle,
-              subtitle: isBusy && progressText != null
-                  ? progressText
-                  : localizations.dataTransferExportSubtitle,
+              helpText: localizations.dataTransferExportSubtitle,
+              statusText: isBusy ? progressText : null,
               enabled: !isBusy,
               trailing: isBusy ? const _TransferProgressIndicator() : null,
               onTap: _exportData,
             ),
             const SizedBox(height: 8),
             _settingsActionCard(
+              tokens: tokens,
               context: context,
               feedbackId: 'data-transfer-import',
               icon: Icons.file_download_outlined,
               title: localizations.dataTransferImportTitle,
-              subtitle: isBusy && progressText != null
-                  ? progressText
-                  : localizations.dataTransferImportSubtitle,
+              helpText: localizations.dataTransferImportSubtitle,
+              statusText: isBusy ? progressText : null,
               enabled: !isBusy,
               trailing: isBusy ? const _TransferProgressIndicator() : null,
               onTap: _importData,
+            ),
+            const SizedBox(height: 8),
+            _settingsActionCard(
+              tokens: tokens,
+              context: context,
+              feedbackId: 'data-health-entry',
+              icon: Icons.monitor_heart_outlined,
+              title: localizations.settingsDataHealthTitle,
+              helpText: localizations.settingsDataHealthSubtitle,
+              enabled: true,
+              onTap: () => Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (_) => DataHealthView(db: widget.db),
+                ),
+              ),
             ),
           ],
         );
@@ -560,17 +611,21 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     );
   }
 
-  Widget _buildOtherSettings(BuildContext context) {
+  Widget _buildSystemAndAboutSettings(
+    BuildContext context,
+    AppLayoutTokens tokens,
+  ) {
     final localizations = AppLocalizations.of(context);
     return ListView(
       padding: EdgeInsets.zero,
       children: [
         _settingsExpansionCard(
+          tokens: tokens,
           context: context,
-          feedbackId: 'other-software-update',
+          feedbackId: 'system-software-update',
           icon: Icons.system_update_alt_outlined,
           title: localizations.softwareUpdate,
-          subtitle: localizations.softwareUpdateDescription,
+          helpText: localizations.softwareUpdateDescription,
           child: SoftwareUpdateView(
             controller: updateController,
             shrinkWrap: true,
@@ -578,14 +633,44 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         ),
         const SizedBox(height: 8),
         _settingsExpansionCard(
+          tokens: tokens,
           context: context,
-          feedbackId: 'other-scrape-jobs',
+          feedbackId: 'system-about',
+          icon: Icons.info_outline,
+          title: localizations.about,
+          child: _buildAboutSettingsEmbedded(context, tokens),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScrapeSettings(BuildContext context, AppLayoutTokens tokens) {
+    final localizations = AppLocalizations.of(context);
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        _settingsExpansionCard(
+          tokens: tokens,
+          context: context,
+          feedbackId: 'scrape-sources',
+          icon: Icons.source_outlined,
+          title: localizations.scrapeSources,
+          child: _buildScrapeSourcesSettings(context, shrinkWrap: true),
+        ),
+        const SizedBox(height: 12),
+        _ScrapePreferencesSettingsBody(database: widget.db, tokens: tokens),
+        const SizedBox(height: 8),
+        _settingsExpansionCard(
+          tokens: tokens,
+          context: context,
+          feedbackId: 'scrape-jobs',
           icon: Icons.queue_play_next_outlined,
           title: localizations.settingsScrapeJobsTitle,
-          subtitle: localizations.settingsScrapeJobsSubtitle,
+          helpText: localizations.settingsScrapeJobsSubtitle,
           child: widget.scrapeJobCoordinator == null
               ? Text(localizations.scrapeJobsEmpty)
               : ListTile(
+                  minTileHeight: tokens.controlHeight,
                   leading: const Icon(Icons.open_in_new),
                   title: Text(localizations.scrapeJobsTitle),
                   onTap: () => Navigator.of(context).push<void>(
@@ -600,41 +685,14 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         ),
         const SizedBox(height: 8),
         _settingsExpansionCard(
+          tokens: tokens,
           context: context,
-          feedbackId: 'other-prefix-route-rules',
+          feedbackId: 'scrape-prefix-route-rules',
           icon: Icons.route_outlined,
           title: localizations.prefixRouteRulesTitle,
-          subtitle: localizations.prefixRouteRulesSubtitle,
+          helpText: localizations.prefixRouteRulesSubtitle,
           child: _buildPrefixRouteRulesSettings(context, shrinkWrap: true),
         ),
-        const SizedBox(height: 8),
-        _settingsExpansionCard(
-          context: context,
-          feedbackId: 'other-about',
-          icon: Icons.info_outline,
-          title: localizations.about,
-          subtitle: null,
-          child: _buildAboutSettingsEmbedded(context),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildScrapeSettings(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
-    return ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        _settingsExpansionCard(
-          context: context,
-          feedbackId: 'scrape-sources',
-          icon: Icons.source_outlined,
-          title: localizations.scrapeSources,
-          subtitle: null,
-          child: _buildScrapeSourcesSettings(context, shrinkWrap: true),
-        ),
-        const SizedBox(height: 12),
-        _ScrapePreferencesSettingsBody(database: widget.db),
       ],
     );
   }
@@ -731,30 +789,36 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     );
   }
 
-  Widget _buildAboutSettingsEmbedded(BuildContext context) {
-    return Column(children: _aboutSettingsChildren(context));
+  Widget _buildAboutSettingsEmbedded(
+    BuildContext context,
+    AppLayoutTokens tokens,
+  ) {
+    return Column(children: _aboutSettingsChildren(context, tokens));
   }
 
-  List<Widget> _aboutSettingsChildren(BuildContext context) {
+  List<Widget> _aboutSettingsChildren(
+    BuildContext context,
+    AppLayoutTokens tokens,
+  ) {
     final localizations = AppLocalizations.of(context);
     return [
       _settingsActionCard(
+        tokens: tokens,
         context: context,
         feedbackId: 'about-github',
         icon: Icons.code_outlined,
         title: localizations.github,
-        subtitle: null,
         enabled: true,
         trailing: const Icon(Icons.open_in_new),
         onTap: () => unawaited(_openExternalLink(_githubUri)),
       ),
       const SizedBox(height: 8),
       _settingsActionCard(
+        tokens: tokens,
         context: context,
         feedbackId: 'about-feedback-suggestions',
         icon: Icons.feedback_outlined,
         title: localizations.feedbackSuggestions,
-        subtitle: null,
         enabled: true,
         trailing: const Icon(Icons.open_in_new),
         onTap: () => unawaited(_openExternalLink(_issuesUri)),
@@ -766,12 +830,22 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     await widget.externalUrlLauncher(uri);
   }
 
+  Widget _settingsTitle(
+    BuildContext context, {
+    required String title,
+    String? helpText,
+  }) {
+    return _settingsOptionTitle(context, title: title, helpText: helpText);
+  }
+
   Widget _settingsActionCard({
+    required AppLayoutTokens tokens,
     required BuildContext context,
     required String feedbackId,
     required IconData icon,
     required String title,
-    String? subtitle,
+    String? helpText,
+    String? statusText,
     required bool enabled,
     required VoidCallback onTap,
     Widget? trailing,
@@ -786,11 +860,13 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         elevation: 0,
         shape: _settingsCardShape(),
         child: ListTile(
+          key: ValueKey(feedbackId),
           enabled: enabled,
-          minVerticalPadding: 12,
+          minTileHeight: tokens.controlHeight,
+          minVerticalPadding: 0,
           leading: Icon(icon),
-          title: Text(title),
-          subtitle: subtitle == null ? null : Text(subtitle),
+          title: _settingsTitle(context, title: title, helpText: helpText),
+          subtitle: statusText == null ? null : Text(statusText),
           trailing: trailing ?? const Icon(Icons.chevron_right),
           onTap: enabled ? onTap : null,
         ),
@@ -799,11 +875,12 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   }
 
   Widget _settingsExpansionCard({
+    required AppLayoutTokens tokens,
     required BuildContext context,
     required String feedbackId,
     required IconData icon,
     required String title,
-    String? subtitle,
+    String? helpText,
     required Widget child,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -813,6 +890,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       child: ExpansionTile(
         key: PageStorageKey(feedbackId),
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        minTileHeight: tokens.controlHeight,
         childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         backgroundColor: colorScheme.surfaceContainerHighest,
         collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
@@ -821,8 +899,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         clipBehavior: Clip.antiAlias,
         expansionAnimationStyle: _expansionAnimationStyle,
         leading: Icon(icon),
-        title: Text(title),
-        subtitle: subtitle == null ? null : Text(subtitle),
+        title: _settingsTitle(context, title: title, helpText: helpText),
         children: [child],
       ),
     );
@@ -1004,7 +1081,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Widget _themeModeSelector(BuildContext context) {
+  Widget _themeModeSelector(BuildContext context, AppLayoutTokens tokens) {
     final current = controller.themeModeString;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
@@ -1015,6 +1092,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       child: ExpansionTile(
         key: const PageStorageKey('theme-mode'),
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        minTileHeight: tokens.controlHeight,
         childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         backgroundColor: colorScheme.surfaceContainerHighest,
         collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
@@ -1022,7 +1100,10 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         collapsedShape: shape,
         clipBehavior: Clip.antiAlias,
         expansionAnimationStyle: _expansionAnimationStyle,
-        title: Text(AppLocalizations.of(context).themeMode),
+        title: _settingsTitle(
+          context,
+          title: AppLocalizations.of(context).themeMode,
+        ),
         children: [
           RadioGroup<String>(
             groupValue: current,
@@ -1033,26 +1114,28 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
             },
             child: Column(
               children: [
-                _themeModeRadioOption(context, 'system'),
-                _themeModeRadioOption(context, 'light'),
+                _themeModeRadioOption(context, tokens, 'system'),
+                _themeModeRadioOption(context, tokens, 'light'),
                 if (isDark && !controller.isCustomTheme)
                   _expandableThemeModeOption(
                     context,
+                    tokens: tokens,
                     key: const PageStorageKey('theme-option-dark'),
                     value: 'dark',
-                    child: _pureBlackSwitch(context),
+                    child: _pureBlackSwitch(context, tokens),
                   )
                 else
-                  _themeModeRadioOption(context, 'dark'),
+                  _themeModeRadioOption(context, tokens, 'dark'),
                 if (controller.isCustomTheme)
                   _expandableThemeModeOption(
                     context,
+                    tokens: tokens,
                     key: const PageStorageKey('theme-option-custom'),
                     value: 'custom',
-                    child: _customThemeEditor(context),
+                    child: _customThemeEditor(context, tokens),
                   )
                 else
-                  _themeModeRadioOption(context, 'custom'),
+                  _themeModeRadioOption(context, tokens, 'custom'),
               ],
             ),
           ),
@@ -1061,9 +1144,14 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     );
   }
 
-  Widget _themeModeRadioOption(BuildContext context, String value) {
+  Widget _themeModeRadioOption(
+    BuildContext context,
+    AppLayoutTokens tokens,
+    String value,
+  ) {
     return RadioListTile<String>(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      minTileHeight: tokens.controlHeight,
       title: Text(_themeModeLabel(context, value)),
       value: value,
     );
@@ -1071,6 +1159,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
 
   Widget _expandableThemeModeOption(
     BuildContext context, {
+    required AppLayoutTokens tokens,
     required Key key,
     required String value,
     required Widget child,
@@ -1080,6 +1169,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       leading: Radio<String>(value: value),
       title: Text(_themeModeLabel(context, value)),
       tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+      minTileHeight: tokens.controlHeight,
       childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
       backgroundColor: Colors.transparent,
       collapsedBackgroundColor: Colors.transparent,
@@ -1090,7 +1180,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     );
   }
 
-  Widget _languageSelector(BuildContext context) {
+  Widget _languageSelector(BuildContext context, AppLayoutTokens tokens) {
     final current = controller.localeString;
     final colorScheme = Theme.of(context).colorScheme;
     final shape = _settingsCardShape();
@@ -1100,6 +1190,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       child: ExpansionTile(
         key: const PageStorageKey('language'),
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        minTileHeight: tokens.controlHeight,
         childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         backgroundColor: colorScheme.surfaceContainerHighest,
         collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
@@ -1107,7 +1198,10 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         collapsedShape: shape,
         clipBehavior: Clip.antiAlias,
         expansionAnimationStyle: _expansionAnimationStyle,
-        title: Text(AppLocalizations.of(context).language),
+        title: _settingsTitle(
+          context,
+          title: AppLocalizations.of(context).language,
+        ),
         children: [
           RadioGroup<String>(
             groupValue: current,
@@ -1120,6 +1214,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
               children: controller.getLocaleOptions().map((value) {
                 return RadioListTile<String>(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  minTileHeight: tokens.controlHeight,
                   title: Text(_localeLabel(context, value)),
                   value: value,
                 );
@@ -1131,7 +1226,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     );
   }
 
-  Widget _worksPageSizeSelector(BuildContext context) {
+  Widget _worksPageSizeSelector(BuildContext context, AppLayoutTokens tokens) {
     final current = controller.worksPageSize;
     final colorScheme = Theme.of(context).colorScheme;
     final shape = _settingsCardShape();
@@ -1141,6 +1236,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       child: ExpansionTile(
         key: const PageStorageKey('works-page-size'),
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        minTileHeight: tokens.controlHeight,
         childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         backgroundColor: colorScheme.surfaceContainerHighest,
         collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
@@ -1148,7 +1244,10 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         collapsedShape: shape,
         clipBehavior: Clip.antiAlias,
         expansionAnimationStyle: _expansionAnimationStyle,
-        title: Text(AppLocalizations.of(context).worksPageSize),
+        title: _settingsTitle(
+          context,
+          title: AppLocalizations.of(context).worksPageSize,
+        ),
         children: [
           RadioGroup<WorksPageSize>(
             groupValue: current,
@@ -1162,12 +1261,14 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
                 RadioListTile<WorksPageSize>(
                   key: const PageStorageKey('works-page-size-option-small'),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  minTileHeight: tokens.controlHeight,
                   title: Text(AppLocalizations.of(context).worksPageSizeSmall),
                   value: WorksPageSize.small,
                 ),
                 RadioListTile<WorksPageSize>(
                   key: const PageStorageKey('works-page-size-option-large'),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  minTileHeight: tokens.controlHeight,
                   title: Text(AppLocalizations.of(context).worksPageSizeLarge),
                   value: WorksPageSize.large,
                 ),
@@ -1200,11 +1301,15 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     };
   }
 
-  Widget _pureBlackSwitch(BuildContext context) {
+  Widget _pureBlackSwitch(BuildContext context, AppLayoutTokens tokens) {
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(AppLocalizations.of(context).pureBlackAmoled),
-      subtitle: Text(AppLocalizations.of(context).pureBlackOnlyDark),
+      minTileHeight: tokens.controlHeight,
+      title: _settingsTitle(
+        context,
+        title: AppLocalizations.of(context).pureBlackAmoled,
+        helpText: AppLocalizations.of(context).pureBlackOnlyDark,
+      ),
       value: controller.isPureBlack,
       onChanged: (value) async {
         await controller.pureBlackChanged(value);
@@ -1212,16 +1317,21 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     );
   }
 
-  Widget _customThemeEditor(BuildContext context) {
+  Widget _customThemeEditor(BuildContext context, AppLayoutTokens tokens) {
     return Column(
       children: controller.customColors.entries
-          .map((entry) => _customColorTile(context, entry))
+          .map((entry) => _customColorTile(context, tokens, entry))
           .toList(),
     );
   }
 
-  Widget _customColorTile(BuildContext context, MapEntry<String, Color> entry) {
+  Widget _customColorTile(
+    BuildContext context,
+    AppLayoutTokens tokens,
+    MapEntry<String, Color> entry,
+  ) {
     return ListTile(
+      minTileHeight: tokens.controlHeight,
       title: Text(_colorLabel(context, entry.key)),
       trailing: _colorPreview(entry.value),
       onTap: () => _openColorPicker(context, entry.key),
@@ -1467,6 +1577,7 @@ class _ScrapeSourcesSettingsBodyState
         _settings ??= snapshot.data ?? const ScrapeSourceSettings();
         final settings = _settings!;
         final localizations = AppLocalizations.of(context);
+        final tokens = _settingsTokensForContext(context);
         return ListView(
           key: const PageStorageKey('scrape-source-settings-scroll'),
           padding: EdgeInsets.zero,
@@ -1475,10 +1586,11 @@ class _ScrapeSourcesSettingsBodyState
               ? const NeverScrollableScrollPhysics()
               : null,
           children: [
-            _connectionStatusSelector(context),
+            _connectionStatusSelector(context, tokens),
             const SizedBox(height: 12),
             _sourceSelector<ScrapeSourceId>(
               key: const PageStorageKey('scrape-actress-source'),
+              tokens: tokens,
               title: localizations.scrapeSourceDetailsTitle,
               value: settings.actressDetailsSource,
               options: [
@@ -1490,10 +1602,11 @@ class _ScrapeSourcesSettingsBodyState
                   unawaited(_select(actressDetailsSource: value)),
             ),
             const SizedBox(height: 12),
-            _worksSourceSelector(context, settings),
+            _worksSourceSelector(context, settings, tokens),
             const SizedBox(height: 12),
             _sourceSelector<ScrapeSourceId>(
               key: const PageStorageKey('scrape-alias-source'),
+              tokens: tokens,
               title: localizations.scrapeSourceAliasTitle,
               value: settings.aliasSource,
               options: [
@@ -1507,7 +1620,10 @@ class _ScrapeSourcesSettingsBodyState
     );
   }
 
-  Widget _connectionStatusSelector(BuildContext context) {
+  Widget _connectionStatusSelector(
+    BuildContext context,
+    AppLayoutTokens tokens,
+  ) {
     final localizations = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -1517,8 +1633,12 @@ class _ScrapeSourcesSettingsBodyState
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         key: const PageStorageKey('scrape-source-connection-status'),
-        title: Text(localizations.scrapeSourceConnectionTitle),
-        subtitle: Text(localizations.scrapeSourceConnectionSubtitle),
+        minTileHeight: tokens.controlHeight,
+        title: _settingsOptionTitle(
+          context,
+          title: localizations.scrapeSourceConnectionTitle,
+          helpText: localizations.scrapeSourceConnectionSubtitle,
+        ),
         backgroundColor: colorScheme.surfaceContainer,
         collapsedBackgroundColor: colorScheme.surfaceContainer,
         shape: const Border(),
@@ -1526,7 +1646,7 @@ class _ScrapeSourcesSettingsBodyState
         clipBehavior: Clip.antiAlias,
         children: [
           for (final source in ScrapeSourceRegistry.aggregatePriority)
-            _connectionStatusTile(context, source),
+            _connectionStatusTile(context, source, tokens),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
             child: SizedBox(
@@ -1553,7 +1673,11 @@ class _ScrapeSourcesSettingsBodyState
     );
   }
 
-  Widget _connectionStatusTile(BuildContext context, ScrapeSourceId source) {
+  Widget _connectionStatusTile(
+    BuildContext context,
+    ScrapeSourceId source,
+    AppLayoutTokens tokens,
+  ) {
     final localizations = AppLocalizations.of(context);
     final status =
         _connectionStatuses[source] ?? _ScrapeSourceConnectionStatus.notTested;
@@ -1587,6 +1711,7 @@ class _ScrapeSourcesSettingsBodyState
 
     return ListTile(
       key: ValueKey('scrape-source-status-${source.name}'),
+      minTileHeight: tokens.controlHeight,
       title: Text(_sourceLabel(localizations, source)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1611,6 +1736,7 @@ class _ScrapeSourcesSettingsBodyState
   Widget _worksSourceSelector(
     BuildContext context,
     ScrapeSourceSettings settings,
+    AppLayoutTokens tokens,
   ) {
     final localizations = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
@@ -1625,13 +1751,17 @@ class _ScrapeSourcesSettingsBodyState
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         key: const PageStorageKey('scrape-works-source'),
+        minTileHeight: tokens.controlHeight,
         backgroundColor: colorScheme.surfaceContainer,
         collapsedBackgroundColor: colorScheme.surfaceContainer,
         shape: const Border(),
         collapsedShape: const Border(),
         clipBehavior: Clip.antiAlias,
-        title: Text(localizations.scrapeSourceWorksTitle),
-        subtitle: Text(localizations.scrapeSourcePriorityHint),
+        title: _settingsOptionTitle(
+          context,
+          title: localizations.scrapeSourceWorksTitle,
+          helpText: localizations.scrapeSourcePriorityHint,
+        ),
         children: [
           ReorderableListView.builder(
             key: const PageStorageKey('scrape-works-source-order'),
@@ -1649,6 +1779,7 @@ class _ScrapeSourcesSettingsBodyState
               final source = selected[index];
               return CheckboxListTile(
                 key: ValueKey('scrape-works-source-selected-${source.name}'),
+                minTileHeight: tokens.controlHeight,
                 value: true,
                 controlAffinity: ListTileControlAffinity.leading,
                 title: Row(
@@ -1676,6 +1807,7 @@ class _ScrapeSourcesSettingsBodyState
           for (final source in unselected)
             CheckboxListTile(
               key: ValueKey('scrape-works-source-available-${source.name}'),
+              minTileHeight: tokens.controlHeight,
               value: false,
               controlAffinity: ListTileControlAffinity.leading,
               title: Text(_sourceLabel(localizations, source)),
@@ -1689,6 +1821,7 @@ class _ScrapeSourcesSettingsBodyState
 
   Widget _sourceSelector<T>({
     required Key key,
+    required AppLayoutTokens tokens,
     required String title,
     required T value,
     required List<(T, String)> options,
@@ -1702,6 +1835,7 @@ class _ScrapeSourcesSettingsBodyState
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         key: key,
+        minTileHeight: tokens.controlHeight,
         backgroundColor: colorScheme.surfaceContainer,
         collapsedBackgroundColor: colorScheme.surfaceContainer,
         shape: const Border(),
@@ -1717,6 +1851,7 @@ class _ScrapeSourcesSettingsBodyState
                 for (final option in options)
                   RadioListTile<T>(
                     value: option.$1,
+                    minTileHeight: tokens.controlHeight,
                     title: Text(option.$2),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
@@ -1730,9 +1865,13 @@ class _ScrapeSourcesSettingsBodyState
 }
 
 class _ScrapePreferencesSettingsBody extends StatefulWidget {
-  const _ScrapePreferencesSettingsBody({required this.database});
+  const _ScrapePreferencesSettingsBody({
+    required this.database,
+    required this.tokens,
+  });
 
   final AppDatabase database;
+  final AppLayoutTokens tokens;
 
   @override
   State<_ScrapePreferencesSettingsBody> createState() =>
@@ -1840,38 +1979,41 @@ class _ScrapePreferencesSettingsBodyState
         Row(
           children: [
             Expanded(
-              child: TextField(
-                key: inputKey,
-                controller: controller,
-                textCapitalization: TextCapitalization.characters,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  hintText: hint,
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppShapeTokens.defaultCardRadius,
+              child: SizedBox(
+                height: widget.tokens.controlHeight,
+                child: TextField(
+                  key: inputKey,
+                  controller: controller,
+                  textCapitalization: TextCapitalization.characters,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppShapeTokens.defaultCardRadius,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppShapeTokens.defaultCardRadius,
+                      ),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppShapeTokens.defaultCardRadius,
+                      ),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 2,
+                      ),
                     ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppShapeTokens.defaultCardRadius,
-                    ),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppShapeTokens.defaultCardRadius,
-                    ),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 2,
-                    ),
-                  ),
+                  onSubmitted: (_) => onAdd(),
                 ),
-                onSubmitted: (_) => onAdd(),
               ),
             ),
             const SizedBox(width: 8),
@@ -1931,59 +2073,70 @@ class _ScrapePreferencesSettingsBodyState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DropdownButtonFormField<bool>(
-                  key: const Key('scrape-existing-data-policy'),
-                  initialValue: current.fillMissingOnly,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: localizations.scrapeExistingData,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppShapeTokens.defaultCardRadius,
-                      ),
+                SizedBox(
+                  height: widget.tokens.controlHeight,
+                  child: DropdownButtonFormField<bool>(
+                    key: const Key('scrape-existing-data-policy'),
+                    initialValue: current.fillMissingOnly,
+                    isExpanded: true,
+                    elevation: 3,
+                    dropdownColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(
+                      AppShapeTokens.popupMenuRadius,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppShapeTokens.defaultCardRadius,
+                    decoration: InputDecoration(
+                      labelText: localizations.scrapeExistingData,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppShapeTokens.defaultCardRadius,
+                        ),
                       ),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).colorScheme.outline,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppShapeTokens.defaultCardRadius,
+                        ),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppShapeTokens.defaultCardRadius,
+                        ),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 2,
+                        ),
+                      ),
+                      isDense: true,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppShapeTokens.defaultCardRadius,
+                    items: [
+                      DropdownMenuItem(
+                        value: true,
+                        child: Text(localizations.fillMissingOnly),
                       ),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).colorScheme.primary,
-                        width: 2,
+                      DropdownMenuItem(
+                        value: false,
+                        child: Text(localizations.scrapeUpdateAll),
                       ),
-                    ),
-                    isDense: true,
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        unawaited(
+                          _update(current.copyWith(fillMissingOnly: value)),
+                        );
+                      }
+                    },
                   ),
-                  items: [
-                    DropdownMenuItem(
-                      value: true,
-                      child: Text(localizations.fillMissingOnly),
-                    ),
-                    DropdownMenuItem(
-                      value: false,
-                      child: Text(localizations.scrapeUpdateAll),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      unawaited(
-                        _update(current.copyWith(fillMissingOnly: value)),
-                      );
-                    }
-                  },
                 ),
                 const SizedBox(height: 4),
                 SwitchListTile(
                   key: const Key('scrape-aliases-switch'),
                   contentPadding: EdgeInsets.zero,
-                  dense: true,
+                  minTileHeight: widget.tokens.controlHeight,
+                  minVerticalPadding: 0,
                   title: Text(localizations.scrapeAliases),
                   value: current.scrapeAliases,
                   onChanged: (value) => unawaited(
@@ -1993,7 +2146,8 @@ class _ScrapePreferencesSettingsBodyState
                 SwitchListTile(
                   key: const Key('scrape-replace-actress-image-switch'),
                   contentPadding: EdgeInsets.zero,
-                  dense: true,
+                  minTileHeight: widget.tokens.controlHeight,
+                  minVerticalPadding: 0,
                   title: Text(localizations.replaceActressImage),
                   value: current.replaceActressImage,
                   onChanged: (value) => unawaited(
@@ -2003,10 +2157,13 @@ class _ScrapePreferencesSettingsBodyState
                 SwitchListTile(
                   key: const Key('scrape-auto-exclude-derived-switch'),
                   contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  title: Text(localizations.scrapeAutomaticDerivedFilter),
-                  subtitle: Text(
-                    localizations.scrapeAutomaticDerivedFilterDescription,
+                  minTileHeight: widget.tokens.controlHeight,
+                  minVerticalPadding: 0,
+                  title: _settingsOptionTitle(
+                    context,
+                    title: localizations.scrapeAutomaticDerivedFilter,
+                    helpText:
+                        localizations.scrapeAutomaticDerivedFilterDescription,
                   ),
                   value: current.autoExcludeDerivedWorks,
                   onChanged: (value) => unawaited(
@@ -2016,11 +2173,15 @@ class _ScrapePreferencesSettingsBodyState
                 ExpansionTile(
                   key: const Key('scrape-advanced-rules'),
                   tilePadding: EdgeInsets.zero,
+                  minTileHeight: widget.tokens.controlHeight,
                   childrenPadding: const EdgeInsets.only(bottom: 8),
                   shape: const Border(),
                   collapsedShape: const Border(),
-                  title: Text(localizations.scrapeAdvancedRules),
-                  subtitle: Text(localizations.scrapeAdvancedRulesDescription),
+                  title: _settingsOptionTitle(
+                    context,
+                    title: localizations.scrapeAdvancedRules,
+                    helpText: localizations.scrapeAdvancedRulesDescription,
+                  ),
                   initiallyExpanded: advancedExpanded,
                   onExpansionChanged: (value) =>
                       setState(() => advancedExpanded = value),
@@ -2108,7 +2269,8 @@ class _SettingsCategoryPage extends StatelessWidget {
 
   final SettingsController controller;
   final String Function(BuildContext context) titleBuilder;
-  final Widget Function(BuildContext context) bodyBuilder;
+  final Widget Function(BuildContext context, AppLayoutTokens tokens)
+  bodyBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -2148,7 +2310,7 @@ class _SettingsCategoryPage extends StatelessWidget {
           padding: tokens.pagePadding,
           child: ListenableBuilder(
             listenable: controller,
-            builder: (context, _) => bodyBuilder(context),
+            builder: (context, _) => bodyBuilder(context, tokens),
           ),
         ),
       ),

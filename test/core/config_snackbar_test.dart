@@ -1,4 +1,5 @@
 import 'package:avaca/core/config.dart';
+import 'package:avaca/core/shapes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,5 +24,17 @@ void main() {
     expect(theme.snackBarTheme.contentTextStyle?.color, text);
     expect(theme.snackBarTheme.elevation, 0);
     expect(theme.snackBarTheme.behavior, SnackBarBehavior.floating);
+  });
+
+  test('popup menus use the shared compact surface shape', () {
+    final theme = AppTheme.fromPalette(AppPalettes.light);
+    final shape = theme.popupMenuTheme.shape! as RoundedRectangleBorder;
+
+    expect(theme.popupMenuTheme.color, AppPalettes.light.surfaceContainer);
+    expect(theme.popupMenuTheme.elevation, 3);
+    expect(
+      shape.borderRadius,
+      BorderRadius.circular(AppShapeTokens.popupMenuRadius),
+    );
   });
 }

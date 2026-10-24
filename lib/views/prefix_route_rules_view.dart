@@ -3,8 +3,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../components/app_help_tooltip.dart';
 import '../controllers/prefix_route_file_transfer.dart';
 import '../core/database.dart';
+import '../core/layout.dart';
 import '../core/shapes.dart';
 import '../l10n/app_localizations.dart';
 import '../services/javbus/prefix_route_repository.dart';
@@ -98,6 +100,9 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final tokens = AppLayoutPolicy.resolve(
+      BoxConstraints.tightFor(width: MediaQuery.sizeOf(context).width),
+    );
     final inputRadius = BorderRadius.circular(AppShapeTokens.defaultCardRadius);
     final colorScheme = Theme.of(context).colorScheme;
     if (_isLoading) {
@@ -113,27 +118,30 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
       children: [
         _summaryCard(context),
         const SizedBox(height: 12),
-        TextField(
-          controller: _searchController,
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search),
-            hintText: localizations.prefixRouteSearchHint,
-            suffixIcon: _searchController.text.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: localizations.clear,
-                    onPressed: _searchController.clear,
-                    icon: const Icon(Icons.clear),
-                  ),
-            border: OutlineInputBorder(borderRadius: inputRadius),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: inputRadius,
-              borderSide: BorderSide(color: colorScheme.outline),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: inputRadius,
-              borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        SizedBox(
+          height: tokens.controlHeight,
+          child: TextField(
+            controller: _searchController,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: localizations.prefixRouteSearchHint,
+              suffixIcon: _searchController.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: localizations.clear,
+                      onPressed: _searchController.clear,
+                      icon: const Icon(Icons.clear),
+                    ),
+              border: OutlineInputBorder(borderRadius: inputRadius),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: inputRadius,
+                borderSide: BorderSide(color: colorScheme.outline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: inputRadius,
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
             ),
           ),
         ),
@@ -145,18 +153,27 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
             OutlinedButton.icon(
               key: const ValueKey('prefix-route-export'),
               onPressed: _export,
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size(0, tokens.controlHeight),
+              ),
               icon: const Icon(Icons.file_upload_outlined),
               label: Text(localizations.prefixRouteExport),
             ),
             OutlinedButton.icon(
               key: const ValueKey('prefix-route-import'),
               onPressed: _import,
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size(0, tokens.controlHeight),
+              ),
               icon: const Icon(Icons.file_download_outlined),
               label: Text(localizations.prefixRouteImport),
             ),
             TextButton.icon(
               key: const ValueKey('prefix-route-clear-automatic'),
               onPressed: _clearAutomaticLearning,
+              style: TextButton.styleFrom(
+                minimumSize: Size(0, tokens.controlHeight),
+              ),
               icon: const Icon(Icons.cleaning_services_outlined),
               label: Text(localizations.prefixRouteClearAutomatic),
             ),
@@ -229,17 +246,22 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    localizations.prefixRouteRulesTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
+                  Row(
+                    children: [
+                      AppHelpTooltip(
+                        message: localizations.prefixRouteRulesSubtitle,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          localizations.prefixRouteRulesTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(localizations.prefixRouteRuleCount(_rules.length)),
-                  const SizedBox(height: 4),
-                  Text(
-                    localizations.prefixRouteRulesSubtitle,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
                 ],
               ),
             ),
@@ -335,6 +357,9 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
 
   Future<bool?> _showExportMode() {
     final localizations = AppLocalizations.of(context);
+    final tokens = AppLayoutPolicy.resolve(
+      BoxConstraints.tightFor(width: MediaQuery.sizeOf(context).width),
+    );
     var includeStatistics = false;
     return showDialog<bool>(
       context: context,
@@ -353,16 +378,36 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
               children: [
                 RadioListTile<bool>(
                   value: false,
-                  title: Text(localizations.prefixRouteExportRulesOnly),
-                  subtitle: Text(
-                    localizations.prefixRouteExportRulesOnlyDescription,
+                  minTileHeight: tokens.controlHeight,
+                  title: Row(
+                    children: [
+                      AppHelpTooltip(
+                        message:
+                            localizations.prefixRouteExportRulesOnlyDescription,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(localizations.prefixRouteExportRulesOnly),
+                      ),
+                    ],
                   ),
                 ),
                 RadioListTile<bool>(
                   value: true,
-                  title: Text(localizations.prefixRouteExportWithStatistics),
-                  subtitle: Text(
-                    localizations.prefixRouteExportWithStatisticsDescription,
+                  minTileHeight: tokens.controlHeight,
+                  title: Row(
+                    children: [
+                      AppHelpTooltip(
+                        message: localizations
+                            .prefixRouteExportWithStatisticsDescription,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          localizations.prefixRouteExportWithStatistics,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -646,7 +691,11 @@ class _PrefixRouteRuleDetailSheetState
     final status = _statusPresentation(context, _rule.status);
     final manual = _rule.manualOverride;
     final inputRadius = BorderRadius.circular(AppShapeTokens.dialogRadius);
+    final menuRadius = BorderRadius.circular(AppShapeTokens.popupMenuRadius);
     final colorScheme = Theme.of(context).colorScheme;
+    final tokens = AppLayoutPolicy.resolve(
+      BoxConstraints.tightFor(width: MediaQuery.sizeOf(context).width),
+    );
     return SafeArea(
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -683,51 +732,72 @@ class _PrefixRouteRuleDetailSheetState
               for (final candidate in _rule.candidates)
                 _candidateTile(context, candidate),
               const SizedBox(height: 16),
-              DropdownButtonFormField<WorkImageNormalizationFamily?>(
-                initialValue: manual,
-                decoration: InputDecoration(
-                  labelText: localizations.prefixRouteManualOverride,
-                  border: OutlineInputBorder(borderRadius: inputRadius),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: inputRadius,
-                    borderSide: BorderSide(color: colorScheme.outline),
+              Row(
+                children: [
+                  AppHelpTooltip(
+                    message: manual == null
+                        ? localizations.prefixRouteAutomaticDescription
+                        : localizations.prefixRouteManualDescription,
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: inputRadius,
-                    borderSide: BorderSide(
-                      color: colorScheme.primary,
-                      width: 2,
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      localizations.prefixRouteManualOverride,
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ),
-                ),
-                items: [
-                  DropdownMenuItem<WorkImageNormalizationFamily?>(
-                    value: null,
-                    child: Text(localizations.prefixRouteAutomatic),
-                  ),
-                  for (final family in workImageDefaultProbeOrder)
-                    DropdownMenuItem<WorkImageNormalizationFamily?>(
-                      value: family,
-                      child: Text(_familyLabel(context, family)),
-                    ),
                 ],
-                onChanged: _isBusy ? null : _setManual,
               ),
-              const SizedBox(height: 8),
-              Text(
-                manual == null
-                    ? localizations.prefixRouteAutomaticDescription
-                    : localizations.prefixRouteManualDescription,
-                style: Theme.of(context).textTheme.bodySmall,
+              const SizedBox(height: 4),
+              SizedBox(
+                height: tokens.controlHeight,
+                child: DropdownButtonFormField<WorkImageNormalizationFamily?>(
+                  initialValue: manual,
+                  elevation: 3,
+                  dropdownColor: colorScheme.surfaceContainer,
+                  borderRadius: menuRadius,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: inputRadius),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: inputRadius,
+                      borderSide: BorderSide(color: colorScheme.outline),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: inputRadius,
+                      borderSide: BorderSide(
+                        color: colorScheme.primary,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  items: [
+                    DropdownMenuItem<WorkImageNormalizationFamily?>(
+                      value: null,
+                      child: Text(localizations.prefixRouteAutomatic),
+                    ),
+                    for (final family in workImageDefaultProbeOrder)
+                      DropdownMenuItem<WorkImageNormalizationFamily?>(
+                        value: family,
+                        child: Text(_familyLabel(context, family)),
+                      ),
+                  ],
+                  onChanged: _isBusy ? null : _setManual,
+                ),
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
                 onPressed: _isBusy ? null : _resetLearning,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: Size(0, tokens.controlHeight),
+                ),
                 icon: const Icon(Icons.restart_alt),
                 label: Text(localizations.prefixRouteReset),
               ),
               TextButton.icon(
                 onPressed: _isBusy ? null : _forgetRule,
+                style: TextButton.styleFrom(
+                  minimumSize: Size(0, tokens.controlHeight),
+                ),
                 icon: const Icon(Icons.delete_outline),
                 label: Text(localizations.prefixRouteForget),
               ),

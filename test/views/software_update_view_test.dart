@@ -61,31 +61,35 @@ void main() {
     });
   });
 
-  testWidgets('Other contains Software update with the requested controls', (
-    tester,
-  ) async {
-    final controller = await _buildController();
-    addTearDown(controller.dispose);
+  testWidgets(
+    'System & About contains Software update with the requested controls',
+    (tester) async {
+      final controller = await _buildController();
+      addTearDown(controller.dispose);
 
-    await tester.pumpWidget(_SettingsHarness(controller: controller));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_SettingsHarness(controller: controller));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Other'), findsOneWidget);
-    await tester.tap(find.text('Other'));
-    await tester.pumpAndSettle();
-    expect(find.text('Software update'), findsOneWidget);
-    expect(find.text('Scrape sources'), findsNothing);
+      expect(find.text('System & About'), findsOneWidget);
+      await tester.tap(find.text('System & About'));
+      await tester.pumpAndSettle();
+      expect(find.text('Software update'), findsOneWidget);
+      expect(find.text('Scrape sources'), findsNothing);
 
-    await tester.tap(find.text('Software update'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Software update'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Current version'), findsOneWidget);
-    expect(find.text('0.8.1'), findsOneWidget);
-    expect(find.text('0.8.1+2026'), findsNothing);
-    expect(find.text('Latest version'), findsOneWidget);
-    expect(find.text('Check for updates automatically'), findsOneWidget);
-    expect(find.byKey(const ValueKey('software-update-check')), findsOneWidget);
-  });
+      expect(find.text('Current version'), findsOneWidget);
+      expect(find.text('0.8.1'), findsOneWidget);
+      expect(find.text('0.8.1+2026'), findsNothing);
+      expect(find.text('Latest version'), findsOneWidget);
+      expect(find.text('Check for updates automatically'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('software-update-check')),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'manual check opens a dialog whose Update now action starts install',
@@ -96,7 +100,7 @@ void main() {
 
       await tester.pumpWidget(_SettingsHarness(controller: controller));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Other'));
+      await tester.tap(find.text('System & About'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Software update'));
       await tester.pumpAndSettle();

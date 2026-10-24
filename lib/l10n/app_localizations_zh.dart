@@ -620,6 +620,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDataTransferTitle => '資料匯入與匯出';
 
   @override
+  String get settingsDataManagementTitle => '資料管理';
+
+  @override
   String get settingsDataTransferSubtitle => '以 ZIP 備份或還原演員、作品、詳細資料與圖片。';
 
   @override
@@ -697,7 +700,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataTransferFailed => '資料傳輸失敗，未變更既有資料。';
 
   @override
-  String get otherSettings => '其他';
+  String get settingsSystemAndAboutTitle => '系統與關於';
 
   @override
   String get about => '關於';
@@ -745,7 +748,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scrapeSourceConnectionTitle => '網站連線狀態';
 
   @override
-  String get scrapeSourceConnectionSubtitle => '查看已加入的刮削網站，並在這裡測試連線與完成驗證。';
+  String get scrapeSourceConnectionSubtitle => '網站連線測試';
 
   @override
   String get scrapeSourceRetest => '重新測試連線';
@@ -1871,6 +1874,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settingsDataTransferTitle => '数据导入与导出';
 
   @override
+  String get settingsDataManagementTitle => '数据管理';
+
+  @override
   String get settingsDataTransferSubtitle => '使用 ZIP 备份或还原女优、作品、详细资料和图片。';
 
   @override
@@ -1948,7 +1954,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get dataTransferFailed => '数据传输失败，现有资料未变更。';
 
   @override
-  String get otherSettings => '其他';
+  String get settingsSystemAndAboutTitle => '系统与关于';
 
   @override
   String get about => '关于';
@@ -1996,7 +2002,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get scrapeSourceConnectionTitle => '网站连接状态';
 
   @override
-  String get scrapeSourceConnectionSubtitle => '查看已加入的刮削网站，并在这里测试连接与完成验证。';
+  String get scrapeSourceConnectionSubtitle => '网站连接测试';
 
   @override
   String get scrapeSourceRetest => '重新测试连接';
@@ -3122,6 +3128,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settingsDataTransferTitle => '資料匯入與匯出';
 
   @override
+  String get settingsDataManagementTitle => '資料管理';
+
+  @override
   String get settingsDataTransferSubtitle => '以 ZIP 備份或還原演員、作品、詳細資料與圖片。';
 
   @override
@@ -3199,7 +3208,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dataTransferFailed => '資料傳輸失敗，未變更既有資料。';
 
   @override
-  String get otherSettings => '其他';
+  String get settingsSystemAndAboutTitle => '系統與關於';
 
   @override
   String get about => '關於';
@@ -3247,7 +3256,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get scrapeSourceConnectionTitle => '網站連線狀態';
 
   @override
-  String get scrapeSourceConnectionSubtitle => '查看已加入的刮削網站，並在這裡測試連線與完成驗證。';
+  String get scrapeSourceConnectionSubtitle => '網站連線測試';
 
   @override
   String get scrapeSourceRetest => '重新測試連線';

@@ -16,4 +16,7 @@ abstract final class AppShapeTokens {
   static const double defaultCardRadius = 12;
 
   static const double inputRadius = defaultCardRadius;
+
+  /// Menus should use the same compact surface language as cards and inputs.
+  static const double popupMenuRadius = defaultCardRadius;
 }

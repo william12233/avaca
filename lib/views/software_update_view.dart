@@ -4,6 +4,7 @@ import 'package:avaca/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/software_update_controller.dart';
+import '../core/layout.dart';
 import '../models/software_update_models.dart';
 
 class SoftwareUpdateView extends StatefulWidget {
@@ -38,6 +39,9 @@ class _SoftwareUpdateViewState extends State<SoftwareUpdateView> {
         final controller = widget.controller;
         final current = controller.currentVersion?.version ?? '—';
         final latest = controller.latestRelease?.version.toString() ?? '—';
+        final tokens = AppLayoutPolicy.resolve(
+          BoxConstraints.tightFor(width: MediaQuery.sizeOf(context).width),
+        );
 
         return ListView(
           key: const PageStorageKey('software-update-settings-scroll'),
@@ -47,17 +51,14 @@ class _SoftwareUpdateViewState extends State<SoftwareUpdateView> {
               ? const NeverScrollableScrollPhysics()
               : null,
           children: [
-            Text(
-              localizations.softwareUpdateDescription,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
             _VersionRow(label: localizations.currentVersion, value: current),
             const SizedBox(height: 8),
             _VersionRow(label: localizations.latestVersion, value: latest),
             const SizedBox(height: 12),
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
+              minTileHeight: tokens.controlHeight,
+              minVerticalPadding: 0,
               title: Text(localizations.autoCheckUpdates),
               value: controller.autoCheckUpdates,
               onChanged: controller.isBusy
@@ -70,12 +71,8 @@ class _SoftwareUpdateViewState extends State<SoftwareUpdateView> {
                 key: const ValueKey('software-update-check'),
                 onPressed: controller.isBusy ? null : _checkForUpdates,
                 style: TextButton.styleFrom(
-                  minimumSize: Size.zero,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  minimumSize: Size(0, tokens.controlHeight),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
                 child: Text(localizations.checkForUpdates),
               ),

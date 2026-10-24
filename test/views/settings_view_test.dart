@@ -1,5 +1,6 @@
 import 'package:avaca/core/config.dart';
 import 'package:avaca/core/database.dart';
+import 'package:avaca/core/shapes.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import 'package:avaca/models/scrape_source_settings.dart';
 import 'package:avaca/models/work_scrape_options.dart';
@@ -30,11 +31,16 @@ void main() {
 
     expect(find.text('Theme & Colors'), findsOneWidget);
     expect(find.text('Interface'), findsOneWidget);
+    expect(find.text('Scrape settings'), findsOneWidget);
+    expect(find.text('Data management'), findsOneWidget);
+    expect(find.text('System & About'), findsOneWidget);
     expect(find.byIcon(Icons.palette_outlined), findsOneWidget);
     expect(find.byIcon(Icons.language), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right), findsNothing);
     _expectBorderlessCategoryCard(tester, 'Theme & Colors');
     _expectBorderlessCategoryCard(tester, 'Interface');
+    _expectBorderlessCategoryCard(tester, 'Data management');
+    _expectBorderlessCategoryCard(tester, 'System & About');
     expect(find.text('Theme Mode'), findsNothing);
     expect(find.text('Language'), findsNothing);
     expect(find.text('Pure Black AMOLED'), findsNothing);
@@ -48,11 +54,35 @@ void main() {
     await tester.pumpAndSettle();
 
     final backRect = tester.getRect(find.byIcon(Icons.arrow_back));
-    final titleRect = tester.getRect(find.text('Theme & Colors'));
+    final titleRect = tester.getRect(
+      find.widgetWithText(AppBar, 'Theme & Colors'),
+    );
     expect(backRect.center.dy, closeTo(titleRect.center.dy, 0.5));
   });
 
-  testWidgets('about expands GitHub and feedback links inline', (tester) async {
+  testWidgets('data management keeps transfer and health actions together', (
+    tester,
+  ) async {
+    await _pumpSettings(tester);
+
+    await tester.tap(find.text('Data management'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppBar, 'Data management'), findsOneWidget);
+    expect(find.text('Export data'), findsOneWidget);
+    expect(find.text('Import data'), findsOneWidget);
+    expect(find.text('Data health'), findsOneWidget);
+    expect(find.text('Scrape jobs'), findsNothing);
+
+    final exportHelp = find.byTooltip(
+      'Choose a destination for a complete ZIP backup.',
+    );
+    expect(exportHelp, findsOneWidget);
+  });
+
+  testWidgets('system and about expands GitHub and feedback links inline', (
+    tester,
+  ) async {
     final openedUrls = <Uri>[];
 
     await _pumpSettings(
@@ -63,7 +93,7 @@ void main() {
       },
     );
 
-    await tester.tap(find.text('Other'));
+    await tester.tap(find.text('System & About'));
     await tester.pumpAndSettle();
 
     expect(find.text('About'), findsOneWidget);
@@ -72,7 +102,7 @@ void main() {
     await tester.tap(find.text('About'));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(AppBar, 'Other'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'System & About'), findsOneWidget);
     expect(find.widgetWithText(AppBar, 'About'), findsNothing);
     expect(find.text('github'), findsOneWidget);
     expect(find.text('Feedback'), findsOneWidget);
@@ -89,17 +119,19 @@ void main() {
     ]);
   });
 
-  testWidgets('other expands Prefix route rules inline', (tester) async {
+  testWidgets('scrape settings expands Prefix route rules inline', (
+    tester,
+  ) async {
     await _pumpSettings(tester);
 
-    await tester.tap(find.text('Other'));
+    await tester.tap(find.text('Scrape settings'));
     await tester.pumpAndSettle();
 
     expect(find.text('Prefix route rules'), findsOneWidget);
     await tester.tap(find.text('Prefix route rules'));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(AppBar, 'Other'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'Scrape settings'), findsOneWidget);
     expect(find.widgetWithText(AppBar, 'Prefix route rules'), findsNothing);
     expect(find.text('0 learned Prefix rules'), findsOneWidget);
     expect(find.byKey(const ValueKey('prefix-route-import')), findsOneWidget);
@@ -121,7 +153,7 @@ void main() {
       family: WorkImageNormalizationFamily.dmmStandard,
     );
 
-    await tester.tap(find.text('Other'));
+    await tester.tap(find.text('Scrape settings'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Prefix route rules'));
     await tester.pumpAndSettle();
@@ -375,6 +407,22 @@ void main() {
     expect(options.exactDenies.single.normalizedCode, 'MANUAL-001');
   });
 
+  testWidgets('scrape policy dropdown uses the app menu shape', (tester) async {
+    await _pumpSettings(tester);
+
+    await tester.tap(find.text('Scrape settings'));
+    await tester.pumpAndSettle();
+
+    final dropdown = tester.widget<DropdownButton<bool>>(
+      find.byType(DropdownButton<bool>),
+    );
+    expect(
+      dropdown.borderRadius,
+      BorderRadius.circular(AppShapeTokens.popupMenuRadius),
+    );
+    expect(dropdown.elevation, 3);
+  });
+
   testWidgets('scrape advanced rules only expose exact overrides', (
     tester,
   ) async {
@@ -403,6 +451,12 @@ void main() {
     expect(find.byKey(const Key('scrape-prefix-input')), findsNothing);
     expect(find.byKey(const Key('scrape-ofje-policy-dropdown')), findsNothing);
     expect(find.text('Compatibility prefixes'), findsNothing);
+    final advancedHelp = find.byTooltip(
+      'Enter a full work code or prefix, e.g. KCKC or KCKC-212.',
+    );
+    expect(advancedHelp, findsOneWidget);
+    await tester.tap(advancedHelp);
+    await tester.pump(const Duration(milliseconds: 100));
     expect(
       find.text('Enter a full work code or prefix, e.g. KCKC or KCKC-212.'),
       findsOneWidget,
@@ -574,6 +628,10 @@ void main() {
     await tester.tap(find.byKey(const PageStorageKey('theme-option-dark')));
     await tester.pumpAndSettle();
 
+    final pureBlackHelp = find.byTooltip('Only works with dark theme');
+    expect(pureBlackHelp, findsOneWidget);
+    await tester.tap(pureBlackHelp);
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Only works with dark theme'), findsOneWidget);
     expect(find.textContaining('/ custom theme'), findsNothing);
   });

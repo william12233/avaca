@@ -17,6 +17,7 @@
 | --- | --- | ---: |
 | 一般卡片、頁面區塊、非響應式外框 | `AppShapeTokens.defaultCardRadius` | 12 |
 | 一般輸入框 | `AppShapeTokens.inputRadius` | 12 |
+| 下拉選單、PopupMenu | `AppShapeTokens.popupMenuRadius` | 12 |
 | Dialog、BottomSheet 及其同一視覺外框內的控制項 | `AppShapeTokens.dialogRadius` | 28 |
 | 會依 compact／expanded 改變大小的卡片或面板 | `tokens.cardRadius`（由 `AppLayoutPolicy.resolve` 取得） | 12／16 |
 
@@ -45,6 +46,13 @@ Card(
 Dialog 也同樣處理：外框使用 `AppShapeTokens.dialogRadius`，其內若有作為該框線一部分的輸入框、按鈕或下拉選單，也使用同一個 token。不要在外框是 12 或 28 時，另外放入 6、8、10 等未命名圓角。
 
 圖片若是外框的全出血內容，也要使用外框圓角。只有縮圖、頭像或刻意內縮的裝飾性圖片可以有不同圓角；這種例外必須在程式碼留下原因。
+
+## 設定頁控制項規則
+
+- 同一個設定頁的選項列、輸入框、下拉選單與操作按鈕，使用 `AppLayoutTokens.controlHeight`，目前固定為 48px。
+- 動態狀態、進度、錯誤與資料摘要可以讓列高自然增加；這些不是固定說明文字。
+- 靜態補充說明不要放在 `subtitle` 常駐顯示，改用 [`AppHelpTooltip`](../lib/components/app_help_tooltip.dart) 放在選項文字前。手機單擊問號顯示，桌面滑鼠移入顯示。
+- 設定分類以「主題與色彩」、「介面」、「刮削設定」、「資料管理」、「系統與關於」分組；新增選項先放入對應分類，不在主頁堆疊細節。
 
 ## 新增 UI 時的檢查
 

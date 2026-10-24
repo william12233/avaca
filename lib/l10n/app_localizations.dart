@@ -1273,6 +1273,12 @@ abstract class AppLocalizations {
   /// **'資料匯入與匯出'**
   String get settingsDataTransferTitle;
 
+  /// No description provided for @settingsDataManagementTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'資料管理'**
+  String get settingsDataManagementTitle;
+
   /// No description provided for @settingsDataTransferSubtitle.
   ///
   /// In zh_TW, this message translates to:
@@ -1417,11 +1423,11 @@ abstract class AppLocalizations {
   /// **'資料傳輸失敗，未變更既有資料。'**
   String get dataTransferFailed;
 
-  /// No description provided for @otherSettings.
+  /// No description provided for @settingsSystemAndAboutTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'其他'**
-  String get otherSettings;
+  /// **'系統與關於'**
+  String get settingsSystemAndAboutTitle;
 
   /// No description provided for @about.
   ///
@@ -1516,7 +1522,7 @@ abstract class AppLocalizations {
   /// No description provided for @scrapeSourceConnectionSubtitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'查看已加入的刮削網站，並在這裡測試連線與完成驗證。'**
+  /// **'網站連線測試'**
   String get scrapeSourceConnectionSubtitle;
 
   /// No description provided for @scrapeSourceRetest.

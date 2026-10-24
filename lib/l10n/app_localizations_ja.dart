@@ -622,6 +622,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsDataTransferTitle => 'データの入出力';
 
   @override
+  String get settingsDataManagementTitle => 'データ管理';
+
+  @override
   String get settingsDataTransferSubtitle =>
       '女優、作品、詳細情報、画像を ZIP でバックアップまたは復元します。';
 
@@ -700,7 +703,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dataTransferFailed => 'データ転送に失敗しました。既存データは変更されていません。';
 
   @override
-  String get otherSettings => 'その他';
+  String get settingsSystemAndAboutTitle => 'システムと情報';
 
   @override
   String get about => '概要';
@@ -748,7 +751,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scrapeSourceConnectionTitle => '取得元の接続状態';
 
   @override
-  String get scrapeSourceConnectionSubtitle => '追加済みの取得元を確認し、ここで接続テストと確認を行います。';
+  String get scrapeSourceConnectionSubtitle => 'サイト接続テスト';
 
   @override
   String get scrapeSourceRetest => '接続を再テスト';
@@ -1885,6 +1888,9 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get settingsDataTransferTitle => 'データの入出力';
 
   @override
+  String get settingsDataManagementTitle => 'データ管理';
+
+  @override
   String get settingsDataTransferSubtitle =>
       '女優、作品、詳細情報、画像を ZIP でバックアップまたは復元します。';
 
@@ -1963,7 +1969,7 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get dataTransferFailed => 'データ転送に失敗しました。既存データは変更されていません。';
 
   @override
-  String get otherSettings => 'その他';
+  String get settingsSystemAndAboutTitle => 'システムと情報';
 
   @override
   String get about => '概要';
@@ -2011,7 +2017,7 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get scrapeSourceConnectionTitle => '取得元の接続状態';
 
   @override
-  String get scrapeSourceConnectionSubtitle => '追加済みの取得元を確認し、ここで接続テストと確認を行います。';
+  String get scrapeSourceConnectionSubtitle => 'サイト接続テスト';
 
   @override
   String get scrapeSourceRetest => '接続を再テスト';

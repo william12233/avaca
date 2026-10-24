@@ -1,6 +1,6 @@
 # AVACA
 
-AVACA 1.3.1 是一個以本地資料為主的女優與作品收藏 App；新增女優維持原本的
+AVACA 1.3.2 是一個以本地資料為主的女優與作品收藏 App；新增女優維持原本的
 手動輸入流程，並提供更新下載進度與較低資源消耗，不包含播放器、遠端 Server
 或配對流程。
 
@@ -10,7 +10,7 @@ UI 開發的圓角、框線與內外框對齊規則請參考
 ## Windows portable 版
 
 Windows portable release 會包含完整的 Flutter 執行檔 bundle，以及
-`avaca_update.exe` 原生更新 helper。從 AVACA「設定 → 其他 → 軟體更新」
+`avaca_update.exe` 原生更新 helper。從 AVACA「設定 → 系統與關於 → 軟體更新」
 按「立即更新」即可自動下載、驗證並替換 portable 程式檔，不需要安裝版。
 
 更新 helper 會在替換程式前停止 AVACA，失敗時復原原本的程式 bundle，成功
