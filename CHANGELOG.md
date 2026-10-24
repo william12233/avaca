@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.1 - 2026-10-24
+
+- Unified rounded corners for cards, inputs, dialogs, bottom sheets, and
+  framed controls across responsive pages so inner controls align with their
+  containing surface.
+- Added shared shape tokens, UI development guidance, and regression coverage
+  to keep future pages on the same visual contract.
+
 ## 1.3.0 - 2026-10-23
 
 - Added visible update download percentage, byte counts, and live progress in

@@ -1,4 +1,5 @@
 import 'package:avaca/core/database.dart';
+import 'package:avaca/core/shapes.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import 'package:avaca/views/detail_view.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +52,30 @@ void main() {
     expect(find.byKey(const Key('detail-alias-input')), findsOneWidget);
     expect(find.byKey(const Key('detail-alias-add')), findsOneWidget);
     expect(find.byKey(const Key('detail-alias-save')), findsNothing);
+
+    final dialog = tester.widget<AlertDialog>(
+      find.byKey(const Key('detail-aliases-dialog')),
+    );
+    final dialogShape = dialog.shape! as RoundedRectangleBorder;
+    expect(
+      dialogShape.borderRadius,
+      BorderRadius.circular(AppShapeTokens.dialogRadius),
+    );
+    final input = tester.widget<TextField>(
+      find.byKey(const Key('detail-alias-input')),
+    );
+    final inputDecoration = input.decoration!;
+    for (final border in [
+      inputDecoration.border,
+      inputDecoration.enabledBorder,
+      inputDecoration.focusedBorder,
+      inputDecoration.disabledBorder,
+    ]) {
+      expect(
+        (border! as OutlineInputBorder).borderRadius,
+        dialogShape.borderRadius,
+      );
+    }
 
     await tester.enterText(
       find.byKey(const Key('detail-alias-input')),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/prefix_route_file_transfer.dart';
 import '../core/database.dart';
+import '../core/shapes.dart';
 import '../l10n/app_localizations.dart';
 import '../services/javbus/prefix_route_repository.dart';
 import '../services/javbus/work_image_route_models.dart';
@@ -97,6 +98,8 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final inputRadius = BorderRadius.circular(AppShapeTokens.defaultCardRadius);
+    final colorScheme = Theme.of(context).colorScheme;
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -123,7 +126,15 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
                     onPressed: _searchController.clear,
                     icon: const Icon(Icons.clear),
                   ),
-            border: const OutlineInputBorder(),
+            border: OutlineInputBorder(borderRadius: inputRadius),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: inputRadius,
+              borderSide: BorderSide(color: colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: inputRadius,
+              borderSide: BorderSide(color: colorScheme.primary, width: 2),
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -634,6 +645,8 @@ class _PrefixRouteRuleDetailSheetState
     final localizations = AppLocalizations.of(context);
     final status = _statusPresentation(context, _rule.status);
     final manual = _rule.manualOverride;
+    final inputRadius = BorderRadius.circular(AppShapeTokens.dialogRadius);
+    final colorScheme = Theme.of(context).colorScheme;
     return SafeArea(
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -674,7 +687,18 @@ class _PrefixRouteRuleDetailSheetState
                 initialValue: manual,
                 decoration: InputDecoration(
                   labelText: localizations.prefixRouteManualOverride,
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(borderRadius: inputRadius),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: inputRadius,
+                    borderSide: BorderSide(color: colorScheme.outline),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: inputRadius,
+                    borderSide: BorderSide(
+                      color: colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
                 ),
                 items: [
                   DropdownMenuItem<WorkImageNormalizationFamily?>(

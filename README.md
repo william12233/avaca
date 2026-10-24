@@ -1,8 +1,11 @@
 # AVACA
 
-AVACA 1.3.0 是一個以本地資料為主的女優與作品收藏 App；新增女優維持原本的
+AVACA 1.3.1 是一個以本地資料為主的女優與作品收藏 App；新增女優維持原本的
 手動輸入流程，並提供更新下載進度與較低資源消耗，不包含播放器、遠端 Server
 或配對流程。
+
+UI 開發的圓角、框線與內外框對齊規則請參考
+[`docs/ui-guidelines.md`](docs/ui-guidelines.md)。
 
 ## Windows portable 版
 

@@ -63,6 +63,9 @@ class AppLayoutTokens {
   final double sectionGap;
   final double gridGap;
   final EdgeInsets gridPadding;
+  /// Radius of the outer card/panel. Framed children should match this value.
+  ///
+  /// Keep the responsive values documented in `docs/ui-guidelines.md`.
   final double cardRadius;
   final double controlHeight;
   final double minimumInteractiveSize;

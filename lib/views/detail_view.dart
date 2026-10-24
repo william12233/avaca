@@ -9,8 +9,9 @@ import '../components/app_snackbar.dart';
 import '../controllers/detail_controller.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
+import '../core/shapes.dart';
 
-const double _detailControlRadius = 6.0;
+const double _detailPickerOverlayRadius = 6.0;
 const double _detailActionHeight = 52.0;
 const double _detailEditableRowHeight = 40.0;
 const double _detailReadOnlyRowHeight = 28.0;
@@ -20,12 +21,13 @@ enum _DetailMenuAction { edit, delete }
 
 enum _DetailLayoutMode { compact, intermediate, wide }
 
-ButtonStyle _detailOutlinedButtonStyle({Color? foregroundColor}) {
+ButtonStyle _detailOutlinedButtonStyle({
+  Color? foregroundColor,
+  double radius = AppShapeTokens.inputRadius,
+}) {
   return OutlinedButton.styleFrom(
     foregroundColor: foregroundColor,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(_detailControlRadius),
-    ),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
   );
 }
 
@@ -154,7 +156,7 @@ class _BirthDatePickerSheetState extends State<_BirthDatePickerSheet> {
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         color: colorScheme.primary.withValues(alpha: 0.28),
-        borderRadius: BorderRadius.circular(_detailControlRadius),
+        borderRadius: BorderRadius.circular(_detailPickerOverlayRadius),
       ),
     );
 
@@ -521,7 +523,7 @@ class _DetailViewState extends State<DetailView> {
           children: [
             SizedBox(
               width: leftWidth,
-              child: _buildWideProfileVisual(leftWidth),
+              child: _buildWideProfileVisual(leftWidth, tokens),
             ),
             SizedBox(width: gap),
             SizedBox(width: middleWidth, child: _buildMetadataPanel(tokens)),
@@ -533,7 +535,7 @@ class _DetailViewState extends State<DetailView> {
     );
   }
 
-  Widget _buildWideProfileVisual(double imageSize) {
+  Widget _buildWideProfileVisual(double imageSize, AppLayoutTokens tokens) {
     final colorScheme = Theme.of(context).colorScheme;
     final name = controller.actressData.name;
     final isEditing = controller.isEditing;
@@ -545,12 +547,15 @@ class _DetailViewState extends State<DetailView> {
           ? null
           : BoxDecoration(
               color: colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(tokens.cardRadius),
             ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildProfileImage(isEditing ? imageSize : imageSize - 24),
+          _buildProfileImage(
+            isEditing ? imageSize : imageSize - 24,
+            radius: tokens.cardRadius,
+          ),
           if (name.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
@@ -596,7 +601,10 @@ class _DetailViewState extends State<DetailView> {
             radius: tokens.cardRadius,
           ),
           const SizedBox(height: 12),
-          if (isEditing) ...[const SizedBox(height: 12), _buildPhotoEditRow()],
+          if (isEditing) ...[
+            const SizedBox(height: 12),
+            _buildPhotoEditRow(radius: tokens.cardRadius),
+          ],
         ],
       ),
     );
@@ -702,15 +710,18 @@ class _DetailViewState extends State<DetailView> {
 
   Widget _buildAppBarTitle() {
     if (controller.isEditing) {
+      final inputRadius = BorderRadius.circular(AppShapeTokens.inputRadius);
       return TextField(
         key: const Key('detail-name-field'),
         controller: nameController,
         textAlign: TextAlign.center,
         textAlignVertical: TextAlignVertical.center,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           isDense: true,
           contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          border: OutlineInputBorder(),
+          border: OutlineInputBorder(borderRadius: inputRadius),
+          enabledBorder: OutlineInputBorder(borderRadius: inputRadius),
+          focusedBorder: OutlineInputBorder(borderRadius: inputRadius),
         ),
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       );
@@ -743,7 +754,10 @@ class _DetailViewState extends State<DetailView> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: imageSize, child: _buildProfileImage(imageSize)),
+              SizedBox(
+                width: imageSize,
+                child: _buildProfileImage(imageSize, radius: tokens.cardRadius),
+              ),
               SizedBox(width: horizontalGap),
               Expanded(
                 child: Column(
@@ -768,7 +782,7 @@ class _DetailViewState extends State<DetailView> {
                     ),
                     if (isEditing) ...[
                       const SizedBox(height: 12),
-                      _buildPhotoEditRow(),
+                      _buildPhotoEditRow(radius: tokens.cardRadius),
                     ],
                   ],
                 ),
@@ -780,7 +794,10 @@ class _DetailViewState extends State<DetailView> {
     );
   }
 
-  Widget _buildProfileImage(double imageSize) {
+  Widget _buildProfileImage(
+    double imageSize, {
+    double radius = AppShapeTokens.defaultCardRadius,
+  }) {
     final imgPath = controller.actressData.imgPath;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -792,7 +809,7 @@ class _DetailViewState extends State<DetailView> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(radius),
         ),
         child: Icon(
           Icons.person,
@@ -804,7 +821,7 @@ class _DetailViewState extends State<DetailView> {
 
     return ClipRRect(
       key: const Key('detail-profile-image'),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(radius),
       child: Image.file(
         File(imgPath),
         width: imageSize,
@@ -814,7 +831,7 @@ class _DetailViewState extends State<DetailView> {
     );
   }
 
-  Widget _buildPhotoEditRow() {
+  Widget _buildPhotoEditRow({required double radius}) {
     final colorScheme = Theme.of(context).colorScheme;
     final actionTextStyle = Theme.of(
       context,
@@ -826,7 +843,7 @@ class _DetailViewState extends State<DetailView> {
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       textStyle: actionTextStyle,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(_detailControlRadius),
+        borderRadius: BorderRadius.circular(radius),
       ),
     );
     final deleteStyle = OutlinedButton.styleFrom(
@@ -837,7 +854,7 @@ class _DetailViewState extends State<DetailView> {
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       textStyle: actionTextStyle,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(_detailControlRadius),
+        borderRadius: BorderRadius.circular(radius),
       ),
     );
 
@@ -1006,37 +1023,40 @@ class _DetailViewState extends State<DetailView> {
                   ),
                 ),
                 const SizedBox(height: _detailEditableFieldGap),
-                _buildEditableBodyFields(),
+                _buildEditableBodyFields(radius: tokens.cardRadius),
               ],
             )
-          : _buildBodyViewFields(),
+          : _buildBodyViewFields(radius: tokens.cardRadius),
     );
   }
 
-  Widget _buildBodyViewFields() {
+  Widget _buildBodyViewFields({required double radius}) {
     return Column(
       children: [
-        _buildBirthDateField(),
+        _buildBirthDateField(radius: radius),
         _buildStatField(
           fieldKey: const Key('detail-height-field'),
           label: AppLocalizations.of(context).heightCm,
           controller: heightController,
+          radius: radius,
         ),
         _buildStatField(
           fieldKey: const Key('detail-cup-field'),
           label: AppLocalizations.of(context).cup,
           controller: cupController,
+          radius: radius,
         ),
         _buildStatField(
           fieldKey: const Key('detail-measurements-field'),
           label: AppLocalizations.of(context).measurements,
           controller: bwhController,
+          radius: radius,
         ),
       ],
     );
   }
 
-  Widget _buildEditableBodyFields() {
+  Widget _buildEditableBodyFields({required double radius}) {
     final l10n = AppLocalizations.of(context);
     final labelWidth = _editableLabelWidth([
       l10n.birthDate,
@@ -1047,13 +1067,14 @@ class _DetailViewState extends State<DetailView> {
 
     return Column(
       children: [
-        _buildBirthDateField(labelWidth: labelWidth),
+        _buildBirthDateField(labelWidth: labelWidth, radius: radius),
         const SizedBox(height: _detailEditableFieldGap),
         _buildStatField(
           fieldKey: const Key('detail-height-field'),
           label: l10n.heightCm,
           controller: heightController,
           labelWidth: labelWidth,
+          radius: radius,
         ),
         const SizedBox(height: _detailEditableFieldGap),
         _buildStatField(
@@ -1061,6 +1082,7 @@ class _DetailViewState extends State<DetailView> {
           label: l10n.cup,
           controller: cupController,
           labelWidth: labelWidth,
+          radius: radius,
         ),
         const SizedBox(height: _detailEditableFieldGap),
         _buildStatField(
@@ -1068,6 +1090,7 @@ class _DetailViewState extends State<DetailView> {
           label: l10n.measurements,
           controller: bwhController,
           labelWidth: labelWidth,
+          radius: radius,
         ),
       ],
     );
@@ -1108,7 +1131,24 @@ class _DetailViewState extends State<DetailView> {
               focusNode: memoFocusNode,
               minLines: 5,
               maxLines: 10,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(tokens.cardRadius),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(tokens.cardRadius),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(tokens.cardRadius),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+              ),
             )
           : Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1150,7 +1190,7 @@ class _DetailViewState extends State<DetailView> {
     });
   }
 
-  Widget _buildBirthDateField({double? labelWidth}) {
+  Widget _buildBirthDateField({double? labelWidth, required double radius}) {
     final selectedDate = birthDate;
     final label = AppLocalizations.of(context).birthDate;
     final colorScheme = Theme.of(context).colorScheme;
@@ -1197,7 +1237,7 @@ class _DetailViewState extends State<DetailView> {
       child: OutlinedButton(
         key: const Key('detail-birth-date-button'),
         onPressed: _openBirthDatePicker,
-        style: _detailOutlinedButtonStyle().copyWith(
+        style: _detailOutlinedButtonStyle(radius: radius).copyWith(
           padding: const WidgetStatePropertyAll(EdgeInsets.zero),
           minimumSize: const WidgetStatePropertyAll(Size.zero),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -1261,6 +1301,7 @@ class _DetailViewState extends State<DetailView> {
     required Key fieldKey,
     required String label,
     required TextEditingController controller,
+    required double radius,
     double? labelWidth,
   }) {
     final isEditing = this.controller.isEditing;
@@ -1307,14 +1348,14 @@ class _DetailViewState extends State<DetailView> {
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 8),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(_detailControlRadius),
+            borderRadius: BorderRadius.circular(radius),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(_detailControlRadius),
+            borderRadius: BorderRadius.circular(radius),
             borderSide: BorderSide(color: colorScheme.outline),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(_detailControlRadius),
+            borderRadius: BorderRadius.circular(radius),
             borderSide: BorderSide(color: colorScheme.primary, width: 2),
           ),
         ),
@@ -1373,7 +1414,7 @@ class _DetailViewState extends State<DetailView> {
     Key? key,
     required String title,
     required Widget child,
-    double radius = 16,
+    double radius = AppShapeTokens.defaultCardRadius,
     Widget? titleTrailing,
     VoidCallback? onTap,
   }) {
@@ -1564,8 +1605,11 @@ class _AliasesDialogState extends State<_AliasesDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final inputRadius = BorderRadius.circular(AppShapeTokens.dialogRadius);
     return AlertDialog(
       key: const Key('detail-aliases-dialog'),
+      shape: RoundedRectangleBorder(borderRadius: inputRadius),
       title: Text(l10n.manageAliases),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
@@ -1584,6 +1628,24 @@ class _AliasesDialogState extends State<_AliasesDialog> {
                       decoration: InputDecoration(
                         hintText: l10n.aliasInputHint,
                         isDense: true,
+                        border: OutlineInputBorder(borderRadius: inputRadius),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: inputRadius,
+                          borderSide: BorderSide(color: colorScheme.outline),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: inputRadius,
+                          borderSide: BorderSide(
+                            color: colorScheme.primary,
+                            width: 2,
+                          ),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: inputRadius,
+                          borderSide: BorderSide(
+                            color: colorScheme.outline.withValues(alpha: 0.5),
+                          ),
+                        ),
                       ),
                       onSubmitted: (_) => _addAlias(),
                     ),

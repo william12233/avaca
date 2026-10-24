@@ -18,6 +18,7 @@ import '../controllers/settings_controller.dart';
 import '../controllers/software_update_controller.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
+import '../core/shapes.dart';
 import '../models/data_transfer_models.dart';
 import '../models/scrape_exclusion_policy.dart';
 import '../models/scrape_source_settings.dart';
@@ -278,7 +279,7 @@ class _SettingsViewContent extends ConsumerStatefulWidget {
 }
 
 class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
-  static const double _settingsCardRadius = 12;
+  static const double _settingsCardRadius = AppShapeTokens.defaultCardRadius;
   static final Uri _githubUri = Uri.parse(
     'https://github.com/william12233/avaca',
   );
@@ -937,7 +938,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 0,
       color: Theme.of(context).colorScheme.surfaceContainer,
-      shape: _outlinedCardShape(context, radius: 10),
+      shape: _outlinedCardShape(context),
       child: RadioListTile<DataTransferDuplicateResolution>(
         value: value,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1847,7 +1848,28 @@ class _ScrapePreferencesSettingsBodyState
                 decoration: InputDecoration(
                   hintText: hint,
                   isDense: true,
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppShapeTokens.defaultCardRadius,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppShapeTokens.defaultCardRadius,
+                    ),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppShapeTokens.defaultCardRadius,
+                    ),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
                 ),
                 onSubmitted: (_) => onAdd(),
               ),
@@ -1915,7 +1937,28 @@ class _ScrapePreferencesSettingsBodyState
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: localizations.scrapeExistingData,
-                    border: const OutlineInputBorder(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppShapeTokens.defaultCardRadius,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppShapeTokens.defaultCardRadius,
+                      ),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppShapeTokens.defaultCardRadius,
+                      ),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 2,
+                      ),
+                    ),
                     isDense: true,
                   ),
                   items: [

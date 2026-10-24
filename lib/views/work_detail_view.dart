@@ -161,7 +161,10 @@ class _WorkDetailViewState extends State<WorkDetailView> {
         tokens.pagePadding.bottom * 2,
       ),
       children: [
-        _buildMedia(work['detail_image_path']?.toString() ?? ''),
+        _buildMedia(
+          work['detail_image_path']?.toString() ?? '',
+          tokens.cardRadius,
+        ),
         SizedBox(height: tokens.sectionGap),
         _buildMetadata(work, tokens),
       ],
@@ -193,7 +196,10 @@ class _WorkDetailViewState extends State<WorkDetailView> {
             children: [
               SizedBox(
                 width: mediaWidth,
-                child: _buildMedia(work['detail_image_path']?.toString() ?? ''),
+                child: _buildMedia(
+                  work['detail_image_path']?.toString() ?? '',
+                  tokens.cardRadius,
+                ),
               ),
               SizedBox(width: tokens.contentColumnGap),
               Expanded(child: _buildMetadata(work, tokens)),
@@ -204,10 +210,10 @@ class _WorkDetailViewState extends State<WorkDetailView> {
     );
   }
 
-  Widget _buildMedia(String imagePath) {
+  Widget _buildMedia(String imagePath, double radius) {
     return ClipRRect(
       key: const Key('work-detail-image'),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(radius),
       child: AspectRatio(aspectRatio: 1.48, child: _detailImage(imagePath)),
     );
   }

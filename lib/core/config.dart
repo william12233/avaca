@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'shapes.dart';
+
 /// 使用者可選擇的主題模式。
 ///
 /// OLED 純黑不是獨立的 ThemeMode，而是在解析色票後套用的背景覆蓋規則。
@@ -265,7 +267,9 @@ class AppTheme {
       color: palette.surfaceContainer,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppShapeTokens.defaultCardRadius),
+      ),
     );
   }
 
@@ -290,6 +294,10 @@ class AppTheme {
   }
 
   static InputDecorationTheme _inputDecorationTheme(AppPalette palette) {
+    final inputRadius = BorderRadius.circular(AppShapeTokens.inputRadius);
+    final errorColor = palette.brightness == Brightness.dark
+        ? const Color(0xFFFFB4AB)
+        : const Color(0xFFBA1A1A);
     return InputDecorationTheme(
       filled: true,
       fillColor: palette.surfaceContainer,
@@ -298,11 +306,25 @@ class AppTheme {
       helperStyle: _appTextStyle(color: palette.onSurfaceVariant),
       prefixIconColor: palette.onSurfaceVariant,
       suffixIconColor: palette.onSurfaceVariant,
+      border: OutlineInputBorder(
+        borderRadius: inputRadius,
+        borderSide: BorderSide(color: palette.outline),
+      ),
       enabledBorder: OutlineInputBorder(
+        borderRadius: inputRadius,
         borderSide: BorderSide(color: palette.outline),
       ),
       focusedBorder: OutlineInputBorder(
+        borderRadius: inputRadius,
         borderSide: BorderSide(color: palette.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: inputRadius,
+        borderSide: BorderSide(color: errorColor),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: inputRadius,
+        borderSide: BorderSide(color: errorColor, width: 2),
       ),
     );
   }
@@ -413,6 +435,9 @@ class AppTheme {
     return DialogThemeData(
       backgroundColor: palette.surfaceContainer,
       surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppShapeTokens.dialogRadius),
+      ),
       titleTextStyle: _appTextStyle(
         color: palette.onSurface,
         fontSize: 20,
@@ -426,6 +451,11 @@ class AppTheme {
     return BottomSheetThemeData(
       backgroundColor: palette.surfaceContainer,
       surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppShapeTokens.dialogRadius),
+        ),
+      ),
     );
   }
 

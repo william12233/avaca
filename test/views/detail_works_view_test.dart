@@ -245,7 +245,7 @@ void main() {
       },
     );
 
-    testWidgets('uses one slightly rounded shape for detail edit controls', (
+    testWidgets('matches detail edit controls to their containing card', (
       tester,
     ) async {
       await _pumpDetail(tester, size: const Size(390, 844));
@@ -256,7 +256,7 @@ void main() {
       final worksRadius = _outlinedButtonRadius(tester, worksButton);
       final birthDateRadius = _outlinedButtonRadius(tester, birthDateButton);
       expect(worksRadius, BorderRadius.circular(12));
-      expect(birthDateRadius, BorderRadius.circular(6));
+      expect(birthDateRadius, BorderRadius.circular(12));
 
       for (final key in const [
         Key('detail-height-field'),
@@ -313,11 +313,11 @@ void main() {
         expect(changeRect.right, lessThanOrEqualTo(deleteRect.left));
         expect(
           _outlinedButtonRadius(tester, changePhoto),
-          BorderRadius.circular(6),
+          BorderRadius.circular(12),
         );
         expect(
           _outlinedButtonRadius(tester, deletePhoto),
-          BorderRadius.circular(6),
+          BorderRadius.circular(12),
         );
         final labelStyle = Theme.of(
           tester.element(changePhoto),

@@ -11,6 +11,7 @@ import '../components/javbus_verification_dialog.dart';
 import '../controllers/works_controller.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
+import '../core/shapes.dart';
 import '../l10n/app_localizations.dart';
 import '../models/scrape_source_settings.dart';
 import '../models/work_scrape_options.dart';
@@ -1952,7 +1953,7 @@ class _ScrapeFailureRow extends StatelessWidget {
   }
 }
 
-const _scrapeDialogRadius = 28.0;
+const _scrapeDialogRadius = AppShapeTokens.dialogRadius;
 
 double _scrapeDialogPadding(BuildContext context) {
   final width = MediaQuery.sizeOf(context).width;
