@@ -12,7 +12,9 @@ import 'controllers/software_update_controller.dart';
 import 'core/config.dart';
 import 'core/database.dart';
 import 'core/keyboard_dismiss_navigator_observer.dart';
+import 'core/platform_adapter.dart';
 import 'core/resource_policy.dart';
+import 'services/scrape_background_controller.dart';
 import 'services/scrape_job_coordinator.dart';
 import 'services/update_cache_service.dart';
 import 'services/update_startup_marker.dart';
@@ -96,9 +98,13 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
   late final SoftwareUpdateController _softwareUpdateController;
   late final DataTransferController _dataTransferController;
   late final ScrapeJobCoordinator _scrapeJobCoordinator;
+  late final ScrapeBackgroundController _scrapeBackgroundController;
   late final UpdateCacheService _updateCacheService;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   bool _automaticUpdateStarted = false;
+  String? _pendingScrapeNotificationJobId;
+  String? _lastScrapeNotificationJobId;
+  DateTime? _lastScrapeNotificationTapAt;
 
   @override
   void initState() {
@@ -108,13 +114,26 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
         ref.read(softwareUpdateControllerProvider);
     _dataTransferController = ref.read(dataTransferControllerProvider);
     _scrapeJobCoordinator = ref.read(scrapeJobCoordinatorProvider);
-    _updateCacheService = ref.read(updateCacheServiceProvider);
-    unawaited(
-      _scrapeJobCoordinator.initialize().catchError((Object error) {
-        debugPrint('Scrape job coordinator initialization failed: $error');
-      }),
+    _scrapeBackgroundController = ScrapeBackgroundController(
+      coordinator: _scrapeJobCoordinator,
+      onNotificationTap: _handleScrapeNotificationTap,
     );
+    _updateCacheService = ref.read(updateCacheServiceProvider);
+    unawaited(_initializeScrapeCoordinator());
     unawaited(_restoreThemeState());
+  }
+
+  Future<void> _initializeScrapeCoordinator() async {
+    var initialized = false;
+    try {
+      await _scrapeJobCoordinator.initialize();
+      initialized = true;
+    } on Object catch (error) {
+      debugPrint('Scrape job coordinator initialization failed: $error');
+    }
+    if (mounted && initialized && PlatformAdapter.isAndroid) {
+      _scrapeBackgroundController.attach();
+    }
   }
 
   Future<void> _restoreThemeState() async {
@@ -157,6 +176,10 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
       _customColors = modeString == 'custom' ? customColors : null;
       _locale = _localeFromString(localeString);
       _ready = true;
+    });
+    _scrapeBackgroundController.setLocale(_locale);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _openPendingScrapeNotification();
     });
 
     if (widget.enableAutomaticUpdateCheck) {
@@ -322,6 +345,7 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
             setState(() {
               _locale = locale;
             });
+            _scrapeBackgroundController.setLocale(locale);
           },
         ),
       );
@@ -377,5 +401,44 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
 
   MaterialPageRoute<void> _page(Widget child) {
     return MaterialPageRoute(builder: (_) => child);
+  }
+
+  void _handleScrapeNotificationTap(String jobId) {
+    final normalized = jobId.trim();
+    if (normalized.isEmpty) return;
+    final now = DateTime.now();
+    if (_lastScrapeNotificationJobId == normalized &&
+        _lastScrapeNotificationTapAt != null &&
+        now.difference(_lastScrapeNotificationTapAt!) <
+            const Duration(seconds: 2)) {
+      return;
+    }
+    _lastScrapeNotificationJobId = normalized;
+    _lastScrapeNotificationTapAt = now;
+    _pendingScrapeNotificationJobId = normalized;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _openPendingScrapeNotification();
+    });
+  }
+
+  void _openPendingScrapeNotification() {
+    if (!mounted || !_ready) return;
+    final jobId = _pendingScrapeNotificationJobId;
+    final navigator = _navigatorKey.currentState;
+    if (jobId == null) return;
+    if (navigator == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openPendingScrapeNotification();
+      });
+      return;
+    }
+    _pendingScrapeNotificationJobId = null;
+    unawaited(navigator.pushNamed('/scrape-job/$jobId'));
+  }
+
+  @override
+  void dispose() {
+    _scrapeBackgroundController.dispose();
+    super.dispose();
   }
 }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0 - 2026-10-25
+
+- Added Android foreground-service support so scrape jobs continue while the app
+  is minimized or the screen is locked.
+- Added an ongoing localized progress notification with phase-aware progress,
+  automatic cleanup on completion, and a notification link to the job detail.
+- Added an attention notification for source verification so a user can reopen
+  the app, complete verification, and resume the job.
+
 ## 1.3.2 - 2026-10-24
 
 - Reorganized Settings into five focused categories so data, scraping, update,

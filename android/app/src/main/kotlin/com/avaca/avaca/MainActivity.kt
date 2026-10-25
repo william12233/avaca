@@ -1,6 +1,8 @@
 package com.avaca.avaca
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -18,6 +20,10 @@ import java.io.File
 
 class MainActivity : FlutterActivity() {
     private val updateChannelName = "com.avaca.avaca/software_update"
+    private val scrapeBackgroundChannelName = "com.avaca.avaca/scrape_background"
+    private val notificationPermissionRequestCode = 2061
+    private var scrapeBackgroundChannel: MethodChannel? = null
+    private var pendingScrapeJobId: String? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -91,5 +97,112 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        scrapeBackgroundChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            scrapeBackgroundChannelName,
+        ).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "requestNotificationPermission" -> {
+                        if (
+                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+                                PackageManager.PERMISSION_GRANTED
+                        ) {
+                            requestPermissions(
+                                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                                notificationPermissionRequestCode,
+                            )
+                        }
+                        result.success(null)
+                    }
+
+                    "startForeground", "updateForeground" -> {
+                        startScrapeForegroundService(
+                            call.arguments,
+                            updateOnly = call.method == "updateForeground",
+                        )
+                        result.success(null)
+                    }
+
+                    "stopForeground" -> {
+                        stopService(
+                            Intent(this, ScrapeForegroundService::class.java),
+                        )
+                        result.success(null)
+                    }
+
+                    "showVerificationNotification" -> {
+                        ScrapeForegroundService.showVerificationNotification(
+                            this,
+                            scrapePayload(call.arguments),
+                        )
+                        result.success(null)
+                    }
+
+                    "consumePendingJobId" -> {
+                        val jobId = pendingScrapeJobId
+                        pendingScrapeJobId = null
+                        result.success(jobId)
+                    }
+
+                    else -> result.notImplemented()
+                }
+            }
+        }
+
+        // The initial notification intent can arrive before Dart has installed
+        // its MethodChannel handler. Keep it until the Dart side consumes it.
+        captureScrapeNotificationIntent(intent, notifyDart = false)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        captureScrapeNotificationIntent(intent, notifyDart = true)
+    }
+
+    private fun startScrapeForegroundService(
+        arguments: Any?,
+        updateOnly: Boolean,
+    ) {
+        val intent = Intent(this, ScrapeForegroundService::class.java).apply {
+            action = ScrapeForegroundService.ACTION_UPDATE
+            putExtras(scrapePayload(arguments))
+        }
+        if (!updateOnly && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+    private fun scrapePayload(arguments: Any?): android.os.Bundle {
+        val values = arguments as? Map<*, *> ?: emptyMap<Any?, Any?>()
+        return android.os.Bundle().apply {
+            putString("job_id", values["jobId"]?.toString().orEmpty())
+            putString("title", values["title"]?.toString().orEmpty())
+            putString("body", values["body"]?.toString().orEmpty())
+            putInt("progress", (values["progress"] as? Number)?.toInt() ?: 0)
+            putBoolean(
+                "indeterminate",
+                values["indeterminate"] as? Boolean ?: false,
+            )
+        }
+    }
+
+    private fun captureScrapeNotificationIntent(
+        intent: Intent?,
+        notifyDart: Boolean,
+    ) {
+        val jobId = intent?.getStringExtra(ScrapeForegroundService.EXTRA_JOB_ID)
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: return
+        pendingScrapeJobId = jobId
+        if (notifyDart) {
+            scrapeBackgroundChannel?.invokeMethod("notificationTap", jobId)
+        }
     }
 }
