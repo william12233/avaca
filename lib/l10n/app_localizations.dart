@@ -691,6 +691,30 @@ abstract class AppLocalizations {
   /// **'作品儲存記錄'**
   String get workStorageTitle;
 
+  /// No description provided for @workStorageOptions.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'儲存項目'**
+  String get workStorageOptions;
+
+  /// No description provided for @workStorageCracked.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'破解'**
+  String get workStorageCracked;
+
+  /// No description provided for @workStorageOriginal.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'原檔'**
+  String get workStorageOriginal;
+
+  /// No description provided for @workStorageSubtitles.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'字幕'**
+  String get workStorageSubtitles;
+
   /// No description provided for @workStorageSaved.
   ///
   /// In zh_TW, this message translates to:

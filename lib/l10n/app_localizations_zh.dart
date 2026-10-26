@@ -309,6 +309,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workStorageTitle => '作品儲存記錄';
 
   @override
+  String get workStorageOptions => '儲存項目';
+
+  @override
+  String get workStorageCracked => '破解';
+
+  @override
+  String get workStorageOriginal => '原檔';
+
+  @override
+  String get workStorageSubtitles => '字幕';
+
+  @override
   String get workStorageSaved => '已儲存';
 
   @override
@@ -1563,6 +1575,18 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get workStorageTitle => '作品存储记录';
 
   @override
+  String get workStorageOptions => '存储项目';
+
+  @override
+  String get workStorageCracked => '破解';
+
+  @override
+  String get workStorageOriginal => '原档';
+
+  @override
+  String get workStorageSubtitles => '字幕';
+
+  @override
   String get workStorageSaved => '已保存';
 
   @override
@@ -2815,6 +2839,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get workStorageTitle => '作品儲存記錄';
+
+  @override
+  String get workStorageOptions => '儲存項目';
+
+  @override
+  String get workStorageCracked => '破解';
+
+  @override
+  String get workStorageOriginal => '原檔';
+
+  @override
+  String get workStorageSubtitles => '字幕';
 
   @override
   String get workStorageSaved => '已儲存';

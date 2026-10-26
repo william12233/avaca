@@ -82,8 +82,20 @@ class _StorageWorksControllerDatabase extends _WorksControllerDatabase {
   @override
   Future<List<Map<String, Object?>>> getWorksForActress(int actressId) async {
     return [
-      {'id': 1, 'code': 'SONE-001', 'title': '已儲存作品', 'is_stored': 1},
-      {'id': 2, 'code': 'ABF-002', 'title': '未儲存作品', 'is_stored': 0},
+      {
+        'id': 1,
+        'code': 'SONE-001',
+        'title': '已儲存作品',
+        'is_stored': 1,
+        'storage_cracked': 1,
+      },
+      {
+        'id': 2,
+        'code': 'ABF-002',
+        'title': '未儲存作品',
+        'is_stored': 0,
+        'storage_cracked': 0,
+      },
     ];
   }
 }

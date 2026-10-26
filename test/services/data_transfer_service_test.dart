@@ -102,8 +102,11 @@ void main() {
       await source.updateWorkStorage(
         workId: workId,
         record: const WorkStorageRecord(
-          isStored: true,
-          quality: '2K',
+          storageOptions: {
+            WorkStorageOption.cracked,
+            WorkStorageOption.original,
+          },
+          quality: '4K',
           frameRate: 30,
         ),
       );
@@ -135,7 +138,10 @@ void main() {
       final importedWork = (await target.getWorksForActress(importedId)).single;
       expect(importedWork['code'], 'RT-001');
       expect(importedWork['is_stored'], 1);
-      expect(importedWork['storage_quality'], '2K');
+      expect(importedWork['storage_cracked'], 1);
+      expect(importedWork['storage_original'], 1);
+      expect(importedWork['storage_subtitles'], 0);
+      expect(importedWork['storage_quality'], '4K');
       expect(importedWork['storage_frame_rate'], 30);
       expect(
         path.basename(importedWork['card_image_path'] as String),

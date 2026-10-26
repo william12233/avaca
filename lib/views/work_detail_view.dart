@@ -74,7 +74,7 @@ class _WorkDetailViewState extends State<WorkDetailView> {
     final l10n = AppLocalizations.of(context);
     final record = _storageRecord ?? WorkStorageRecord.fromDatabase(work);
     final statusLabel = record.isStored
-        ? record.compactLabel
+        ? _storageSummary(record, l10n)
         : l10n.workStorageNotSaved;
     return Padding(
       padding: const EdgeInsets.only(right: 4),
@@ -110,6 +110,26 @@ class _WorkDetailViewState extends State<WorkDetailView> {
         ),
       ),
     );
+  }
+
+  String _storageSummary(WorkStorageRecord record, AppLocalizations l10n) {
+    final options = [
+      for (final option in WorkStorageOption.values)
+        if (record.storageOptions.contains(option))
+          _storageOptionLabel(option, l10n),
+    ];
+    if (record.compactLabel.isNotEmpty) {
+      options.add(record.compactLabel);
+    }
+    return options.join(' · ');
+  }
+
+  String _storageOptionLabel(WorkStorageOption option, AppLocalizations l10n) {
+    return switch (option) {
+      WorkStorageOption.cracked => l10n.workStorageCracked,
+      WorkStorageOption.original => l10n.workStorageOriginal,
+      WorkStorageOption.subtitles => l10n.workStorageSubtitles,
+    };
   }
 
   Future<void> _editWorkStorage(WorkStorageRecord initial) async {
@@ -380,14 +400,14 @@ class _WorkStorageDialog extends StatefulWidget {
 }
 
 class _WorkStorageDialogState extends State<_WorkStorageDialog> {
-  late bool isStored;
-  late String quality;
-  late int frameRate;
+  late Set<WorkStorageOption> storageOptions;
+  late String? quality;
+  late int? frameRate;
 
   @override
   void initState() {
     super.initState();
-    isStored = widget.initial.isStored;
+    storageOptions = {...widget.initial.storageOptions};
     quality = widget.initial.quality;
     frameRate = widget.initial.frameRate;
   }
@@ -403,14 +423,30 @@ class _WorkStorageDialogState extends State<_WorkStorageDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SwitchListTile.adaptive(
-              key: const Key('work-storage-saved-switch'),
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.workStorageSaved),
-              value: isStored,
-              onChanged: (value) => setState(() => isStored = value),
-            ),
+            Text(l10n.workStorageOptions),
             const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final option in WorkStorageOption.values)
+                  FilterChip(
+                    key: Key('work-storage-option-${option.storageValue}'),
+                    label: Text(_optionLabel(option, l10n)),
+                    selected: storageOptions.contains(option),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: const VisualDensity(vertical: -2),
+                    onSelected: (selected) => setState(() {
+                      if (selected) {
+                        storageOptions.add(option);
+                      } else {
+                        storageOptions.remove(option);
+                      }
+                    }),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Text(l10n.workStorageQuality),
             const SizedBox(height: 4),
             Wrap(
@@ -424,7 +460,9 @@ class _WorkStorageDialogState extends State<_WorkStorageDialog> {
                     selected: quality == value,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: const VisualDensity(vertical: -2),
-                    onSelected: (_) => setState(() => quality = value),
+                    onSelected: (_) => setState(
+                      () => quality = quality == value ? null : value,
+                    ),
                   ),
               ],
             ),
@@ -441,7 +479,9 @@ class _WorkStorageDialogState extends State<_WorkStorageDialog> {
                     selected: frameRate == value,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: const VisualDensity(vertical: -2),
-                    onSelected: (_) => setState(() => frameRate = value),
+                    onSelected: (_) => setState(
+                      () => frameRate = frameRate == value ? null : value,
+                    ),
                   ),
               ],
             ),
@@ -457,14 +497,22 @@ class _WorkStorageDialogState extends State<_WorkStorageDialog> {
           key: const Key('work-storage-save'),
           onPressed: () => Navigator.of(context).pop(
             WorkStorageRecord(
-              isStored: isStored,
-              quality: quality,
-              frameRate: frameRate,
+              storageOptions: Set.unmodifiable(storageOptions),
+              quality: storageOptions.isEmpty ? null : quality,
+              frameRate: storageOptions.isEmpty ? null : frameRate,
             ),
           ),
           child: Text(l10n.workStorageSave),
         ),
       ],
     );
+  }
+
+  String _optionLabel(WorkStorageOption option, AppLocalizations l10n) {
+    return switch (option) {
+      WorkStorageOption.cracked => l10n.workStorageCracked,
+      WorkStorageOption.original => l10n.workStorageOriginal,
+      WorkStorageOption.subtitles => l10n.workStorageSubtitles,
+    };
   }
 }

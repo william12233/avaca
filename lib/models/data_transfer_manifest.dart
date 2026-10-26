@@ -1,12 +1,14 @@
 import 'dart:convert';
 
+import 'work_storage.dart';
+
 /// The versioned, portable data contract shared by the exporter and importer.
 class DataTransferLimits {
   const DataTransferLimits._();
 
   static const format = 'avaca-data';
-  static const version = 2;
-  static const supportedVersions = {1, 2};
+  static const version = 3;
+  static const supportedVersions = {1, 2, 3};
   static const maxArchiveBytes = 1 << 30;
   static const maxEntries = 10000;
   static const maxSingleEntryBytes = 128 << 20;
@@ -200,7 +202,7 @@ class DataTransferWork {
     required this.detailImageAssetId,
     required this.createdAt,
     required this.modifiedAt,
-    this.isStored = false,
+    this.storageOptions = const [],
     this.storageQuality,
     this.storageFrameRate,
     this.provenance = const [],
@@ -218,7 +220,7 @@ class DataTransferWork {
   final String? detailImageAssetId;
   final String? createdAt;
   final String? modifiedAt;
-  final bool isStored;
+  final List<String> storageOptions;
   final String? storageQuality;
   final int? storageFrameRate;
   final List<DataTransferProvenance> provenance;
@@ -236,7 +238,7 @@ class DataTransferWork {
     'detailImageAssetId': detailImageAssetId,
     'createdAt': createdAt,
     'modifiedAt': modifiedAt,
-    'isStored': isStored,
+    'storageOptions': storageOptions,
     'storageQuality': storageQuality,
     'storageFrameRate': storageFrameRate,
     'provenance': provenance
@@ -259,7 +261,7 @@ class DataTransferWork {
       detailImageAssetId: _nullableString(map, 'detailImageAssetId'),
       createdAt: _nullableString(map, 'createdAt'),
       modifiedAt: _nullableString(map, 'modifiedAt'),
-      isStored: _optionalBool(map, 'isStored') ?? false,
+      storageOptions: _storageOptions(map),
       storageQuality: _nullableString(map, 'storageQuality'),
       storageFrameRate: _nullableInt(map, 'storageFrameRate'),
       provenance: _optionalList(
@@ -269,6 +271,20 @@ class DataTransferWork {
       ),
     );
   }
+}
+
+List<String> _storageOptions(Map<String, Object?> map) {
+  final options = _optionalStringList(map, 'storageOptions');
+  final seen = <String>{};
+  for (final value in options) {
+    if (!seen.add(value)) {
+      throw FormatException('Duplicate storage option: $value.');
+    }
+    if (WorkStorageOption.fromStorageValue(value) == null) {
+      throw FormatException('Unsupported storage option: $value.');
+    }
+  }
+  return options;
 }
 
 class DataTransferProvenance {
@@ -417,15 +433,6 @@ int? _nullableInt(Map<String, Object?> map, String key) {
   return value;
 }
 
-bool? _optionalBool(Map<String, Object?> map, String key) {
-  final value = map[key];
-  if (value == null) return null;
-  if (value is! bool) {
-    throw FormatException('$key must be a boolean or null.');
-  }
-  return value;
-}
-
 List<String> _stringList(Map<String, Object?> map, String key) {
   final value = map[key];
   if (value is! List) {
@@ -442,6 +449,11 @@ List<String> _stringList(Map<String, Object?> map, String key) {
         return item;
       })
       .toList(growable: false);
+}
+
+List<String> _optionalStringList(Map<String, Object?> map, String key) {
+  if (!map.containsKey(key) || map[key] == null) return const [];
+  return _stringList(map, key);
 }
 
 List<T> _list<T>(

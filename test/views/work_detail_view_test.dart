@@ -71,18 +71,37 @@ void main() {
     await tester.tap(find.byKey(const Key('work-storage-action')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('work-storage-dialog')), findsOneWidget);
+    expect(find.byKey(const Key('work-storage-saved-switch')), findsNothing);
+    for (final option in WorkStorageOption.values) {
+      expect(
+        tester
+            .widget<FilterChip>(
+              find.byKey(Key('work-storage-option-${option.storageValue}')),
+            )
+            .selected,
+        isFalse,
+      );
+    }
 
-    await tester.tap(find.byKey(const Key('work-storage-saved-switch')));
-    await tester.tap(find.byKey(const Key('work-storage-quality-2K')));
+    await tester.tap(find.byKey(const Key('work-storage-option-cracked')));
+    await tester.tap(find.byKey(const Key('work-storage-option-subtitles')));
+    await tester.tap(find.byKey(const Key('work-storage-quality-4K')));
     await tester.tap(find.byKey(const Key('work-storage-frame-rate-30')));
     await tester.tap(find.byKey(const Key('work-storage-save')));
     await tester.pumpAndSettle();
 
     expect(
       database.savedStorage,
-      const WorkStorageRecord(isStored: true, quality: '2K', frameRate: 30),
+      const WorkStorageRecord(
+        storageOptions: {
+          WorkStorageOption.cracked,
+          WorkStorageOption.subtitles,
+        },
+        quality: '4K',
+        frameRate: 30,
+      ),
     );
-    expect(find.text('2K/30'), findsOneWidget);
+    expect(find.textContaining('4K/30'), findsOneWidget);
   });
 }
 
@@ -113,6 +132,9 @@ class _WorkDetailDatabase extends AppDatabase {
       'series': '系列',
       'detail_image_path': '',
       'is_stored': 0,
+      'storage_cracked': 0,
+      'storage_original': 0,
+      'storage_subtitles': 0,
       'storage_quality': null,
       'storage_frame_rate': null,
       'related_performers': [

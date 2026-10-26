@@ -563,6 +563,9 @@ class AppDatabase {
         card_image_path TEXT,
         detail_image_path TEXT,
         is_stored INTEGER NOT NULL DEFAULT 0,
+        storage_cracked INTEGER NOT NULL DEFAULT 0,
+        storage_original INTEGER NOT NULL DEFAULT 0,
+        storage_subtitles INTEGER NOT NULL DEFAULT 0,
         storage_quality TEXT,
         storage_frame_rate INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -570,9 +573,28 @@ class AppDatabase {
       )
     ''');
     final columns = await _getTableColumns(db, 'works');
+    final storageOptionsNeedMigration =
+        !columns.contains('storage_cracked') ||
+        !columns.contains('storage_original') ||
+        !columns.contains('storage_subtitles');
     if (!columns.contains('is_stored')) {
       await db.execute(
         'ALTER TABLE works ADD COLUMN is_stored INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    if (!columns.contains('storage_cracked')) {
+      await db.execute(
+        'ALTER TABLE works ADD COLUMN storage_cracked INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    if (!columns.contains('storage_original')) {
+      await db.execute(
+        'ALTER TABLE works ADD COLUMN storage_original INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    if (!columns.contains('storage_subtitles')) {
+      await db.execute(
+        'ALTER TABLE works ADD COLUMN storage_subtitles INTEGER NOT NULL DEFAULT 0',
       );
     }
     if (!columns.contains('storage_quality')) {
@@ -582,6 +604,17 @@ class AppDatabase {
       await db.execute(
         'ALTER TABLE works ADD COLUMN storage_frame_rate INTEGER',
       );
+    }
+    if (storageOptionsNeedMigration) {
+      await db.execute('''
+        UPDATE works
+        SET is_stored = 0,
+            storage_cracked = 0,
+            storage_original = 0,
+            storage_subtitles = 0,
+            storage_quality = NULL,
+            storage_frame_rate = NULL
+      ''');
     }
     await db.execute('''
       CREATE TABLE IF NOT EXISTS actress_works (
@@ -942,6 +975,9 @@ class AppDatabase {
     'card_image_path',
     'detail_image_path',
     'is_stored',
+    'storage_cracked',
+    'storage_original',
+    'storage_subtitles',
     'storage_quality',
     'storage_frame_rate',
   ];
@@ -1014,8 +1050,10 @@ class AppDatabase {
     required int workId,
     required WorkStorageRecord record,
   }) async {
-    if (!WorkStorageRecord.qualities.contains(record.quality) ||
-        !WorkStorageRecord.frameRates.contains(record.frameRate)) {
+    if ((record.quality != null &&
+            !WorkStorageRecord.qualities.contains(record.quality)) ||
+        (record.frameRate != null &&
+            !WorkStorageRecord.frameRates.contains(record.frameRate))) {
       throw ArgumentError('Unsupported work storage settings.');
     }
     final db = await database;

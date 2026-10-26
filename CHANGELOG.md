@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.1 - 2026-10-26
+
+- Changed work storage records to support selecting multiple storage types:
+  cracked, original, and subtitles.
+- Made quality and frame rate optional metadata instead of a separate saved
+  switch, and added 4K quality selection.
+- Migrated existing work storage state to the new model by resetting legacy
+  saved flags so the new selections start unselected.
+
 ## 1.4.0 - 2026-10-25
 
 - Added Android foreground-service support so scrape jobs continue while the app

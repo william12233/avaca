@@ -312,6 +312,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workStorageTitle => 'Work storage record';
 
   @override
+  String get workStorageOptions => 'Storage types';
+
+  @override
+  String get workStorageCracked => 'Cracked';
+
+  @override
+  String get workStorageOriginal => 'Original';
+
+  @override
+  String get workStorageSubtitles => 'Subtitles';
+
+  @override
   String get workStorageSaved => 'Saved';
 
   @override

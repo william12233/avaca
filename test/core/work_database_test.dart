@@ -66,6 +66,9 @@ void main() {
           'card_image_path': 'images/abf-183-card.jpg',
           'detail_image_path': 'images/abf-183-detail.jpg',
           'is_stored': 0,
+          'storage_cracked': 0,
+          'storage_original': 0,
+          'storage_subtitles': 0,
           'storage_quality': null,
           'storage_frame_rate': null,
         },
@@ -76,27 +79,61 @@ void main() {
       );
     });
 
+    test('persists the work storage record and storage options', () async {
+      final workId = await database.upsertActressWork(
+        actressId: actressId,
+        work: const Work(code: 'STORE-001', title: '儲存測試作品'),
+      );
+
+      await database.updateWorkStorage(
+        workId: workId,
+        record: const WorkStorageRecord(
+          storageOptions: {
+            WorkStorageOption.cracked,
+            WorkStorageOption.subtitles,
+          },
+          quality: '4K',
+          frameRate: 30,
+        ),
+      );
+
+      final row = await database.getWorkById(workId);
+      expect(row?['is_stored'], 1);
+      expect(row?['storage_cracked'], 1);
+      expect(row?['storage_original'], 0);
+      expect(row?['storage_subtitles'], 1);
+      expect(row?['storage_quality'], '4K');
+      expect(row?['storage_frame_rate'], 30);
+    });
+
     test(
-      'persists the work storage record with quality and frame rate',
+      'clears storage metadata when all storage options are removed',
       () async {
         final workId = await database.upsertActressWork(
           actressId: actressId,
-          work: const Work(code: 'STORE-001', title: '儲存測試作品'),
+          work: const Work(code: 'STORE-002', title: '清除儲存測試作品'),
         );
 
         await database.updateWorkStorage(
           workId: workId,
           record: const WorkStorageRecord(
-            isStored: true,
-            quality: '2K',
-            frameRate: 30,
+            storageOptions: {WorkStorageOption.original},
+            quality: '1080',
+            frameRate: 60,
           ),
+        );
+        await database.updateWorkStorage(
+          workId: workId,
+          record: const WorkStorageRecord(quality: '4K', frameRate: 30),
         );
 
         final row = await database.getWorkById(workId);
-        expect(row?['is_stored'], 1);
-        expect(row?['storage_quality'], '2K');
-        expect(row?['storage_frame_rate'], 30);
+        expect(row?['is_stored'], 0);
+        expect(row?['storage_cracked'], 0);
+        expect(row?['storage_original'], 0);
+        expect(row?['storage_subtitles'], 0);
+        expect(row?['storage_quality'], isNull);
+        expect(row?['storage_frame_rate'], isNull);
       },
     );
 

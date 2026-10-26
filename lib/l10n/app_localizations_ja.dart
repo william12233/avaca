@@ -310,6 +310,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workStorageTitle => '作品保存記録';
 
   @override
+  String get workStorageOptions => '保存項目';
+
+  @override
+  String get workStorageCracked => 'クラック版';
+
+  @override
+  String get workStorageOriginal => '原本';
+
+  @override
+  String get workStorageSubtitles => '字幕';
+
+  @override
   String get workStorageSaved => '保存済み';
 
   @override
@@ -1574,6 +1586,18 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
 
   @override
   String get workStorageTitle => '作品保存記録';
+
+  @override
+  String get workStorageOptions => '保存項目';
+
+  @override
+  String get workStorageCracked => 'クラック版';
+
+  @override
+  String get workStorageOriginal => '原本';
+
+  @override
+  String get workStorageSubtitles => '字幕';
 
   @override
   String get workStorageSaved => '保存済み';
