@@ -16,6 +16,16 @@ class ScrapeSourceRegistry {
     ScrapeSourceId.avwiki,
   ];
 
+  /// Sources that can answer one work code and expose category evidence.
+  ///
+  /// Keep this ordered so automatic evidence lookups are deterministic. The
+  /// catalog-oriented sources are preferred before the detail-only source.
+  static const List<ScrapeSourceId> categoryEvidenceSources = [
+    ScrapeSourceId.avbase,
+    ScrapeSourceId.avwiki,
+    ScrapeSourceId.javbus,
+  ];
+
   static List<ScrapeSourceId> resolveWorksSources(
     Iterable<ScrapeSourceId> selected,
   ) {

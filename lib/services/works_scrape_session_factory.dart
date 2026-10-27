@@ -52,9 +52,13 @@ class WorksScrapeSessionFactory {
       autoExcludeDerivedWorks: options.autoExcludeDerivedWorks,
       exactDenies: options.exactDenies,
     );
+    final categoryEvidenceSources = options.selectedCategories.isEmpty
+        ? const <ScrapeSourceId>[]
+        : ScrapeSourceRegistry.categoryEvidenceSources;
     final requestedSourceIds = <ScrapeSourceId>{
       sourceSettings.actressDetailsSource,
       ...ScrapeSourceRegistry.resolveWorksSources(sourceSettings.worksSources),
+      ...categoryEvidenceSources,
     };
     if (options.scrapeAliases) {
       requestedSourceIds.add(sourceSettings.aliasSource);
@@ -136,6 +140,7 @@ class WorksScrapeSessionFactory {
       sources: configuredSources,
       actressImageDownloader: detailsImageDownloader,
       imageUriDownloader: imageUriDownloader,
+      categoryEvidenceSources: categoryEvidenceSources,
     );
     return WorksScrapeSession(
       service: service,

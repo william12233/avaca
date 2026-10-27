@@ -19,6 +19,7 @@ import 'javbus/javbus_verification.dart';
 import 'javbus/prefix_route_repository.dart';
 import 'javbus/work_image_downloader.dart';
 import 'javbus/work_image_policy.dart';
+import 'minnano/minnano_transport.dart';
 import 'safe_image.dart';
 import 'scrape/scrape_category_classifier.dart';
 import 'scrape/scrape_image_downloader.dart';
@@ -284,6 +285,7 @@ class WorksScrapeService {
     this.imageUriDownloader,
     String? imageDirectory,
     this.javBusDetailDelay = const Duration(milliseconds: 600),
+    List<ScrapeSourceId> categoryEvidenceSources = const [],
   }) : sources = sources ?? _singleJavBusSource(client),
        workImageDownloader =
            workImageDownloader ??
@@ -292,7 +294,8 @@ class WorksScrapeService {
            ),
        actressImageDownloader =
            actressImageDownloader ?? HttpActressImageDownloader(),
-       imageDirectory = imageDirectory ?? path.join(db.imgDir, 'scraped');
+       imageDirectory = imageDirectory ?? path.join(db.imgDir, 'scraped'),
+       categoryEvidenceSources = List.unmodifiable(categoryEvidenceSources);
 
   final AppDatabase db;
   final Map<ScrapeSourceId, ScrapeSource> sources;
@@ -301,6 +304,7 @@ class WorksScrapeService {
   final ScrapeImageUriDownloader? imageUriDownloader;
   final String imageDirectory;
   final Duration javBusDetailDelay;
+  final List<ScrapeSourceId> categoryEvidenceSources;
   final _AsyncSemaphore _imageSemaphore = _AsyncSemaphore(
     ResourcePolicy.maxConcurrentImageDownloads,
   );
@@ -962,13 +966,7 @@ class WorksScrapeService {
         .toList(growable: false);
     final cancelled = _isCancelled(cancellationToken);
     final partial =
-        sourceResults.values.any(
-          (result) =>
-              result.state == ScrapeSourceRunState.failed ||
-              result.state == ScrapeSourceRunState.unavailable ||
-              result.state == ScrapeSourceRunState.cancelled ||
-              result.state == ScrapeSourceRunState.verificationRequired,
-        ) ||
+        sourceResults.values.any((result) => !result.succeeded) ||
         failed > 0 ||
         imageFailures.isNotEmpty ||
         resolvedGroups.any((group) => group.hadSourceFailure);
@@ -1212,6 +1210,18 @@ class WorksScrapeService {
         AvBaseFailureKind.parserInvalid ||
         AvBaseFailureKind.transport ||
         AvBaseFailureKind.transientTransport => ScrapeSourceRunState.failed,
+      };
+    }
+    if (error is MinnanoRequestException) {
+      return switch (error.kind) {
+        MinnanoFailureKind.blocked => ScrapeSourceRunState.blocked,
+        MinnanoFailureKind.rateLimited => ScrapeSourceRunState.rateLimited,
+        MinnanoFailureKind.timeout => ScrapeSourceRunState.timedOut,
+        MinnanoFailureKind.cancelled => ScrapeSourceRunState.cancelled,
+        MinnanoFailureKind.notFound ||
+        MinnanoFailureKind.parserInvalid ||
+        MinnanoFailureKind.transport ||
+        MinnanoFailureKind.transientTransport => ScrapeSourceRunState.failed,
       };
     }
     if (error is AvWikiRequestException) {
@@ -1583,6 +1593,46 @@ class WorksScrapeService {
       unresolved = nextUnresolved;
     }
 
+    // Category filtering can request evidence sources that are not part of
+    // the user's catalog union. Query those sources by exact work code only;
+    // never collect another actress catalog just to classify one work.
+    if (selectedCategories.isNotEmpty && unresolved.isNotEmpty) {
+      for (final sourceId in categoryEvidenceSources) {
+        if (_isCancelled(cancellationToken) || unresolved.isEmpty) break;
+        if (requestedWorkIds.contains(sourceId)) continue;
+        final source = sources[sourceId];
+        if (source == null || source is! ScrapeSourceWorkCodeLookup) {
+          continue;
+        }
+        final directLookup = source as ScrapeSourceWorkCodeLookup;
+
+        _supplementalEvidenceTotal += unresolved.length;
+        final directStage = await _runDirectSecondaryEvidence(
+          source: source,
+          lookup: directLookup,
+          groups: unresolved,
+          cancellationToken: cancellationToken,
+          onProgress: onProgress,
+          optional: true,
+        );
+        pipelineResults.add(directStage);
+        fetched.addAll(directStage.fetched);
+        failedCandidates.addAll(directStage.failedCandidates);
+
+        final nextUnresolved = <_GlobalWorkGroup>[];
+        for (final group in unresolved) {
+          final groupDetails = fetched
+              .where((item) => item.identityKey == group.identityKey)
+              .map((item) => item.details)
+              .toList(growable: false);
+          if (needsSecondaryEvidence(group, groupDetails)) {
+            nextUnresolved.add(group);
+          }
+        }
+        unresolved = nextUnresolved;
+      }
+    }
+
     // A source may have been used for coverage but not for detail fetching
     // (for example when cancellation arrived between stages). Keep its
     // collection result visible without inventing a failure.
@@ -1611,6 +1661,7 @@ class WorksScrapeService {
     required List<_GlobalWorkGroup> groups,
     required WorksScrapeCancellationToken? cancellationToken,
     void Function(WorksScrapeProgress progress)? onProgress,
+    bool optional = false,
   }) async {
     final scheduler = _SourceDetailScheduler(
       delay:
@@ -1622,6 +1673,18 @@ class WorksScrapeService {
     final fetched = <_FetchedWorkDetail>[];
     final sourceCurrent = <ScrapeSourceId, int>{};
     Object? sourceError;
+    var sourceErrorReported = false;
+
+    void reportSourceError(Object error, String code) {
+      sourceError ??= error;
+      if (sourceErrorReported) return;
+      sourceErrorReported = true;
+      _observer?.onError(
+        stage: WorksScrapePhase.fetchingDetails.name,
+        code: code,
+        error: error,
+      );
+    }
 
     Future<void> lookupGroup(_GlobalWorkGroup group) async {
       if (_isCancelled(cancellationToken) || sourceError != null) return;
@@ -1680,21 +1743,13 @@ class WorksScrapeService {
           source: source.id,
           state: 'details_ready',
         );
-      } on JavBusVerificationRequiredException {
-        rethrow;
+      } on JavBusVerificationRequiredException catch (error) {
+        if (!optional) rethrow;
+        reportSourceError(error, code);
       } on JavBusVerificationCancelledException catch (error) {
-        sourceError = error;
-        _observer?.onError(
-          stage: WorksScrapePhase.fetchingDetails.name,
-          code: code,
-          error: error,
-        );
+        reportSourceError(error, code);
       } on Object catch (error) {
-        _observer?.onError(
-          stage: WorksScrapePhase.fetchingDetails.name,
-          code: code,
-          error: error,
-        );
+        reportSourceError(error, code);
       } finally {
         if (!_isCancelled(cancellationToken)) {
           _supplementalEvidenceCompleted++;
@@ -1731,7 +1786,9 @@ class WorksScrapeService {
       }
     }
 
-    final workerCount = groups.length < 4 ? groups.length : 4;
+    final workerCount = optional
+        ? (groups.isEmpty ? 0 : 1)
+        : (groups.length < 4 ? groups.length : 4);
     await Future.wait(List.generate(workerCount, (_) => worker()));
     return _SourcePipelineOutcome(
       sourceId: source.id,
@@ -1739,7 +1796,9 @@ class WorksScrapeService {
         source: source.id,
         state: sourceError == null
             ? ScrapeSourceRunState.success
-            : ScrapeSourceRunState.cancelled,
+            : _isCancelled(cancellationToken)
+            ? ScrapeSourceRunState.cancelled
+            : _sourceStateForError(sourceError),
         discovered: groups.length,
         error: sourceError,
       ),

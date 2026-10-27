@@ -907,6 +907,10 @@ class _WorksViewState extends State<WorksView> {
       sourceSettings.actressDetailsSource,
       ...ScrapeSourceRegistry.resolveWorksSources(sourceSettings.worksSources),
     };
+    final categoryEvidenceSources = options.selectedCategories.isEmpty
+        ? const <ScrapeSourceId>[]
+        : ScrapeSourceRegistry.categoryEvidenceSources;
+    requestedSourceIds.addAll(categoryEvidenceSources);
     if (options.scrapeAliases) {
       requestedSourceIds.add(sourceSettings.aliasSource);
     }
@@ -993,6 +997,7 @@ class _WorksViewState extends State<WorksView> {
       sources: configuredSources,
       actressImageDownloader: detailsImageDownloader,
       imageUriDownloader: imageUriDownloader,
+      categoryEvidenceSources: categoryEvidenceSources,
     );
 
     try {

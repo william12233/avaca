@@ -43,18 +43,21 @@ class SafeHttpFetcher {
     this.timeout = const Duration(seconds: 20),
     this.maxBytes = 5 * 1024 * 1024,
     this.maxRedirects = 3,
+    Map<String, String> defaultHeaders = const {},
     String? initialCookieHeader,
   }) : _client = client ?? http.Client(),
        _ownsClient = client == null,
        _allowedHosts = allowedHosts
            .map((host) => host.trim().toLowerCase())
            .toSet() {
+    _defaultHeaders.addAll(defaultHeaders);
     _importCookies(initialCookieHeader);
   }
 
   final http.Client _client;
   final bool _ownsClient;
   final Set<String> _allowedHosts;
+  final Map<String, String> _defaultHeaders = {};
   final Map<String, String> _cookies = {};
   final Duration timeout;
   final int maxBytes;
@@ -82,6 +85,9 @@ class SafeHttpFetcher {
     for (var redirects = 0; redirects <= maxRedirects; redirects++) {
       _validate(current);
       final request = http.Request(method, current)..followRedirects = false;
+      if (_defaultHeaders.isNotEmpty) {
+        request.headers.addAll(_defaultHeaders);
+      }
       if (referer != null) {
         _validate(referer);
         request.headers['referer'] = referer.toString();
