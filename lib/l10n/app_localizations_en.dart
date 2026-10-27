@@ -416,31 +416,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scrapeUpdateAll => 'Update existing data';
 
   @override
-  String get scrapeAutomaticDerivedFilter =>
-      'Automatically exclude derived or bundled works';
+  String get scrapeCategoryWhitelist => 'Collection category filter';
 
   @override
-  String get scrapeAutomaticDerivedFilterDescription =>
-      'Use lineage and work semantics; keep unknown works and never exclude by prefix alone.';
+  String get scrapeCategoryWhitelistDescription =>
+      'Save works matching any selected category. With no category selected, all works are included. Works that cannot be classified are kept and marked for review.';
 
   @override
-  String get scrapeAdvancedRules => 'Advanced rules';
+  String get scrapeCategorySingle => 'Single';
 
   @override
-  String get scrapeAdvancedRulesDescription =>
-      'Enter a full work code or prefix, e.g. KCKC or KCKC-212.';
+  String get scrapeCategoryMulti => 'Multiple';
 
   @override
-  String get scrapeExactAllows => 'Code/prefix allows';
+  String get scrapeCategoryPhoto => 'Photo';
 
   @override
-  String get scrapeExactDenies => 'Code/prefix denies';
+  String get scrapeCategoryRetrospective => 'Retrospective';
 
   @override
-  String get scrapeRuleHint => 'Enter a code or prefix';
+  String get scrapeCategoryVr => 'VR';
 
   @override
-  String get scrapeNoRules => 'No rules configured';
+  String get scrapeCategorySourceSupport =>
+      'Source support: AVBase and AV-Wiki use catalog tags; JavBus reads work details.';
 
   @override
   String get syncActressDetails => 'Sync profile details';

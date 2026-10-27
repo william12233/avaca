@@ -413,30 +413,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scrapeUpdateAll => '既存データも更新';
 
   @override
-  String get scrapeAutomaticDerivedFilter => '再編集・合集作品を自動除外';
+  String get scrapeCategoryWhitelist => 'コレクション分類フィルター';
 
   @override
-  String get scrapeAutomaticDerivedFilterDescription =>
-      '出典の系譜と作品語義だけで判定し、不明な作品は保持します。';
+  String get scrapeCategoryWhitelistDescription =>
+      '選択した分類のいずれかに一致する作品を保存します。未選択の場合はすべての作品を対象にします。判定できない作品は保存し、要確認として記録します。';
 
   @override
-  String get scrapeAdvancedRules => '詳細ルール';
+  String get scrapeCategorySingle => '単体';
 
   @override
-  String get scrapeAdvancedRulesDescription =>
-      '完全な作品番号またはPrefixを入力（例：KCKC、KCKC-212）。';
+  String get scrapeCategoryMulti => '多人';
 
   @override
-  String get scrapeExactAllows => '番号／Prefixで許可';
+  String get scrapeCategoryPhoto => '写真';
 
   @override
-  String get scrapeExactDenies => '番号／Prefixで除外';
+  String get scrapeCategoryRetrospective => '回顧';
 
   @override
-  String get scrapeRuleHint => '作品番号またはPrefixを入力';
+  String get scrapeCategoryVr => 'VR';
 
   @override
-  String get scrapeNoRules => 'ルールは未設定です';
+  String get scrapeCategorySourceSupport =>
+      '対応状況：AVBase と AV-Wiki はカタログタグ、JavBus は作品詳細から判定します。';
 
   @override
   String get syncActressDetails => 'プロフィール詳細を同期';
@@ -1691,30 +1691,30 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get scrapeUpdateAll => '既存データも更新';
 
   @override
-  String get scrapeAutomaticDerivedFilter => '再編集・合集作品を自動除外';
+  String get scrapeCategoryWhitelist => 'コレクション分類フィルター';
 
   @override
-  String get scrapeAutomaticDerivedFilterDescription =>
-      '出典の系譜と作品語義だけで判定し、不明な作品は保持します。';
+  String get scrapeCategoryWhitelistDescription =>
+      '選択した分類のいずれかに一致する作品を保存します。未選択の場合はすべての作品を対象にします。判定できない作品は保存し、要確認として記録します。';
 
   @override
-  String get scrapeAdvancedRules => '詳細ルール';
+  String get scrapeCategorySingle => '単体';
 
   @override
-  String get scrapeAdvancedRulesDescription =>
-      '完全な作品番号またはPrefixを入力（例：KCKC、KCKC-212）。';
+  String get scrapeCategoryMulti => '多人';
 
   @override
-  String get scrapeExactAllows => '番号／Prefixで許可';
+  String get scrapeCategoryPhoto => '写真';
 
   @override
-  String get scrapeExactDenies => '番号／Prefixで除外';
+  String get scrapeCategoryRetrospective => '回顧';
 
   @override
-  String get scrapeRuleHint => '作品番号またはPrefixを入力';
+  String get scrapeCategoryVr => 'VR';
 
   @override
-  String get scrapeNoRules => 'ルールは未設定です';
+  String get scrapeCategorySourceSupport =>
+      '対応状況：AVBase と AV-Wiki はカタログタグ、JavBus は作品詳細から判定します。';
 
   @override
   String get syncActressDetails => 'プロフィール詳細を同期';

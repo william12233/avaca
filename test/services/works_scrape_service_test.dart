@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:avaca/core/database.dart';
 import 'package:avaca/models/scrape_source_settings.dart';
 import 'package:avaca/models/scraped_actress_details.dart';
+import 'package:avaca/models/scrape_work_category.dart';
 import 'package:avaca/models/work.dart';
 import 'package:avaca/models/work_scrape_options.dart';
 import 'package:avaca/services/javbus/javbus_client.dart';
@@ -13,6 +14,7 @@ import 'package:avaca/services/javbus/work_image_downloader.dart';
 import 'package:avaca/services/javbus/work_image_policy.dart';
 import 'package:avaca/services/javbus/work_image_route_resolver.dart';
 import 'package:avaca/services/scrape_run_observer.dart';
+import 'package:avaca/services/scrape/scrape_models.dart';
 import 'package:avaca/services/works_scrape_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as image;
@@ -140,6 +142,61 @@ void main() {
       expect(
         observer.outcomes,
         contains(const (code: 'ABF-367', state: ScrapeWorkOutcomeState.saved)),
+      );
+    },
+  );
+
+  test(
+    'category whitelist saves matches, excludes known others, and reviews unknowns',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'avaca_scrape_category_test_',
+      );
+      final database = AppDatabase.forTesting(
+        baseDir: directory.path,
+        databaseFactory: databaseFactoryFfi,
+      );
+      addTearDown(() async {
+        await database.close();
+        await directory.delete(recursive: true);
+      });
+      await database.init();
+      await database.addActress(name: '分類測試');
+      final sqlite = await database.database;
+      final actressId = (await sqlite.query('actresses')).single['id'] as int;
+      final observer = _RecordingScrapeObserver();
+      final service = WorksScrapeService(
+        db: database,
+        client: _CategoryJavBusClient(),
+        workImageDownloader: _FakeWorkImageDownloader(),
+        imageDirectory: directory.path,
+        javBusDetailDelay: Duration.zero,
+      );
+
+      final result = await service.scrape(
+        actressId: actressId,
+        actressName: '涼森れむ',
+        options: const WorkScrapeOptions(
+          syncDetails: false,
+          selectedCategories: [ScrapeWorkCategory.single],
+        ),
+        sourceSettings: const ScrapeSourceSettings(
+          actressDetailsSource: ScrapeSourceId.javbus,
+        ),
+        observer: observer,
+      );
+
+      expect(result.saved, 2);
+      expect(result.review, 1);
+      expect(result.excluded, 1);
+      expect(await database.getWorkCountForActress(actressId), 2);
+      expect(
+        observer.outcomes,
+        containsAll([
+          const (code: 'SINGLE-001', state: ScrapeWorkOutcomeState.saved),
+          const (code: 'MULTI-001', state: ScrapeWorkOutcomeState.excluded),
+          const (code: 'UNKNOWN-001', state: ScrapeWorkOutcomeState.review),
+        ]),
       );
     },
   );
@@ -650,6 +707,42 @@ class _FakeJavBusClient extends JavBusClient {
               const WorkPerformer(name: '涼森れむ'),
             ]
           : null,
+    );
+  }
+}
+
+class _CategoryJavBusClient extends _FakeJavBusClient {
+  @override
+  Future<List<JavBusWorkSummary>> fetchAllActressWorks(
+    Uri actressUri, {
+    bool Function()? isCancelled,
+    JavBusActressPage? firstPage,
+    void Function(int currentPage, int totalPages, int discovered)? onProgress,
+  }) async {
+    return ['SINGLE-001', 'MULTI-001', 'UNKNOWN-001']
+        .map(
+          (code) => JavBusWorkSummary(
+            code: code,
+            title: code,
+            detailUri: Uri.parse('https://www.javbus.com/$code'),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  @override
+  Future<JavBusWorkDetails> fetchWorkDetails(Uri uri) async {
+    final code = uri.pathSegments.last;
+    detailRequests.add(code);
+    final genres = switch (code) {
+      'SINGLE-001' => const ['単体'],
+      'MULTI-001' => const ['多人'],
+      _ => const <String>[],
+    };
+    return JavBusWorkDetails(
+      code: code,
+      title: code,
+      provenanceFacts: ScrapeWorkProvenanceFacts(genres: genres),
     );
   }
 }

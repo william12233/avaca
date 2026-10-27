@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.3 - 2026-10-27
+
+- Added multi-select scrape categories for single, multiple, photo, retrospective,
+  and VR works, using source-declared metadata instead of title, code, or cast
+  count inference.
+- Kept works with unresolved category evidence and marked them for review,
+  while excluding only known non-selected categories.
+- Added optional AV-Wiki catalog evidence to category matching and preserved
+  legacy scrape settings as read-only compatibility data.
+
 ## 1.4.2 - 2026-10-27
 
 - Repositioned all static help indicators to the right side of their labels,

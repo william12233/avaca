@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:avaca/core/database.dart';
 import 'package:avaca/models/scrape_source_settings.dart';
+import 'package:avaca/models/scrape_work_category.dart';
 import 'package:avaca/models/scraped_actress_details.dart';
 import 'package:avaca/models/work_scrape_options.dart';
 import 'package:avaca/services/javbus/work_image_downloader.dart';
@@ -80,6 +81,7 @@ void main() {
             source: ScrapeSourceId.javbus,
             code: 'NEW-002',
             title: '新作',
+            genres: ['單體'],
             provenanceFacts: ScrapeWorkProvenanceFacts(
               explicitOriginalProduction: true,
             ),
@@ -101,6 +103,7 @@ void main() {
           source: ScrapeSourceId.avbase,
           code: 'UNKNOWN-002',
           title: '作品集',
+          genres: ['多人'],
           provenanceFacts: ScrapeWorkProvenanceFacts(
             includedWorks: ['OLD-001'],
           ),
@@ -112,7 +115,9 @@ void main() {
           .scrape(
             actressId: fixture.actressId,
             actressName: '测试女优',
-            options: const WorkScrapeOptions(),
+            options: const WorkScrapeOptions(
+              selectedCategories: [ScrapeWorkCategory.single],
+            ),
             sourceSettings: const ScrapeSourceSettings(
               actressDetailsSource: ScrapeSourceId.javbus,
               worksSources: [ScrapeSourceId.javbus, ScrapeSourceId.avbase],
@@ -152,6 +157,7 @@ void main() {
             source: ScrapeSourceId.avbase,
             code: 'UNKNOWN-003',
             title: '作品集',
+            genres: ['多人'],
             provenanceFacts: ScrapeWorkProvenanceFacts(
               includedWorks: ['OLD-003'],
             ),
@@ -165,7 +171,9 @@ void main() {
           .scrape(
             actressId: fixture.actressId,
             actressName: '测试女优',
-            options: const WorkScrapeOptions(),
+            options: const WorkScrapeOptions(
+              selectedCategories: [ScrapeWorkCategory.single],
+            ),
             sourceSettings: const ScrapeSourceSettings(
               actressDetailsSource: ScrapeSourceId.javbus,
               worksSources: [ScrapeSourceId.javbus, ScrapeSourceId.avbase],
@@ -236,7 +244,7 @@ void main() {
   );
 
   test(
-    'does not escalate a confident director-cut premium repackage',
+    'keeps a title-only premium repackage when category filtering is disabled',
     () async {
       final fixture = await _Fixture.create();
       addTearDown(fixture.dispose);
@@ -272,8 +280,8 @@ void main() {
             ),
           );
 
-      expect(result.saved, 0);
-      expect(result.excluded, 1);
+      expect(result.saved, 1);
+      expect(result.excluded, 0);
       expect(primary.detailCalls, 1);
       expect(secondary.worksCalls, 1);
       expect(secondary.detailCalls, 0);
@@ -320,7 +328,7 @@ void main() {
     expect(secondary.detailCalls, 0);
   });
 
-  test('does not escalate a mixed derived surface', () async {
+  test('does not infer categories from a mixed title', () async {
     final fixture = await _Fixture.create();
     addTearDown(fixture.dispose);
     final primary = _EscalationSource(
@@ -354,8 +362,8 @@ void main() {
           ),
         );
 
-    expect(result.saved, 0);
-    expect(result.excluded, 1);
+    expect(result.saved, 1);
+    expect(result.excluded, 0);
     expect(primary.detailCalls, 1);
     expect(secondary.worksCalls, 1);
     expect(secondary.detailCalls, 0);

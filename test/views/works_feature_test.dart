@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:avaca/core/database.dart';
 import 'package:avaca/l10n/app_localizations.dart';
-import 'package:avaca/models/scrape_exclusion_policy.dart';
+import 'package:avaca/models/scrape_work_category.dart';
 import 'package:avaca/models/work_scrape_options.dart';
 import 'package:avaca/models/scrape_source_settings.dart';
 import 'package:avaca/services/scrape/scrape_models.dart';
@@ -521,8 +521,7 @@ void main() {
       syncDetails: false,
       fillMissingOnly: false,
       scrapeAliases: true,
-      autoExcludeDerivedWorks: false,
-      exactDenies: [ScrapeExactDenyRule(code: 'MANUAL-001')],
+      selectedCategories: [ScrapeWorkCategory.photo],
     );
     WorkScrapeOptions? received;
     await _pumpWorks(
@@ -545,8 +544,7 @@ void main() {
     expect(received?.syncDetails, isFalse);
     expect(received?.fillMissingOnly, isFalse);
     expect(received?.scrapeAliases, isTrue);
-    expect(received?.autoExcludeDerivedWorks, isFalse);
-    expect(received?.exactDenies.single.normalizedCode, 'MANUAL-001');
+    expect(received?.selectedCategories, [ScrapeWorkCategory.photo]);
     expect(find.byKey(const Key('scrape-result-dialog')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('scrape-result-done')));

@@ -110,8 +110,6 @@ void main() {
       );
       await tester.tap(find.text('刮削設定'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('scrape-advanced-rules')));
-      await tester.pumpAndSettle();
       await expectLater(
         find.byType(Scaffold).last,
         matchesGoldenFile('goldens/compact/scrape-settings.png'),
@@ -129,8 +127,6 @@ void main() {
         size: _expandedViewport,
       );
       await tester.tap(find.text('刮削設定'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('scrape-advanced-rules')));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(Scaffold).last,

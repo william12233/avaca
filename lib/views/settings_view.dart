@@ -21,8 +21,8 @@ import '../core/database.dart';
 import '../core/layout.dart';
 import '../core/shapes.dart';
 import '../models/data_transfer_models.dart';
-import '../models/scrape_exclusion_policy.dart';
 import '../models/scrape_source_settings.dart';
+import '../models/scrape_work_category.dart';
 import '../models/work_scrape_options.dart';
 import '../services/scrape_job_coordinator.dart';
 import '../services/avbase/avbase_client.dart';
@@ -1893,10 +1893,7 @@ class _ScrapePreferencesSettingsBody extends StatefulWidget {
 class _ScrapePreferencesSettingsBodyState
     extends State<_ScrapePreferencesSettingsBody> {
   late final Future<WorkScrapeOptions> _optionsFuture;
-  final exactAllowController = TextEditingController();
-  final exactDenyController = TextEditingController();
   WorkScrapeOptions? options;
-  bool advancedExpanded = false;
 
   @override
   void initState() {
@@ -1906,8 +1903,6 @@ class _ScrapePreferencesSettingsBodyState
 
   @override
   void dispose() {
-    exactAllowController.dispose();
-    exactDenyController.dispose();
     super.dispose();
   }
 
@@ -1935,131 +1930,66 @@ class _ScrapePreferencesSettingsBodyState
     }
   }
 
-  void _addExactAllow(WorkScrapeOptions current) {
-    final value = exactAllowController.text.trim().toUpperCase();
-    if (value.isEmpty ||
-        current.exactAllows.any((rule) => rule.normalizedCode == value)) {
-      return;
-    }
-    exactAllowController.clear();
-    unawaited(
-      _update(
-        current.copyWith(
-          exactAllows: [
-            ...current.exactAllows,
-            ScrapeExactAllowRule(code: value),
-          ],
-        ),
-      ),
-    );
+  String _categoryLabel(
+    AppLocalizations localizations,
+    ScrapeWorkCategory category,
+  ) {
+    return switch (category) {
+      ScrapeWorkCategory.single => localizations.scrapeCategorySingle,
+      ScrapeWorkCategory.multi => localizations.scrapeCategoryMulti,
+      ScrapeWorkCategory.photo => localizations.scrapeCategoryPhoto,
+      ScrapeWorkCategory.retrospective =>
+        localizations.scrapeCategoryRetrospective,
+      ScrapeWorkCategory.vr => localizations.scrapeCategoryVr,
+    };
   }
 
-  void _addExactDeny(WorkScrapeOptions current) {
-    final value = exactDenyController.text.trim().toUpperCase();
-    if (value.isEmpty ||
-        current.exactDenies.any((rule) => rule.normalizedCode == value)) {
-      return;
-    }
-    exactDenyController.clear();
-    unawaited(
-      _update(
-        current.copyWith(
-          exactDenies: [
-            ...current.exactDenies,
-            ScrapeExactDenyRule(code: value),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _ruleEditor({
-    required String title,
-    required String hint,
-    required TextEditingController controller,
-    required List<String> values,
-    required VoidCallback onAdd,
-    required ValueChanged<String> onDelete,
-    required Key inputKey,
-    required Key addKey,
-  }) {
+  Widget _categorySelector(
+    AppLocalizations localizations,
+    WorkScrapeOptions current,
+  ) {
+    final selected = current.selectedCategories.toSet();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 6),
-        Row(
+        _settingsOptionTitle(
+          context,
+          title: localizations.scrapeCategoryWhitelist,
+          helpText: localizations.scrapeCategoryWhitelistDescription,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Expanded(
-              child: SizedBox(
-                height: widget.tokens.controlHeight,
-                child: TextField(
-                  key: inputKey,
-                  controller: controller,
-                  textCapitalization: TextCapitalization.characters,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppShapeTokens.defaultCardRadius,
+            for (final category in ScrapeWorkCategory.values)
+              FilterChip(
+                key: ValueKey('scrape-category-${category.storageValue}'),
+                label: Text(_categoryLabel(localizations, category)),
+                selected: selected.contains(category),
+                onSelected: (value) {
+                  final next = [...selected];
+                  if (value) {
+                    next.add(category);
+                  } else {
+                    next.remove(category);
+                  }
+                  unawaited(
+                    _update(
+                      current.copyWith(
+                        selectedCategories: List.unmodifiable(next),
                       ),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppShapeTokens.defaultCardRadius,
-                      ),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppShapeTokens.defaultCardRadius,
-                      ),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).colorScheme.primary,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  onSubmitted: (_) => onAdd(),
-                ),
+                  );
+                },
               ),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              key: addKey,
-              tooltip: title,
-              onPressed: onAdd,
-              icon: const Icon(Icons.add),
-            ),
           ],
         ),
-        if (values.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              AppLocalizations.of(context).scrapeNoRules,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          )
-        else
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final value in values)
-                  InputChip(
-                    label: Text(value),
-                    onDeleted: () => onDelete(value),
-                  ),
-              ],
-            ),
-          ),
+        const SizedBox(height: 6),
+        Text(
+          localizations.scrapeCategorySourceSupport,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
   }
@@ -2143,6 +2073,8 @@ class _ScrapePreferencesSettingsBodyState
                     },
                   ),
                 ),
+                const SizedBox(height: 12),
+                _categorySelector(localizations, current),
                 const SizedBox(height: 4),
                 SwitchListTile(
                   key: const Key('scrape-aliases-switch'),
@@ -2164,87 +2096,6 @@ class _ScrapePreferencesSettingsBodyState
                   value: current.replaceActressImage,
                   onChanged: (value) => unawaited(
                     _update(current.copyWith(replaceActressImage: value)),
-                  ),
-                ),
-                SwitchListTile(
-                  key: const Key('scrape-auto-exclude-derived-switch'),
-                  contentPadding: EdgeInsets.zero,
-                  minTileHeight: widget.tokens.controlHeight,
-                  minVerticalPadding: 0,
-                  horizontalTitleGap: AppHelpTitleRow.gap,
-                  title: _settingsOptionTitle(
-                    context,
-                    title: localizations.scrapeAutomaticDerivedFilter,
-                    helpText:
-                        localizations.scrapeAutomaticDerivedFilterDescription,
-                  ),
-                  value: current.autoExcludeDerivedWorks,
-                  onChanged: (value) => unawaited(
-                    _update(current.copyWith(autoExcludeDerivedWorks: value)),
-                  ),
-                ),
-                ListTileTheme.merge(
-                  horizontalTitleGap: AppHelpTitleRow.gap,
-                  child: ExpansionTile(
-                    key: const Key('scrape-advanced-rules'),
-                    tilePadding: EdgeInsets.zero,
-                    minTileHeight: widget.tokens.controlHeight,
-                    childrenPadding: const EdgeInsets.only(bottom: 8),
-                    shape: const Border(),
-                    collapsedShape: const Border(),
-                    title: _settingsOptionTitle(
-                      context,
-                      title: localizations.scrapeAdvancedRules,
-                      helpText: localizations.scrapeAdvancedRulesDescription,
-                    ),
-                    initiallyExpanded: advancedExpanded,
-                    onExpansionChanged: (value) =>
-                        setState(() => advancedExpanded = value),
-                    children: [
-                      _ruleEditor(
-                        title: localizations.scrapeExactAllows,
-                        hint: localizations.scrapeRuleHint,
-                        controller: exactAllowController,
-                        values: [
-                          for (final rule in current.exactAllows) rule.code,
-                        ],
-                        onAdd: () => _addExactAllow(current),
-                        onDelete: (value) => unawaited(
-                          _update(
-                            current.copyWith(
-                              exactAllows: [
-                                for (final rule in current.exactAllows)
-                                  if (rule.code != value) rule,
-                              ],
-                            ),
-                          ),
-                        ),
-                        inputKey: const Key('scrape-exact-allow-input'),
-                        addKey: const Key('scrape-exact-allow-add'),
-                      ),
-                      const SizedBox(height: 16),
-                      _ruleEditor(
-                        title: localizations.scrapeExactDenies,
-                        hint: localizations.scrapeRuleHint,
-                        controller: exactDenyController,
-                        values: [
-                          for (final rule in current.exactDenies) rule.code,
-                        ],
-                        onAdd: () => _addExactDeny(current),
-                        onDelete: (value) => unawaited(
-                          _update(
-                            current.copyWith(
-                              exactDenies: [
-                                for (final rule in current.exactDenies)
-                                  if (rule.code != value) rule,
-                              ],
-                            ),
-                          ),
-                        ),
-                        inputKey: const Key('scrape-exact-deny-input'),
-                        addKey: const Key('scrape-exact-deny-add'),
-                      ),
-                    ],
                   ),
                 ),
               ],

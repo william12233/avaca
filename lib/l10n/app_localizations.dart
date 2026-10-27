@@ -889,53 +889,53 @@ abstract class AppLocalizations {
   /// **'更新已有資料'**
   String get scrapeUpdateAll;
 
-  /// No description provided for @scrapeAutomaticDerivedFilter.
+  /// No description provided for @scrapeCategoryWhitelist.
   ///
   /// In zh_TW, this message translates to:
-  /// **'自動排除重製／合集作品'**
-  String get scrapeAutomaticDerivedFilter;
+  /// **'收藏分類篩選'**
+  String get scrapeCategoryWhitelist;
 
-  /// No description provided for @scrapeAutomaticDerivedFilterDescription.
+  /// No description provided for @scrapeCategoryWhitelistDescription.
   ///
   /// In zh_TW, this message translates to:
-  /// **'只依來源 lineage 與作品語義判定；未知作品保留，不用前綴直接排除。'**
-  String get scrapeAutomaticDerivedFilterDescription;
+  /// **'儲存命中任一所選分類的作品。未選擇分類時納入全部作品。無法判定分類的作品會保留並標記為待複核。'**
+  String get scrapeCategoryWhitelistDescription;
 
-  /// No description provided for @scrapeAdvancedRules.
+  /// No description provided for @scrapeCategorySingle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'進階規則'**
-  String get scrapeAdvancedRules;
+  /// **'單體'**
+  String get scrapeCategorySingle;
 
-  /// No description provided for @scrapeAdvancedRulesDescription.
+  /// No description provided for @scrapeCategoryMulti.
   ///
   /// In zh_TW, this message translates to:
-  /// **'可輸入完整番號或前綴，例如 KCKC 或 KCKC-212。'**
-  String get scrapeAdvancedRulesDescription;
+  /// **'多人'**
+  String get scrapeCategoryMulti;
 
-  /// No description provided for @scrapeExactAllows.
+  /// No description provided for @scrapeCategoryPhoto.
   ///
   /// In zh_TW, this message translates to:
-  /// **'番號／前綴允許'**
-  String get scrapeExactAllows;
+  /// **'寫真'**
+  String get scrapeCategoryPhoto;
 
-  /// No description provided for @scrapeExactDenies.
+  /// No description provided for @scrapeCategoryRetrospective.
   ///
   /// In zh_TW, this message translates to:
-  /// **'番號／前綴排除'**
-  String get scrapeExactDenies;
+  /// **'回顧'**
+  String get scrapeCategoryRetrospective;
 
-  /// No description provided for @scrapeRuleHint.
+  /// No description provided for @scrapeCategoryVr.
   ///
   /// In zh_TW, this message translates to:
-  /// **'輸入番號或前綴'**
-  String get scrapeRuleHint;
+  /// **'VR'**
+  String get scrapeCategoryVr;
 
-  /// No description provided for @scrapeNoRules.
+  /// No description provided for @scrapeCategorySourceSupport.
   ///
   /// In zh_TW, this message translates to:
-  /// **'尚未設定規則'**
-  String get scrapeNoRules;
+  /// **'來源支援：AVBase 和 AV-Wiki 使用目錄標籤；JavBus 讀取作品詳情。'**
+  String get scrapeCategorySourceSupport;
 
   /// No description provided for @syncActressDetails.
   ///

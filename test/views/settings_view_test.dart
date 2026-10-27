@@ -1,9 +1,9 @@
-import 'package:avaca/components/app_help_tooltip.dart';
 import 'package:avaca/core/config.dart';
 import 'package:avaca/core/database.dart';
 import 'package:avaca/core/shapes.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import 'package:avaca/models/scrape_source_settings.dart';
+import 'package:avaca/models/scrape_work_category.dart';
 import 'package:avaca/models/work_scrape_options.dart';
 import 'package:avaca/services/javbus/prefix_route_repository.dart';
 import 'package:avaca/services/javbus/javbus_verification.dart';
@@ -128,6 +128,11 @@ void main() {
     await tester.tap(find.text('Scrape settings'));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Prefix route rules'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(find.text('Prefix route rules'), findsOneWidget);
     await tester.tap(find.text('Prefix route rules'));
     await tester.pumpAndSettle();
@@ -156,6 +161,11 @@ void main() {
 
     await tester.tap(find.text('Scrape settings'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Prefix route rules'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Prefix route rules'));
     await tester.pumpAndSettle();
     final sone = find.text('SONE');
@@ -365,95 +375,61 @@ void main() {
     expect(find.text('Verification required'), findsOneWidget);
   });
 
-  testWidgets('global scrape preferences persist outside the Works action', (
-    tester,
-  ) async {
+  testWidgets(
+    'global scrape category preferences persist outside the Works action',
+    (tester) async {
+      await _pumpSettings(tester);
+
+      await tester.tap(find.text('Scrape settings'));
+      await tester.pumpAndSettle();
+
+      final preferences = find.byKey(const Key('settings-scrape-preferences'));
+      await tester.ensureVisible(preferences);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('scrape-existing-data-policy')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('scrape-category-single')), findsOneWidget);
+      expect(find.byKey(const Key('scrape-category-vr')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('scrape-category-single')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('scrape-category-vr')));
+      await tester.pumpAndSettle();
+
+      final database = tester
+          .state<_SettingsHarnessState>(find.byType(_SettingsHarness))
+          .database;
+      final options = WorkScrapeOptions.decode(
+        await database.getSetting('works_scrape_options'),
+      );
+      expect(options.selectedCategories, [
+        ScrapeWorkCategory.single,
+        ScrapeWorkCategory.vr,
+      ]);
+    },
+  );
+
+  testWidgets('category filter explains its source support', (tester) async {
     await _pumpSettings(tester);
 
     await tester.tap(find.text('Scrape settings'));
     await tester.pumpAndSettle();
 
-    final preferences = find.byKey(const Key('settings-scrape-preferences'));
-    await tester.ensureVisible(preferences);
+    final category = find.byKey(const Key('scrape-category-single'));
+    await tester.ensureVisible(category);
     await tester.pumpAndSettle();
+
+    final categoryHelp = find.byTooltip(
+      'Save works matching any selected category. With no category selected, all works are included. Works that cannot be classified are kept and marked for review.',
+    );
+    expect(categoryHelp, findsOneWidget);
     expect(
-      find.byKey(const Key('scrape-existing-data-policy')),
+      find.text(
+        'Source support: AVBase and AV-Wiki use catalog tags; JavBus reads work details.',
+      ),
       findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('scrape-auto-exclude-derived-switch')),
-      findsOneWidget,
-    );
-
-    await tester.tap(
-      find.byKey(const Key('scrape-auto-exclude-derived-switch')),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('scrape-advanced-rules')));
-    await tester.pumpAndSettle();
-    final denyInput = find.byKey(const Key('scrape-exact-deny-input'));
-    await tester.ensureVisible(denyInput);
-    await tester.enterText(denyInput, 'manual-001');
-    await tester.tap(find.byKey(const Key('scrape-exact-deny-add')));
-    await tester.pumpAndSettle();
-
-    final database = tester
-        .state<_SettingsHarnessState>(find.byType(_SettingsHarness))
-        .database;
-    final options = WorkScrapeOptions.decode(
-      await database.getSetting('works_scrape_options'),
-    );
-    expect(options.autoExcludeDerivedWorks, isFalse);
-    expect(options.exactDenies.single.normalizedCode, 'MANUAL-001');
-  });
-
-  testWidgets('help affordances sit before trailing scrape controls', (
-    tester,
-  ) async {
-    await _pumpSettings(tester);
-
-    await tester.tap(find.text('Scrape settings'));
-    await tester.pumpAndSettle();
-
-    final autoExclude = find.byKey(
-      const Key('scrape-auto-exclude-derived-switch'),
-    );
-    await tester.ensureVisible(autoExclude);
-    await tester.pumpAndSettle();
-
-    final autoExcludeHelp = find.byTooltip(
-      'Use lineage and work semantics; keep unknown works and never exclude by prefix alone.',
-    );
-    final autoExcludeSwitch = find.descendant(
-      of: autoExclude,
-      matching: find.byType(Switch),
-    );
-    expect(autoExcludeHelp, findsOneWidget);
-    expect(autoExcludeSwitch, findsOneWidget);
-    expect(
-      tester.getRect(autoExcludeSwitch).left -
-          tester.getRect(autoExcludeHelp).right,
-      closeTo(AppHelpTitleRow.gap, 0.1),
-    );
-    expect(
-      tester.widget<SwitchListTile>(autoExclude).horizontalTitleGap,
-      AppHelpTitleRow.gap,
-    );
-
-    final advancedRules = find.byKey(const Key('scrape-advanced-rules'));
-    final advancedHelp = find.byTooltip(
-      'Enter a full work code or prefix, e.g. KCKC or KCKC-212.',
-    );
-    final advancedArrow = find.descendant(
-      of: advancedRules,
-      matching: find.byIcon(Icons.expand_more),
-    );
-    expect(advancedHelp, findsOneWidget);
-    expect(advancedArrow, findsOneWidget);
-    expect(
-      tester.getRect(advancedArrow).left - tester.getRect(advancedHelp).right,
-      closeTo(AppHelpTitleRow.gap, 0.1),
     );
   });
 
@@ -473,45 +449,32 @@ void main() {
     expect(dropdown.elevation, 3);
   });
 
-  testWidgets('scrape advanced rules only expose exact overrides', (
-    tester,
-  ) async {
-    await _pumpSettings(tester);
+  testWidgets(
+    'scrape preferences expose category chips instead of legacy rules',
+    (tester) async {
+      await _pumpSettings(tester);
 
-    await tester.tap(find.text('Scrape settings'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Scrape settings'));
+      await tester.pumpAndSettle();
 
-    final padding = tester.widget<Padding>(
-      find.byKey(const Key('scrape-preferences-padding')),
-    );
-    expect(padding.padding, const EdgeInsets.fromLTRB(8, 7, 8, 8));
+      final padding = tester.widget<Padding>(
+        find.byKey(const Key('scrape-preferences-padding')),
+      );
+      expect(padding.padding, const EdgeInsets.fromLTRB(8, 7, 8, 8));
 
-    final tileFinder = find.byKey(const Key('scrape-advanced-rules'));
-    final collapsed = tester.widget<ExpansionTile>(tileFinder);
-    expect(collapsed.shape, const Border());
-    expect(collapsed.collapsedShape, const Border());
-    expect(find.byKey(const Key('scrape-prefix-input')), findsNothing);
-    expect(find.byKey(const Key('scrape-ofje-policy-dropdown')), findsNothing);
-
-    await tester.tap(tileFinder);
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('scrape-exact-allow-input')), findsOneWidget);
-    expect(find.byKey(const Key('scrape-exact-deny-input')), findsOneWidget);
-    expect(find.byKey(const Key('scrape-prefix-input')), findsNothing);
-    expect(find.byKey(const Key('scrape-ofje-policy-dropdown')), findsNothing);
-    expect(find.text('Compatibility prefixes'), findsNothing);
-    final advancedHelp = find.byTooltip(
-      'Enter a full work code or prefix, e.g. KCKC or KCKC-212.',
-    );
-    expect(advancedHelp, findsOneWidget);
-    await tester.tap(advancedHelp);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(
-      find.text('Enter a full work code or prefix, e.g. KCKC or KCKC-212.'),
-      findsOneWidget,
-    );
-  });
+      expect(find.byKey(const Key('scrape-category-single')), findsOneWidget);
+      expect(find.byKey(const Key('scrape-category-multi')), findsOneWidget);
+      expect(find.byKey(const Key('scrape-category-photo')), findsOneWidget);
+      expect(
+        find.byKey(const Key('scrape-category-retrospective')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('scrape-category-vr')), findsOneWidget);
+      expect(find.byKey(const Key('scrape-advanced-rules')), findsNothing);
+      expect(find.byKey(const Key('scrape-exact-allow-input')), findsNothing);
+      expect(find.byKey(const Key('scrape-exact-deny-input')), findsNothing);
+    },
+  );
 
   testWidgets('all visible settings text uses the bundled variable font', (
     tester,

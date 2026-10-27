@@ -412,29 +412,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scrapeUpdateAll => '更新已有資料';
 
   @override
-  String get scrapeAutomaticDerivedFilter => '自動排除重製／合集作品';
+  String get scrapeCategoryWhitelist => '收藏分類篩選';
 
   @override
-  String get scrapeAutomaticDerivedFilterDescription =>
-      '只依來源 lineage 與作品語義判定；未知作品保留，不用前綴直接排除。';
+  String get scrapeCategoryWhitelistDescription =>
+      '儲存命中任一所選分類的作品。未選擇分類時納入全部作品。無法判定分類的作品會保留並標記為待複核。';
 
   @override
-  String get scrapeAdvancedRules => '進階規則';
+  String get scrapeCategorySingle => '單體';
 
   @override
-  String get scrapeAdvancedRulesDescription => '可輸入完整番號或前綴，例如 KCKC 或 KCKC-212。';
+  String get scrapeCategoryMulti => '多人';
 
   @override
-  String get scrapeExactAllows => '番號／前綴允許';
+  String get scrapeCategoryPhoto => '寫真';
 
   @override
-  String get scrapeExactDenies => '番號／前綴排除';
+  String get scrapeCategoryRetrospective => '回顧';
 
   @override
-  String get scrapeRuleHint => '輸入番號或前綴';
+  String get scrapeCategoryVr => 'VR';
 
   @override
-  String get scrapeNoRules => '尚未設定規則';
+  String get scrapeCategorySourceSupport =>
+      '來源支援：AVBase 和 AV-Wiki 使用目錄標籤；JavBus 讀取作品詳情。';
 
   @override
   String get syncActressDetails => '同步詳細資料';
@@ -1678,29 +1679,30 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get scrapeUpdateAll => '更新已有资料';
 
   @override
-  String get scrapeAutomaticDerivedFilter => '自动排除重制／合集作品';
+  String get scrapeCategoryWhitelist => '收藏分类筛选';
 
   @override
-  String get scrapeAutomaticDerivedFilterDescription =>
-      '只依据来源 lineage 与作品语义判断；未知作品保留，不用前缀直接排除。';
+  String get scrapeCategoryWhitelistDescription =>
+      '保存命中任一所选分类的作品。未选择分类时纳入全部作品。无法判定分类的作品会保留并标记为待复核。';
 
   @override
-  String get scrapeAdvancedRules => '高级规则';
+  String get scrapeCategorySingle => '单体';
 
   @override
-  String get scrapeAdvancedRulesDescription => '可输入完整番号或前缀，例如 KCKC 或 KCKC-212。';
+  String get scrapeCategoryMulti => '多人';
 
   @override
-  String get scrapeExactAllows => '番号／前缀允许';
+  String get scrapeCategoryPhoto => '写真';
 
   @override
-  String get scrapeExactDenies => '番号／前缀排除';
+  String get scrapeCategoryRetrospective => '回顾';
 
   @override
-  String get scrapeRuleHint => '输入番号或前缀';
+  String get scrapeCategoryVr => 'VR';
 
   @override
-  String get scrapeNoRules => '尚未设置规则';
+  String get scrapeCategorySourceSupport =>
+      '来源支持：AVBase 和 AV-Wiki 使用目录标签；JavBus 读取作品详情。';
 
   @override
   String get syncActressDetails => '同步详细资料';
@@ -2944,29 +2946,30 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get scrapeUpdateAll => '更新已有資料';
 
   @override
-  String get scrapeAutomaticDerivedFilter => '自動排除重製／合集作品';
+  String get scrapeCategoryWhitelist => '收藏分類篩選';
 
   @override
-  String get scrapeAutomaticDerivedFilterDescription =>
-      '只依來源 lineage 與作品語義判定；未知作品保留，不用前綴直接排除。';
+  String get scrapeCategoryWhitelistDescription =>
+      '儲存命中任一所選分類的作品。未選擇分類時納入全部作品。無法判定分類的作品會保留並標記為待複核。';
 
   @override
-  String get scrapeAdvancedRules => '進階規則';
+  String get scrapeCategorySingle => '單體';
 
   @override
-  String get scrapeAdvancedRulesDescription => '可輸入完整番號或前綴，例如 KCKC 或 KCKC-212。';
+  String get scrapeCategoryMulti => '多人';
 
   @override
-  String get scrapeExactAllows => '番號／前綴允許';
+  String get scrapeCategoryPhoto => '寫真';
 
   @override
-  String get scrapeExactDenies => '番號／前綴排除';
+  String get scrapeCategoryRetrospective => '回顧';
 
   @override
-  String get scrapeRuleHint => '輸入番號或前綴';
+  String get scrapeCategoryVr => 'VR';
 
   @override
-  String get scrapeNoRules => '尚未設定規則';
+  String get scrapeCategorySourceSupport =>
+      '來源支援：AVBase 和 AV-Wiki 使用目錄標籤；JavBus 讀取作品詳情。';
 
   @override
   String get syncActressDetails => '同步詳細資料';

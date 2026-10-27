@@ -66,7 +66,11 @@ final class _RecordedWork {
 void main() {
   sqfliteFfiInit();
 
-  test('runs the real-maker and large-actress frozen production stress set', () async {
+  // This corpus asserts the retired provenance/reuse policy's decisions. The
+  // category whitelist has dedicated service and classifier coverage; keep
+  // this fixture available for historical comparison without treating the
+  // old policy as a current scrape contract.
+  test('runs the retired provenance stress set', () async {
     final allRecords = <_RecordedWork>[
       ..._frozenRecords,
       ..._majorMakerStressRecords,
@@ -266,7 +270,7 @@ void main() {
     for (final report in reports) {
       print(report.render(observed));
     }
-  });
+  }, skip: 'Retired provenance policy corpus; replaced by category filtering.');
 }
 
 const _requiredMakers = <String>{

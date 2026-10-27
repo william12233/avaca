@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:avaca/core/database.dart';
 import 'package:avaca/models/scrape_source_settings.dart';
+import 'package:avaca/models/scrape_work_category.dart';
 import 'package:avaca/models/scraped_actress_details.dart';
 import 'package:avaca/models/work.dart';
 import 'package:avaca/models/work_scrape_options.dart';
@@ -2076,7 +2077,10 @@ void main() {
       final result = await service.scrape(
         actressId: actressId,
         actressName: '新井リマ',
-        options: const WorkScrapeOptions(syncDetails: false),
+        options: const WorkScrapeOptions(
+          syncDetails: false,
+          selectedCategories: [ScrapeWorkCategory.retrospective],
+        ),
         sourceSettings: const ScrapeSourceSettings(
           actressDetailsSource: ScrapeSourceId.javbus,
           worksSources: [ScrapeSourceId.javbus, ScrapeSourceId.avbase],
@@ -2084,8 +2088,8 @@ void main() {
         observer: observer,
       );
 
-      expect(result.saved, 0);
-      expect(result.excluded, 1);
+      expect(result.saved, 1);
+      expect(result.excluded, 0);
       expect(result.review, 0);
       expect(javbus.detailRequests, ['MIZD-270']);
       expect(avbase.detailRequests, isEmpty);
@@ -2099,7 +2103,8 @@ void main() {
       );
       expect(observer.outcomes, hasLength(1));
       final metadata = observer.outcomes.single.metadata;
-      expect(metadata['resolutionState'], 'decisiveExclude');
+      expect(metadata['finalAction'], 'keep');
+      expect(metadata['categoryEvidenceState'], 'matched');
       expect(metadata['evidenceSources'], containsAll(['javbus', 'avbase']));
       expect(metadata['primarySource'], 'javbus');
     },
@@ -2163,6 +2168,7 @@ void main() {
           code: 'ATKD-001',
           title: '普通作品名',
           studio: 'Attackers',
+          genres: ['單體'],
           provenanceFacts: ScrapeWorkProvenanceFacts(
             explicitOriginalProduction: true,
           ),
@@ -2180,7 +2186,10 @@ void main() {
     final result = await service.scrape(
       actressId: actressId,
       actressName: '沢北みなみ',
-      options: const WorkScrapeOptions(syncDetails: false),
+      options: const WorkScrapeOptions(
+        syncDetails: false,
+        selectedCategories: [ScrapeWorkCategory.single],
+      ),
       sourceSettings: const ScrapeSourceSettings(
         actressDetailsSource: ScrapeSourceId.javbus,
         worksSources: [ScrapeSourceId.javbus, ScrapeSourceId.avbase],

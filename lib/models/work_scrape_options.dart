@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'scrape_exclusion_policy.dart';
+import 'scrape_work_category.dart';
 
 class WorkScrapeOptions {
   const WorkScrapeOptions({
@@ -9,6 +10,9 @@ class WorkScrapeOptions {
     this.fillMissingOnly = true,
     this.retryWorkCodes = const [],
     this.scrapeAliases = false,
+    this.selectedCategories = const [],
+    // These fields remain readable for old job snapshots. They are no longer
+    // written by new settings and are not consulted by the scrape pipeline.
     this.autoExcludeDerivedWorks = true,
     this.exactAllows = const [],
     this.exactDenies = const [],
@@ -19,8 +23,15 @@ class WorkScrapeOptions {
   final bool fillMissingOnly;
   final List<String> retryWorkCodes;
   final bool scrapeAliases;
+  final List<ScrapeWorkCategory> selectedCategories;
+
+  /// @deprecated Replaced by [selectedCategories]. Kept for old snapshots.
   final bool autoExcludeDerivedWorks;
+
+  /// @deprecated Replaced by [selectedCategories]. Kept for old snapshots.
   final List<ScrapeExactAllowRule> exactAllows;
+
+  /// @deprecated Replaced by [selectedCategories]. Kept for old snapshots.
   final List<ScrapeExactDenyRule> exactDenies;
 
   WorkScrapeOptions copyWith({
@@ -29,6 +40,7 @@ class WorkScrapeOptions {
     bool? fillMissingOnly,
     List<String>? retryWorkCodes,
     bool? scrapeAliases,
+    List<ScrapeWorkCategory>? selectedCategories,
     bool? autoExcludeDerivedWorks,
     List<ScrapeExactAllowRule>? exactAllows,
     List<ScrapeExactDenyRule>? exactDenies,
@@ -38,6 +50,7 @@ class WorkScrapeOptions {
     fillMissingOnly: fillMissingOnly ?? this.fillMissingOnly,
     retryWorkCodes: retryWorkCodes ?? this.retryWorkCodes,
     scrapeAliases: scrapeAliases ?? this.scrapeAliases,
+    selectedCategories: selectedCategories ?? this.selectedCategories,
     autoExcludeDerivedWorks:
         autoExcludeDerivedWorks ?? this.autoExcludeDerivedWorks,
     exactAllows: exactAllows ?? this.exactAllows,
@@ -51,9 +64,7 @@ class WorkScrapeOptions {
       'fillMissingOnly': fillMissingOnly,
       'retryWorkCodes': retryWorkCodes,
       'scrapeAliases': scrapeAliases,
-      'autoExcludeDerivedWorks': autoExcludeDerivedWorks,
-      'exactAllows': exactAllows.map((item) => item.toJson()).toList(),
-      'exactDenies': exactDenies.map((item) => item.toJson()).toList(),
+      'categoryWhitelist': selectedCategories.storageValues,
     });
   }
 
@@ -71,6 +82,16 @@ class WorkScrapeOptions {
       // remain readable so an older settings record can be rewritten without
       // allowing prefix or family semantics back into the active model.
       final retryCodes = json['retryWorkCodes'];
+      final selectedCategories = <ScrapeWorkCategory>[];
+      final rawCategories = json['categoryWhitelist'];
+      if (rawCategories is Iterable) {
+        for (final rawCategory in rawCategories) {
+          final category = ScrapeWorkCategory.fromStorage(rawCategory);
+          if (category != null && !selectedCategories.contains(category)) {
+            selectedCategories.add(category);
+          }
+        }
+      }
       final exactAllows = <ScrapeExactAllowRule>[];
       if (json['exactAllows'] is List) {
         for (final item in json['exactAllows'] as List) {
@@ -112,6 +133,7 @@ class WorkScrapeOptions {
         scrapeAliases: json['scrapeAliases'] is bool
             ? json['scrapeAliases'] as bool
             : false,
+        selectedCategories: List.unmodifiable(selectedCategories),
         autoExcludeDerivedWorks: json['autoExcludeDerivedWorks'] is bool
             ? json['autoExcludeDerivedWorks'] as bool
             : true,

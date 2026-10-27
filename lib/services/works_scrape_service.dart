@@ -8,7 +8,7 @@ import '../core/database.dart';
 import '../core/resource_policy.dart';
 import '../models/scrape_source_settings.dart';
 import '../models/scrape_exclusion_policy.dart';
-import '../models/scrape_rules.dart';
+import '../models/scrape_work_category.dart';
 import '../models/scraped_actress_details.dart';
 import '../models/work_scrape_options.dart';
 import 'avbase/avbase_models.dart';
@@ -20,14 +20,13 @@ import 'javbus/prefix_route_repository.dart';
 import 'javbus/work_image_downloader.dart';
 import 'javbus/work_image_policy.dart';
 import 'safe_image.dart';
+import 'scrape/scrape_category_classifier.dart';
 import 'scrape/scrape_image_downloader.dart';
-import 'scrape/scrape_classification_context.dart';
 import 'scrape/scrape_models.dart';
 import 'scrape_run_observer.dart';
 import 'scrape/scrape_source.dart';
 import 'scrape/scrape_source_registry.dart';
 import 'scrape/work_identity.dart';
-import 'scrape_exclusion_policy_evaluator.dart';
 
 abstract interface class ActressImageDownloader {
   Future<String> download(Uri uri, String targetPath);
@@ -378,19 +377,6 @@ class WorksScrapeService {
       phase: WorksScrapePhase.collectingSources,
     );
     final settings = sourceSettings ?? const ScrapeSourceSettings();
-    final effectivePolicy =
-        policySnapshot ??
-        ScrapePolicySnapshot.current(
-          rules: ScrapeRules.builtin,
-          exactAllows: options.exactAllows,
-          autoExcludeDerivedWorks: options.autoExcludeDerivedWorks,
-          exactDenies: options.exactDenies,
-        );
-    final policyEvaluator = ScrapeExclusionPolicyEvaluator(effectivePolicy);
-    final classificationContext = ScrapeClassificationContext(
-      targetActressName: name,
-      targetAliases: aliases,
-    );
     final queries = _queries(name, aliases);
     final requestedWorkIds = ScrapeSourceRegistry.resolveWorksSources(
       settings.worksSources,
@@ -507,8 +493,7 @@ class WorksScrapeService {
       requestedWorkIds: requestedWorkIds,
       collectedById: collectedById,
       retryWorkCodes: options.retryWorkCodes,
-      policyEvaluator: policyEvaluator,
-      classificationContext: classificationContext,
+      selectedCategories: options.selectedCategories,
       ensureCollection: ensureCollection,
       cancellationToken: cancellationToken,
       onProgress: onProgress,
@@ -842,24 +827,19 @@ class WorksScrapeService {
         );
       } else {
         final selectedDetails = resolved.details.first;
-        final decision = policyEvaluator.evaluate(
-          code: code,
+        final classification = ScrapeCategoryClassifier.classify(
           details: resolved.details,
-          classificationContext: classificationContext,
+        );
+        final decision = ScrapeCategoryClassifier.decide(
+          selectedCategories: options.selectedCategories,
+          classification: classification,
         );
         final decisionMetadata = <String, Object?>{
           'canonicalCode': code,
           'finalAction': decision.finalAction.name,
-          'finalVerdict': decision.verdict.name,
-          'resolutionState': decision.resolutionState.name,
           'reviewRequired': decision.reviewRequired,
-          'provenanceClass': decision.provenanceClass.name,
-          'evidenceLevel': decision.evidenceLevel.name,
           'reasonCodes': decision.reasonCodes,
-          'evidenceRuleIds': decision.evidence
-              .map((item) => item.ruleId)
-              .toSet()
-              .toList(),
+          ...decision.toMetadata(),
           'evidenceSources': {
             ...resolved.details.map((item) => item.source.storageValue),
             ...resolved.details
@@ -1396,8 +1376,7 @@ class WorksScrapeService {
     required List<ScrapeSourceId> requestedWorkIds,
     required Map<ScrapeSourceId, _CollectedSource> collectedById,
     required List<String> retryWorkCodes,
-    required ScrapeExclusionPolicyEvaluator policyEvaluator,
-    required ScrapeClassificationContext classificationContext,
+    required List<ScrapeWorkCategory> selectedCategories,
     required Future<_SourceCollectionOutcome> Function(ScrapeSourceId)
     ensureCollection,
     required WorksScrapeCancellationToken? cancellationToken,
@@ -1456,24 +1435,16 @@ class WorksScrapeService {
       List<ScrapeWorkDetails> groupDetails,
     ) {
       if (groupDetails.isEmpty) return true;
-      final decision = policyEvaluator.evaluate(
-        code: group.storageCode,
+      if (selectedCategories.isEmpty) return false;
+      final classification = ScrapeCategoryClassifier.classify(
+        catalogEvidence: group.catalogEvidence,
         details: groupDetails,
-        classificationContext: classificationContext,
-        evidenceExhausted: false,
       );
-      if (decision.resolutionState != ScrapeResolutionState.needsEvidence &&
-          decision.resolutionState != ScrapeResolutionState.conflict) {
-        return false;
-      }
-      // A disabled automatic filter is an intentional user choice, not a
-      // missing fact that should trigger another site's request.
-      if (decision.reasonCodes.contains('derived_work_filter_disabled') ||
-          decision.reasonCodes.contains('manual_rule_scope_uncertain') ||
-          decision.reasonCodes.contains('manual_override_conflict')) {
-        return false;
-      }
-      return true;
+      final decision = ScrapeCategoryClassifier.decide(
+        selectedCategories: selectedCategories,
+        classification: classification,
+      );
+      return decision.evidenceState == ScrapeCategoryEvidenceState.unknown;
     }
 
     final selectedSourceIndex = requestedWorkIds.indexOf(
