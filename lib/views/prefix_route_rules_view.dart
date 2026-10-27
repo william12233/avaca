@@ -246,19 +246,12 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      AppHelpTooltip(
-                        message: localizations.prefixRouteRulesSubtitle,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          localizations.prefixRouteRulesTitle,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                    ],
+                  AppHelpTitleRow(
+                    message: localizations.prefixRouteRulesSubtitle,
+                    title: Text(
+                      localizations.prefixRouteRulesTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(localizations.prefixRouteRuleCount(_rules.length)),
@@ -379,35 +372,19 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
                 RadioListTile<bool>(
                   value: false,
                   minTileHeight: tokens.controlHeight,
-                  title: Row(
-                    children: [
-                      AppHelpTooltip(
-                        message:
-                            localizations.prefixRouteExportRulesOnlyDescription,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(localizations.prefixRouteExportRulesOnly),
-                      ),
-                    ],
+                  title: AppHelpTitleRow(
+                    message:
+                        localizations.prefixRouteExportRulesOnlyDescription,
+                    title: Text(localizations.prefixRouteExportRulesOnly),
                   ),
                 ),
                 RadioListTile<bool>(
                   value: true,
                   minTileHeight: tokens.controlHeight,
-                  title: Row(
-                    children: [
-                      AppHelpTooltip(
-                        message: localizations
-                            .prefixRouteExportWithStatisticsDescription,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          localizations.prefixRouteExportWithStatistics,
-                        ),
-                      ),
-                    ],
+                  title: AppHelpTitleRow(
+                    message: localizations
+                        .prefixRouteExportWithStatisticsDescription,
+                    title: Text(localizations.prefixRouteExportWithStatistics),
                   ),
                 ),
               ],
@@ -732,21 +709,14 @@ class _PrefixRouteRuleDetailSheetState
               for (final candidate in _rule.candidates)
                 _candidateTile(context, candidate),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  AppHelpTooltip(
-                    message: manual == null
-                        ? localizations.prefixRouteAutomaticDescription
-                        : localizations.prefixRouteManualDescription,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      localizations.prefixRouteManualOverride,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                  ),
-                ],
+              AppHelpTitleRow(
+                message: manual == null
+                    ? localizations.prefixRouteAutomaticDescription
+                    : localizations.prefixRouteManualDescription,
+                title: Text(
+                  localizations.prefixRouteManualOverride,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
               ),
               const SizedBox(height: 4),
               SizedBox(

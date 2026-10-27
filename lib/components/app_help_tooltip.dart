@@ -32,3 +32,31 @@ class _AppHelpTooltipState extends State<AppHelpTooltip> {
     );
   }
 }
+
+/// Places a help affordance after a title while keeping the title flexible.
+///
+/// The fixed gap is shared with list-tile hosts so the tooltip hit target sits
+/// immediately before a trailing switch or expansion control.
+class AppHelpTitleRow extends StatelessWidget {
+  const AppHelpTitleRow({
+    super.key,
+    required this.title,
+    required this.message,
+  });
+
+  static const double gap = 8;
+
+  final Widget title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: title),
+        const SizedBox(width: gap),
+        AppHelpTooltip(message: message),
+      ],
+    );
+  }
+}

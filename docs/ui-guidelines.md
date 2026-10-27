@@ -51,7 +51,7 @@ Dialog 也同樣處理：外框使用 `AppShapeTokens.dialogRadius`，其內若�
 
 - 同一個設定頁的選項列、輸入框、下拉選單與操作按鈕，使用 `AppLayoutTokens.controlHeight`，目前固定為 48px。
 - 動態狀態、進度、錯誤與資料摘要可以讓列高自然增加；這些不是固定說明文字。
-- 靜態補充說明不要放在 `subtitle` 常駐顯示，改用 [`AppHelpTooltip`](../lib/components/app_help_tooltip.dart) 放在選項文字前。手機單擊問號顯示，桌面滑鼠移入顯示。
+- 靜態補充說明不要放在 `subtitle` 常駐顯示，改用 [`AppHelpTooltip`](../lib/components/app_help_tooltip.dart) 放在選項文字右側，與 trailing 開關或箭頭保持 8px 間距。手機單擊問號顯示，桌面滑鼠移入顯示。
 - 設定分類以「主題與色彩」、「介面」、「刮削設定」、「資料管理」、「系統與關於」分組；新增選項先放入對應分類，不在主頁堆疊細節。
 
 ## 新增 UI 時的檢查

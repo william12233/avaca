@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.2 - 2026-10-27
+
+- Repositioned all static help indicators to the right side of their labels,
+  with consistent spacing before switches and expansion controls.
+- Added layout regression coverage for the shared help-title row and scrape
+  settings controls.
+
 ## 1.4.1 - 2026-10-26
 
 - Changed work storage records to support selecting multiple storage types:

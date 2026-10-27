@@ -1,3 +1,4 @@
+import 'package:avaca/components/app_help_tooltip.dart';
 import 'package:avaca/core/config.dart';
 import 'package:avaca/core/database.dart';
 import 'package:avaca/core/shapes.dart';
@@ -405,6 +406,55 @@ void main() {
     );
     expect(options.autoExcludeDerivedWorks, isFalse);
     expect(options.exactDenies.single.normalizedCode, 'MANUAL-001');
+  });
+
+  testWidgets('help affordances sit before trailing scrape controls', (
+    tester,
+  ) async {
+    await _pumpSettings(tester);
+
+    await tester.tap(find.text('Scrape settings'));
+    await tester.pumpAndSettle();
+
+    final autoExclude = find.byKey(
+      const Key('scrape-auto-exclude-derived-switch'),
+    );
+    await tester.ensureVisible(autoExclude);
+    await tester.pumpAndSettle();
+
+    final autoExcludeHelp = find.byTooltip(
+      'Use lineage and work semantics; keep unknown works and never exclude by prefix alone.',
+    );
+    final autoExcludeSwitch = find.descendant(
+      of: autoExclude,
+      matching: find.byType(Switch),
+    );
+    expect(autoExcludeHelp, findsOneWidget);
+    expect(autoExcludeSwitch, findsOneWidget);
+    expect(
+      tester.getRect(autoExcludeSwitch).left -
+          tester.getRect(autoExcludeHelp).right,
+      closeTo(AppHelpTitleRow.gap, 0.1),
+    );
+    expect(
+      tester.widget<SwitchListTile>(autoExclude).horizontalTitleGap,
+      AppHelpTitleRow.gap,
+    );
+
+    final advancedRules = find.byKey(const Key('scrape-advanced-rules'));
+    final advancedHelp = find.byTooltip(
+      'Enter a full work code or prefix, e.g. KCKC or KCKC-212.',
+    );
+    final advancedArrow = find.descendant(
+      of: advancedRules,
+      matching: find.byIcon(Icons.expand_more),
+    );
+    expect(advancedHelp, findsOneWidget);
+    expect(advancedArrow, findsOneWidget);
+    expect(
+      tester.getRect(advancedArrow).left - tester.getRect(advancedHelp).right,
+      closeTo(AppHelpTitleRow.gap, 0.1),
+    );
   });
 
   testWidgets('scrape policy dropdown uses the app menu shape', (tester) async {

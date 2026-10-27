@@ -70,13 +70,7 @@ Widget _settingsOptionTitle(
   if (helpText == null || helpText.isEmpty) {
     return Text(title);
   }
-  return Row(
-    children: [
-      AppHelpTooltip(message: helpText),
-      const SizedBox(width: 4),
-      Expanded(child: Text(title)),
-    ],
-  );
+  return AppHelpTitleRow(title: Text(title), message: helpText);
 }
 
 class _SettingsInteractionTheme extends StatelessWidget {
@@ -851,6 +845,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     Widget? trailing,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final hasHelp = helpText != null && helpText.isNotEmpty;
     return _SettingsTapFeedback(
       id: feedbackId,
       child: Card(
@@ -865,6 +860,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
           minTileHeight: tokens.controlHeight,
           minVerticalPadding: 0,
           leading: Icon(icon),
+          horizontalTitleGap: hasHelp ? AppHelpTitleRow.gap : null,
           title: _settingsTitle(context, title: title, helpText: helpText),
           subtitle: statusText == null ? null : Text(statusText),
           trailing: trailing ?? const Icon(Icons.chevron_right),
@@ -885,23 +881,30 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final shape = _settingsCardShape();
+    final hasHelp = helpText != null && helpText.isNotEmpty;
+    final expansionTile = ExpansionTile(
+      key: PageStorageKey(feedbackId),
+      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+      minTileHeight: tokens.controlHeight,
+      childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      backgroundColor: colorScheme.surfaceContainerHighest,
+      collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
+      shape: shape,
+      collapsedShape: shape,
+      clipBehavior: Clip.antiAlias,
+      expansionAnimationStyle: _expansionAnimationStyle,
+      leading: Icon(icon),
+      title: _settingsTitle(context, title: title, helpText: helpText),
+      children: [child],
+    );
     return _SettingsTapFeedback(
       id: feedbackId,
-      child: ExpansionTile(
-        key: PageStorageKey(feedbackId),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-        minTileHeight: tokens.controlHeight,
-        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        backgroundColor: colorScheme.surfaceContainerHighest,
-        collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
-        shape: shape,
-        collapsedShape: shape,
-        clipBehavior: Clip.antiAlias,
-        expansionAnimationStyle: _expansionAnimationStyle,
-        leading: Icon(icon),
-        title: _settingsTitle(context, title: title, helpText: helpText),
-        children: [child],
-      ),
+      child: hasHelp
+          ? ListTileTheme.merge(
+              horizontalTitleGap: AppHelpTitleRow.gap,
+              child: expansionTile,
+            )
+          : expansionTile,
     );
   }
 
@@ -1305,6 +1308,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
       minTileHeight: tokens.controlHeight,
+      horizontalTitleGap: AppHelpTitleRow.gap,
       title: _settingsTitle(
         context,
         title: AppLocalizations.of(context).pureBlackAmoled,
@@ -1631,44 +1635,47 @@ class _ScrapeSourcesSettingsBodyState
       margin: EdgeInsets.zero,
       elevation: 0,
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        key: const PageStorageKey('scrape-source-connection-status'),
-        minTileHeight: tokens.controlHeight,
-        title: _settingsOptionTitle(
-          context,
-          title: localizations.scrapeSourceConnectionTitle,
-          helpText: localizations.scrapeSourceConnectionSubtitle,
-        ),
-        backgroundColor: colorScheme.surfaceContainer,
-        collapsedBackgroundColor: colorScheme.surfaceContainer,
-        shape: const Border(),
-        collapsedShape: const Border(),
-        clipBehavior: Clip.antiAlias,
-        children: [
-          for (final source in ScrapeSourceRegistry.aggregatePriority)
-            _connectionStatusTile(context, source, tokens),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                key: const ValueKey('scrape-source-retest-button'),
-                onPressed: _isTestingConnections ? null : _testConnections,
-                icon: _isTestingConnections
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh),
-                label: Text(
-                  _isTestingConnections
-                      ? localizations.scrapeSourceTesting
-                      : localizations.scrapeSourceRetest,
+      child: ListTileTheme.merge(
+        horizontalTitleGap: AppHelpTitleRow.gap,
+        child: ExpansionTile(
+          key: const PageStorageKey('scrape-source-connection-status'),
+          minTileHeight: tokens.controlHeight,
+          title: _settingsOptionTitle(
+            context,
+            title: localizations.scrapeSourceConnectionTitle,
+            helpText: localizations.scrapeSourceConnectionSubtitle,
+          ),
+          backgroundColor: colorScheme.surfaceContainer,
+          collapsedBackgroundColor: colorScheme.surfaceContainer,
+          shape: const Border(),
+          collapsedShape: const Border(),
+          clipBehavior: Clip.antiAlias,
+          children: [
+            for (final source in ScrapeSourceRegistry.aggregatePriority)
+              _connectionStatusTile(context, source, tokens),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  key: const ValueKey('scrape-source-retest-button'),
+                  onPressed: _isTestingConnections ? null : _testConnections,
+                  icon: _isTestingConnections
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                  label: Text(
+                    _isTestingConnections
+                        ? localizations.scrapeSourceTesting
+                        : localizations.scrapeSourceRetest,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1749,72 +1756,77 @@ class _ScrapeSourcesSettingsBodyState
       margin: EdgeInsets.zero,
       elevation: 0,
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        key: const PageStorageKey('scrape-works-source'),
-        minTileHeight: tokens.controlHeight,
-        backgroundColor: colorScheme.surfaceContainer,
-        collapsedBackgroundColor: colorScheme.surfaceContainer,
-        shape: const Border(),
-        collapsedShape: const Border(),
-        clipBehavior: Clip.antiAlias,
-        title: _settingsOptionTitle(
-          context,
-          title: localizations.scrapeSourceWorksTitle,
-          helpText: localizations.scrapeSourcePriorityHint,
-        ),
-        children: [
-          ReorderableListView.builder(
-            key: const PageStorageKey('scrape-works-source-order'),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            buildDefaultDragHandles: false,
-            itemCount: selected.length,
-            onReorderItem: (oldIndex, newIndex) {
-              final reordered = [...selected];
-              final source = reordered.removeAt(oldIndex);
-              reordered.insert(newIndex, source);
-              unawaited(_select(worksSources: reordered));
-            },
-            itemBuilder: (context, index) {
-              final source = selected[index];
-              return CheckboxListTile(
-                key: ValueKey('scrape-works-source-selected-${source.name}'),
-                minTileHeight: tokens.controlHeight,
-                value: true,
-                controlAffinity: ListTileControlAffinity.leading,
-                title: Row(
-                  children: [
-                    Expanded(child: Text(_sourceLabel(localizations, source))),
-                    Text('#${index + 1}'),
-                  ],
-                ),
-                secondary: ReorderableDragStartListener(
-                  index: index,
-                  child: const Icon(Icons.drag_handle),
-                ),
-                onChanged: selected.length == 1
-                    ? null
-                    : (_) => unawaited(
-                        _select(
-                          worksSources: selected
-                              .where((item) => item != source)
-                              .toList(growable: false),
-                        ),
-                      ),
-              );
-            },
+      child: ListTileTheme.merge(
+        horizontalTitleGap: AppHelpTitleRow.gap,
+        child: ExpansionTile(
+          key: const PageStorageKey('scrape-works-source'),
+          minTileHeight: tokens.controlHeight,
+          backgroundColor: colorScheme.surfaceContainer,
+          collapsedBackgroundColor: colorScheme.surfaceContainer,
+          shape: const Border(),
+          collapsedShape: const Border(),
+          clipBehavior: Clip.antiAlias,
+          title: _settingsOptionTitle(
+            context,
+            title: localizations.scrapeSourceWorksTitle,
+            helpText: localizations.scrapeSourcePriorityHint,
           ),
-          for (final source in unselected)
-            CheckboxListTile(
-              key: ValueKey('scrape-works-source-available-${source.name}'),
-              minTileHeight: tokens.controlHeight,
-              value: false,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: Text(_sourceLabel(localizations, source)),
-              onChanged: (_) =>
-                  unawaited(_select(worksSources: [...selected, source])),
+          children: [
+            ReorderableListView.builder(
+              key: const PageStorageKey('scrape-works-source-order'),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              itemCount: selected.length,
+              onReorderItem: (oldIndex, newIndex) {
+                final reordered = [...selected];
+                final source = reordered.removeAt(oldIndex);
+                reordered.insert(newIndex, source);
+                unawaited(_select(worksSources: reordered));
+              },
+              itemBuilder: (context, index) {
+                final source = selected[index];
+                return CheckboxListTile(
+                  key: ValueKey('scrape-works-source-selected-${source.name}'),
+                  minTileHeight: tokens.controlHeight,
+                  value: true,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(_sourceLabel(localizations, source)),
+                      ),
+                      Text('#${index + 1}'),
+                    ],
+                  ),
+                  secondary: ReorderableDragStartListener(
+                    index: index,
+                    child: const Icon(Icons.drag_handle),
+                  ),
+                  onChanged: selected.length == 1
+                      ? null
+                      : (_) => unawaited(
+                          _select(
+                            worksSources: selected
+                                .where((item) => item != source)
+                                .toList(growable: false),
+                          ),
+                        ),
+                );
+              },
             ),
-        ],
+            for (final source in unselected)
+              CheckboxListTile(
+                key: ValueKey('scrape-works-source-available-${source.name}'),
+                minTileHeight: tokens.controlHeight,
+                value: false,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(_sourceLabel(localizations, source)),
+                onChanged: (_) =>
+                    unawaited(_select(worksSources: [...selected, source])),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -2159,6 +2171,7 @@ class _ScrapePreferencesSettingsBodyState
                   contentPadding: EdgeInsets.zero,
                   minTileHeight: widget.tokens.controlHeight,
                   minVerticalPadding: 0,
+                  horizontalTitleGap: AppHelpTitleRow.gap,
                   title: _settingsOptionTitle(
                     context,
                     title: localizations.scrapeAutomaticDerivedFilter,
@@ -2170,66 +2183,69 @@ class _ScrapePreferencesSettingsBodyState
                     _update(current.copyWith(autoExcludeDerivedWorks: value)),
                   ),
                 ),
-                ExpansionTile(
-                  key: const Key('scrape-advanced-rules'),
-                  tilePadding: EdgeInsets.zero,
-                  minTileHeight: widget.tokens.controlHeight,
-                  childrenPadding: const EdgeInsets.only(bottom: 8),
-                  shape: const Border(),
-                  collapsedShape: const Border(),
-                  title: _settingsOptionTitle(
-                    context,
-                    title: localizations.scrapeAdvancedRules,
-                    helpText: localizations.scrapeAdvancedRulesDescription,
+                ListTileTheme.merge(
+                  horizontalTitleGap: AppHelpTitleRow.gap,
+                  child: ExpansionTile(
+                    key: const Key('scrape-advanced-rules'),
+                    tilePadding: EdgeInsets.zero,
+                    minTileHeight: widget.tokens.controlHeight,
+                    childrenPadding: const EdgeInsets.only(bottom: 8),
+                    shape: const Border(),
+                    collapsedShape: const Border(),
+                    title: _settingsOptionTitle(
+                      context,
+                      title: localizations.scrapeAdvancedRules,
+                      helpText: localizations.scrapeAdvancedRulesDescription,
+                    ),
+                    initiallyExpanded: advancedExpanded,
+                    onExpansionChanged: (value) =>
+                        setState(() => advancedExpanded = value),
+                    children: [
+                      _ruleEditor(
+                        title: localizations.scrapeExactAllows,
+                        hint: localizations.scrapeRuleHint,
+                        controller: exactAllowController,
+                        values: [
+                          for (final rule in current.exactAllows) rule.code,
+                        ],
+                        onAdd: () => _addExactAllow(current),
+                        onDelete: (value) => unawaited(
+                          _update(
+                            current.copyWith(
+                              exactAllows: [
+                                for (final rule in current.exactAllows)
+                                  if (rule.code != value) rule,
+                              ],
+                            ),
+                          ),
+                        ),
+                        inputKey: const Key('scrape-exact-allow-input'),
+                        addKey: const Key('scrape-exact-allow-add'),
+                      ),
+                      const SizedBox(height: 16),
+                      _ruleEditor(
+                        title: localizations.scrapeExactDenies,
+                        hint: localizations.scrapeRuleHint,
+                        controller: exactDenyController,
+                        values: [
+                          for (final rule in current.exactDenies) rule.code,
+                        ],
+                        onAdd: () => _addExactDeny(current),
+                        onDelete: (value) => unawaited(
+                          _update(
+                            current.copyWith(
+                              exactDenies: [
+                                for (final rule in current.exactDenies)
+                                  if (rule.code != value) rule,
+                              ],
+                            ),
+                          ),
+                        ),
+                        inputKey: const Key('scrape-exact-deny-input'),
+                        addKey: const Key('scrape-exact-deny-add'),
+                      ),
+                    ],
                   ),
-                  initiallyExpanded: advancedExpanded,
-                  onExpansionChanged: (value) =>
-                      setState(() => advancedExpanded = value),
-                  children: [
-                    _ruleEditor(
-                      title: localizations.scrapeExactAllows,
-                      hint: localizations.scrapeRuleHint,
-                      controller: exactAllowController,
-                      values: [
-                        for (final rule in current.exactAllows) rule.code,
-                      ],
-                      onAdd: () => _addExactAllow(current),
-                      onDelete: (value) => unawaited(
-                        _update(
-                          current.copyWith(
-                            exactAllows: [
-                              for (final rule in current.exactAllows)
-                                if (rule.code != value) rule,
-                            ],
-                          ),
-                        ),
-                      ),
-                      inputKey: const Key('scrape-exact-allow-input'),
-                      addKey: const Key('scrape-exact-allow-add'),
-                    ),
-                    const SizedBox(height: 16),
-                    _ruleEditor(
-                      title: localizations.scrapeExactDenies,
-                      hint: localizations.scrapeRuleHint,
-                      controller: exactDenyController,
-                      values: [
-                        for (final rule in current.exactDenies) rule.code,
-                      ],
-                      onAdd: () => _addExactDeny(current),
-                      onDelete: (value) => unawaited(
-                        _update(
-                          current.copyWith(
-                            exactDenies: [
-                              for (final rule in current.exactDenies)
-                                if (rule.code != value) rule,
-                            ],
-                          ),
-                        ),
-                      ),
-                      inputKey: const Key('scrape-exact-deny-input'),
-                      addKey: const Key('scrape-exact-deny-add'),
-                    ),
-                  ],
                 ),
               ],
             ),

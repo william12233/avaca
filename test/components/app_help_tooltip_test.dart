@@ -43,4 +43,30 @@ void main() {
 
     expect(find.text('Hover help'), findsOneWidget);
   });
+
+  testWidgets('places the help affordance after a flexible title', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.fromPalette(AppPalettes.light),
+        home: const Scaffold(
+          body: SizedBox(
+            width: 240,
+            child: AppHelpTitleRow(
+              title: Text('Setting'),
+              message: 'Setting help',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final row = tester.widget<Row>(find.byType(Row));
+    expect(row.children, hasLength(3));
+    expect(row.children.first, isA<Expanded>());
+    expect(row.children[1], isA<SizedBox>());
+    expect((row.children[1] as SizedBox).width, AppHelpTitleRow.gap);
+    expect(row.children.last, isA<AppHelpTooltip>());
+  });
 }
