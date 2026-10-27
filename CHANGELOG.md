@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.4 - 2026-10-27
+
+- Hardened Minnano requests with browser headers, session cookies, polite
+  pacing, retry handling, and explicit blocked/rate-limited diagnostics.
+- Added exact-code AVBase, AV-Wiki, and JavBus evidence lookups for unresolved
+  category filters without collecting a second full actress catalog.
+- Kept optional evidence failures reviewable without interrupting the scrape,
+  while preserving partial diagnostics for configured source failures.
+
 ## 1.4.3 - 2026-10-27
 
 - Added multi-select scrape categories for single, multiple, photo, retrospective,
