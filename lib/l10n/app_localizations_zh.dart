@@ -740,9 +740,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scrapeSourceAliasTitle => '女優别名来源';
 
   @override
-  String get scrapeSourceMinnanoAv => 'Minnano AV';
-
-  @override
   String get scrapeSourceJavBus => 'JavBus';
 
   @override
@@ -2007,9 +2004,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get scrapeSourceAliasTitle => '女优别名来源';
 
   @override
-  String get scrapeSourceMinnanoAv => 'Minnano AV';
-
-  @override
   String get scrapeSourceJavBus => 'JavBus';
 
   @override
@@ -3272,9 +3266,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get scrapeSourceAliasTitle => '女優別名來源';
-
-  @override
-  String get scrapeSourceMinnanoAv => 'Minnano AV';
 
   @override
   String get scrapeSourceJavBus => 'JavBus';

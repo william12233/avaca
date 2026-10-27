@@ -23,14 +23,14 @@ void main() {
     ]);
   });
 
-  test('non-work and duplicate sources are sanitized', () {
+  test('duplicate work sources are sanitized', () {
     expect(
       ScrapeSourceRegistry.resolveWorksSources(const [
-        ScrapeSourceId.minnanoAv,
+        ScrapeSourceId.avwiki,
         ScrapeSourceId.avbase,
         ScrapeSourceId.avbase,
       ]),
-      [ScrapeSourceId.avbase],
+      [ScrapeSourceId.avwiki, ScrapeSourceId.avbase],
     );
   });
 }

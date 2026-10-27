@@ -435,7 +435,6 @@ class _ScrapeJobDetailViewState extends State<ScrapeJobDetailView> {
     final source = switch (progress.source) {
       ScrapeSourceId.javbus => l10n.scrapeSourceJavBus,
       ScrapeSourceId.avbase => l10n.scrapeSourceAvBase,
-      ScrapeSourceId.minnanoAv => l10n.scrapeSourceMinnanoAv,
       ScrapeSourceId.avwiki => l10n.scrapeSourceAvWiki,
     };
     final pages = progress.totalKnown

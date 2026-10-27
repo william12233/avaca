@@ -27,10 +27,6 @@ import '../services/javbus/javbus_scrape_source.dart';
 import '../services/javbus/javbus_verification.dart';
 import '../services/javbus/work_image_downloader.dart';
 import '../services/javbus/work_image_policy.dart';
-import '../services/minnano/minnano_client.dart';
-import '../services/minnano/minnano_scrape_source.dart';
-import '../services/minnano/minnano_transport.dart';
-import '../services/scrape/scrape_image_downloader.dart';
 import '../services/scrape/scrape_models.dart';
 import '../services/scrape/scrape_source.dart';
 import '../services/scrape/scrape_source_registry.dart';
@@ -916,13 +912,9 @@ class _WorksViewState extends State<WorksView> {
     }
     final configuredSources = <ScrapeSourceId, ScrapeSource>{};
     HttpJavBusTransport? javBusTransport;
-    HttpMinnanoTransport? minnanoTransport;
-    MinnanoClient? minnanoClient;
-    HttpBinaryTransport? minnanoAvatarTransport;
     HttpAvBaseTransport? avbaseTransport;
     AvBaseClient? avbaseClient;
     HttpBinaryTransport? avbaseAvatarTransport;
-    HttpScrapeImageUriDownloader? imageUriDownloader;
 
     if (requestedSourceIds.contains(ScrapeSourceId.javbus)) {
       String? initialCookies;
@@ -937,24 +929,6 @@ class _WorksViewState extends State<WorksView> {
       );
       configuredSources[ScrapeSourceId.javbus] = JavBusScrapeSource(
         JavBusClient(transport: javBusTransport),
-      );
-    }
-    if (requestedSourceIds.contains(ScrapeSourceId.minnanoAv)) {
-      minnanoTransport = HttpMinnanoTransport();
-      minnanoClient = MinnanoClient(transport: minnanoTransport);
-      configuredSources[ScrapeSourceId.minnanoAv] = MinnanoScrapeSource(
-        minnanoClient,
-      );
-      minnanoAvatarTransport = HttpBinaryTransport(
-        allowedHosts: const {'www.minnano-av.com'},
-        maxBytes: 5 * 1024 * 1024,
-      );
-      imageUriDownloader = HttpScrapeImageUriDownloader(
-        isAllowed: minnanoClient.acceptsImageUri,
-        transport: HttpBinaryTransport(
-          allowedHosts: const {'www.minnano-av.com'},
-          maxBytes: 15 * 1024 * 1024,
-        ),
       );
     }
     if (requestedSourceIds.contains(ScrapeSourceId.avbase)) {
@@ -976,9 +950,6 @@ class _WorksViewState extends State<WorksView> {
 
     final detailsImageDownloader =
         switch (sourceSettings.actressDetailsSource) {
-          ScrapeSourceId.minnanoAv => HttpActressImageDownloader(
-            transport: minnanoAvatarTransport,
-          ),
           ScrapeSourceId.avbase => HttpActressImageDownloader(
             transport: avbaseAvatarTransport,
           ),
@@ -996,7 +967,6 @@ class _WorksViewState extends State<WorksView> {
       db: widget.db,
       sources: configuredSources,
       actressImageDownloader: detailsImageDownloader,
-      imageUriDownloader: imageUriDownloader,
       categoryEvidenceSources: categoryEvidenceSources,
     );
 
@@ -2016,9 +1986,9 @@ ScrapeSourceId? _resultDetailsSource(WorksScrapeResult result) {
   if (result.detailsSource != null) {
     return result.detailsSource;
   }
-  if (result.sourceResults.containsKey(ScrapeSourceId.minnanoAv) &&
-      !result.worksSources.contains(ScrapeSourceId.minnanoAv)) {
-    return ScrapeSourceId.minnanoAv;
+  if (result.sourceResults.containsKey(ScrapeSourceId.avwiki) &&
+      !result.worksSources.contains(ScrapeSourceId.avwiki)) {
+    return ScrapeSourceId.avwiki;
   }
   if (result.sourceResults.containsKey(ScrapeSourceId.avbase) &&
       !result.worksSources.contains(ScrapeSourceId.avbase)) {
@@ -2119,7 +2089,6 @@ String _scrapePhaseLabel(AppLocalizations l10n, WorksScrapePhase phase) {
 String _scrapeSourceLabel(AppLocalizations l10n, ScrapeSourceId source) {
   return switch (source) {
     ScrapeSourceId.javbus => l10n.scrapeSourceJavBus,
-    ScrapeSourceId.minnanoAv => l10n.scrapeSourceMinnanoAv,
     ScrapeSourceId.avbase => l10n.scrapeSourceAvBase,
     ScrapeSourceId.avwiki => l10n.scrapeSourceAvWiki,
   };

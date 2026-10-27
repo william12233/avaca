@@ -32,8 +32,6 @@ import '../services/avwiki/avwiki_transport.dart';
 import '../services/javbus/javbus_client.dart';
 import '../services/javbus/javbus_verification.dart';
 import '../services/javbus/prefix_route_repository.dart';
-import '../services/minnano/minnano_client.dart';
-import '../services/minnano/minnano_transport.dart';
 import '../services/scrape/scrape_source_registry.dart';
 import 'software_update_view.dart';
 import 'prefix_route_rules_view.dart';
@@ -743,13 +741,6 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
               // Cookie 儲存失敗不應遮蔽原始連線結果。
             }
           }
-          client.close();
-        }
-      case ScrapeSourceId.minnanoAv:
-        final client = MinnanoClient(transport: HttpMinnanoTransport());
-        try {
-          await client.checkConnection();
-        } finally {
           client.close();
         }
       case ScrapeSourceId.avbase:
@@ -1598,8 +1589,7 @@ class _ScrapeSourcesSettingsBodyState
               title: localizations.scrapeSourceDetailsTitle,
               value: settings.actressDetailsSource,
               options: [
-                (ScrapeSourceId.minnanoAv, localizations.scrapeSourceMinnanoAv),
-                (ScrapeSourceId.javbus, localizations.scrapeSourceJavBus),
+                (ScrapeSourceId.avwiki, localizations.scrapeSourceAvWiki),
                 (ScrapeSourceId.avbase, localizations.scrapeSourceAvBase),
               ],
               onChanged: (value) =>
@@ -1614,6 +1604,7 @@ class _ScrapeSourcesSettingsBodyState
               title: localizations.scrapeSourceAliasTitle,
               value: settings.aliasSource,
               options: [
+                (ScrapeSourceId.avwiki, localizations.scrapeSourceAvWiki),
                 (ScrapeSourceId.avbase, localizations.scrapeSourceAvBase),
               ],
               onChanged: (value) => unawaited(_select(aliasSource: value)),
@@ -1733,7 +1724,6 @@ class _ScrapeSourcesSettingsBodyState
 
   String _sourceLabel(AppLocalizations localizations, ScrapeSourceId source) {
     return switch (source) {
-      ScrapeSourceId.minnanoAv => localizations.scrapeSourceMinnanoAv,
       ScrapeSourceId.javbus => localizations.scrapeSourceJavBus,
       ScrapeSourceId.avbase => localizations.scrapeSourceAvBase,
       ScrapeSourceId.avwiki => localizations.scrapeSourceAvWiki,

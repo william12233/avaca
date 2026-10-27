@@ -4,7 +4,6 @@ const String scrapeSourceSettingsKey = 'scrape_source_settings';
 
 enum ScrapeSourceId {
   javbus('javbus'),
-  minnanoAv('minnanoAv'),
   avbase('avbase'),
   avwiki('avwiki');
 
@@ -13,6 +12,9 @@ enum ScrapeSourceId {
   final String storageValue;
 
   static ScrapeSourceId? fromStorage(String? value) {
+    // Migrate the removed legacy source to the current Av-Wiki actress and
+    // alias source without invalidating persisted settings or queued jobs.
+    if (value == 'minnanoAv') return ScrapeSourceId.avwiki;
     for (final source in values) {
       if (source.storageValue == value) {
         return source;
@@ -24,9 +26,9 @@ enum ScrapeSourceId {
 
 final class ScrapeSourceSettings {
   const ScrapeSourceSettings({
-    this.actressDetailsSource = ScrapeSourceId.minnanoAv,
+    this.actressDetailsSource = ScrapeSourceId.avwiki,
     this.worksSources = const [ScrapeSourceId.javbus],
-    this.aliasSource = ScrapeSourceId.avbase,
+    this.aliasSource = ScrapeSourceId.avwiki,
   });
 
   final ScrapeSourceId actressDetailsSource;
@@ -75,9 +77,9 @@ final class ScrapeSourceSettings {
       );
       final aliases = _isAliasSource(decodedAliases) ? decodedAliases : null;
       return ScrapeSourceSettings(
-        actressDetailsSource: details ?? ScrapeSourceId.minnanoAv,
+        actressDetailsSource: details ?? ScrapeSourceId.avwiki,
         worksSources: works,
-        aliasSource: aliases ?? ScrapeSourceId.avbase,
+        aliasSource: aliases ?? ScrapeSourceId.avwiki,
       );
     } on Object {
       return const ScrapeSourceSettings();
@@ -112,10 +114,8 @@ final class ScrapeSourceSettings {
       source == ScrapeSourceId.avwiki;
 
   static bool _isDetailsSource(ScrapeSourceId? source) =>
-      source == ScrapeSourceId.minnanoAv ||
-      source == ScrapeSourceId.javbus ||
-      source == ScrapeSourceId.avbase;
+      source == ScrapeSourceId.avbase || source == ScrapeSourceId.avwiki;
 
   static bool _isAliasSource(ScrapeSourceId? source) =>
-      source == ScrapeSourceId.avbase;
+      source == ScrapeSourceId.avbase || source == ScrapeSourceId.avwiki;
 }

@@ -4,10 +4,9 @@ class ScrapeSourceRegistry {
   const ScrapeSourceRegistry._();
 
   static const List<ScrapeSourceId> aggregatePriority = [
-    ScrapeSourceId.minnanoAv,
-    ScrapeSourceId.javbus,
-    ScrapeSourceId.avbase,
     ScrapeSourceId.avwiki,
+    ScrapeSourceId.avbase,
+    ScrapeSourceId.javbus,
   ];
 
   static const List<ScrapeSourceId> worksSources = [

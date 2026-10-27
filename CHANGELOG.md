@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.5 - 2026-10-27
+
+- Removed the unavailable Minnano scraper, connection check, image routes, and
+  source-specific UI and tests.
+- Made AV-Wiki the default actress-details and alias source, with AVBase kept
+  as the selectable alternative; JavBus remains available for works and
+  category evidence.
+- Migrated legacy actress-source settings and queued scrape records to AV-Wiki
+  without discarding existing data.
+- Made fill-missing-only re-scrapes skip complete existing works before detail
+  requests and count them as retained results.
+
 ## 1.4.4 - 2026-10-27
 
 - Hardened Minnano requests with browser headers, session cookies, polite

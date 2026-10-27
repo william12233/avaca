@@ -1501,12 +1501,6 @@ abstract class AppLocalizations {
   /// **'女優別名來源'**
   String get scrapeSourceAliasTitle;
 
-  /// No description provided for @scrapeSourceMinnanoAv.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'Minnano AV'**
-  String get scrapeSourceMinnanoAv;
-
   /// No description provided for @scrapeSourceJavBus.
   ///
   /// In zh_TW, this message translates to:

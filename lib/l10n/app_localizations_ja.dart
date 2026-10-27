@@ -742,9 +742,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scrapeSourceAliasTitle => '女優別名の取得元';
 
   @override
-  String get scrapeSourceMinnanoAv => 'みんなのAV';
-
-  @override
   String get scrapeSourceJavBus => 'JavBus';
 
   @override
@@ -2018,9 +2015,6 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
 
   @override
   String get scrapeSourceAliasTitle => '女優別名の取得元';
-
-  @override
-  String get scrapeSourceMinnanoAv => 'みんなのAV';
 
   @override
   String get scrapeSourceJavBus => 'JavBus';

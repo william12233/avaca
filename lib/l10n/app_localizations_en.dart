@@ -762,9 +762,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scrapeSourceAliasTitle => 'Actress aliases source';
 
   @override
-  String get scrapeSourceMinnanoAv => 'Minnano AV';
-
-  @override
   String get scrapeSourceJavBus => 'JavBus';
 
   @override

@@ -368,10 +368,9 @@ class ScrapeJobSourceProgress {
   };
 
   factory ScrapeJobSourceProgress.fromRow(Map<String, Object?> row) {
-    final source = ScrapeSourceId.values.firstWhere(
-      (item) => item.storageValue == row['source']?.toString(),
-      orElse: () => ScrapeSourceId.javbus,
-    );
+    final source =
+        ScrapeSourceId.fromStorage(row['source']?.toString()) ??
+        ScrapeSourceId.javbus;
     return ScrapeJobSourceProgress(
       jobId: row['job_id']?.toString() ?? '',
       source: source,
@@ -427,15 +426,12 @@ class ScrapeJobEvent {
   };
 
   factory ScrapeJobEvent.fromRow(Map<String, Object?> row) {
-    final source = ScrapeSourceId.values.where(
-      (item) => item.storageValue == row['source']?.toString(),
-    );
     return ScrapeJobEvent(
       id: row['id'] is num ? (row['id'] as num).toInt() : null,
       jobId: row['job_id']?.toString() ?? '',
       itemId: row['item_id'] is num ? (row['item_id'] as num).toInt() : null,
       canonicalCode: row['canonical_code']?.toString(),
-      source: source.isEmpty ? null : source.first,
+      source: ScrapeSourceId.fromStorage(row['source']?.toString()),
       severity: ScrapeJobEventSeverityCodec.parse(row['severity']),
       stage: ScrapeJobPhaseCodec.parse(row['stage']),
       message: row['message']?.toString() ?? '',

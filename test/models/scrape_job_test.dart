@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:avaca/models/scrape_job.dart';
+import 'package:avaca/models/scrape_source_settings.dart';
 
 void main() {
   test('job row round trip keeps stable lifecycle values', () {
@@ -48,5 +49,27 @@ void main() {
       ).isActive,
       isFalse,
     );
+  });
+
+  test('legacy removed source rows migrate to AV-Wiki', () {
+    final progress = ScrapeJobSourceProgress.fromRow({
+      'job_id': 'job-legacy',
+      'source': 'minnanoAv',
+      'phase': 'fetching_details',
+      'current_value': 1,
+      'total_value': 2,
+      'total_known': 1,
+    });
+    expect(progress.source, ScrapeSourceId.avwiki);
+
+    final event = ScrapeJobEvent.fromRow({
+      'job_id': 'job-legacy',
+      'source': 'minnanoAv',
+      'severity': 'info',
+      'stage': 'fetching_details',
+      'message': 'legacy source event',
+      'created_at': '2026-08-23T12:30:00Z',
+    });
+    expect(event.source, ScrapeSourceId.avwiki);
   });
 }

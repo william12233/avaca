@@ -230,7 +230,7 @@ void main() {
     await tester.tap(find.byKey(const PageStorageKey('scrape-actress-source')));
     await tester.pumpAndSettle();
     await tester.tap(
-      find.widgetWithText(RadioListTile<ScrapeSourceId>, 'JavBus'),
+      find.widgetWithText(RadioListTile<ScrapeSourceId>, 'AvBase'),
     );
     await tester.pumpAndSettle();
 
@@ -280,13 +280,13 @@ void main() {
     final settings = ScrapeSourceSettings.decode(
       await database.getSetting(scrapeSourceSettingsKey),
     );
-    expect(settings.actressDetailsSource, ScrapeSourceId.javbus);
+    expect(settings.actressDetailsSource, ScrapeSourceId.avbase);
     expect(settings.worksSources, [
       ScrapeSourceId.avbase,
       ScrapeSourceId.javbus,
       ScrapeSourceId.avwiki,
     ]);
-    expect(settings.aliasSource, ScrapeSourceId.avbase);
+    expect(settings.aliasSource, ScrapeSourceId.avwiki);
 
     // Reopening the category must read the latest persisted pair rather than
     // restoring either source's default.
@@ -305,13 +305,13 @@ void main() {
     final reopenedSettings = ScrapeSourceSettings.decode(
       await database.getSetting(scrapeSourceSettingsKey),
     );
-    expect(reopenedSettings.actressDetailsSource, ScrapeSourceId.javbus);
+    expect(reopenedSettings.actressDetailsSource, ScrapeSourceId.avbase);
     expect(reopenedSettings.worksSources, [
       ScrapeSourceId.avbase,
       ScrapeSourceId.javbus,
       ScrapeSourceId.avwiki,
     ]);
-    expect(reopenedSettings.aliasSource, ScrapeSourceId.avbase);
+    expect(reopenedSettings.aliasSource, ScrapeSourceId.avwiki);
   });
 
   testWidgets('scrape source connections can be retested and verified', (
@@ -345,10 +345,6 @@ void main() {
     );
 
     expect(
-      find.byKey(const ValueKey('scrape-source-status-minnanoAv')),
-      findsOneWidget,
-    );
-    expect(
       find.byKey(const ValueKey('scrape-source-status-javbus')),
       findsOneWidget,
     );
@@ -360,18 +356,17 @@ void main() {
       find.byKey(const ValueKey('scrape-source-status-avwiki')),
       findsOneWidget,
     );
-    expect(find.text('Not tested'), findsNWidgets(4));
+    expect(find.text('Not tested'), findsNWidgets(3));
 
     await tester.tap(find.byKey(const ValueKey('scrape-source-retest-button')));
     await tester.pumpAndSettle();
 
     expect(testedSources, [
-      ScrapeSourceId.minnanoAv,
-      ScrapeSourceId.javbus,
-      ScrapeSourceId.avbase,
       ScrapeSourceId.avwiki,
+      ScrapeSourceId.avbase,
+      ScrapeSourceId.javbus,
     ]);
-    expect(find.text('Connected'), findsNWidgets(3));
+    expect(find.text('Connected'), findsNWidgets(2));
     expect(find.text('Verification required'), findsOneWidget);
   });
 

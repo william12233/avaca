@@ -130,6 +130,7 @@ void main() {
       sourceSettings: const ScrapeSourceSettings(
         actressDetailsSource: ScrapeSourceId.javbus,
         worksSources: [ScrapeSourceId.javbus],
+        aliasSource: ScrapeSourceId.avbase,
       ),
     );
     expect(aliasResult.saved, 1);

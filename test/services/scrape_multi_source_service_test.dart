@@ -47,35 +47,35 @@ void main() {
               (await (await database.database).query('actresses')).single['id']
                   as int;
 
-          final minnano = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+          final avwiki = _FakeScrapeSource(
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1996-05-29',
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'start－489',
-                title: 'Minnano title',
-                detailUri: Uri.parse('https://www.minnano-av.com/av489.html'),
+                title: 'AvWiki title',
+                detailUri: Uri.parse('https://av-wiki.net/av489.html'),
               ),
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'M-002',
-                title: 'Minnano only',
-                detailUri: Uri.parse('https://www.minnano-av.com/av2.html'),
+                title: 'AvWiki only',
+                detailUri: Uri.parse('https://av-wiki.net/av2.html'),
               ),
             ],
             detailsByCode: {
               'START-489': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'START-489',
-                title: 'Minnano title',
-                studio: 'Minnano studio',
+                title: 'AvWiki title',
+                studio: 'AvWiki studio',
                 performerCount: 1,
               ),
               'M-002': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'M-002',
-                title: 'Minnano only',
+                title: 'AvWiki only',
                 performerCount: 1,
               ),
             },
@@ -123,7 +123,7 @@ void main() {
           final service = WorksScrapeService(
             db: database,
             sources: {
-              ScrapeSourceId.minnanoAv: minnano,
+              ScrapeSourceId.avwiki: avwiki,
               ScrapeSourceId.javbus: javbus,
             },
             workImageDownloader: _FakeWorkImageDownloader(),
@@ -145,32 +145,32 @@ void main() {
           expect(result.partialSuccess, isTrue);
           expect(
             result.sourceResults.keys,
-            containsAll([ScrapeSourceId.minnanoAv, ScrapeSourceId.javbus]),
+            containsAll([ScrapeSourceId.avwiki, ScrapeSourceId.javbus]),
           );
           expect(
             works.map((row) => row['code']),
             unorderedEquals(['START-489', 'M-002', 'J-003']),
           );
           final merged = works.firstWhere((row) => row['code'] == 'START-489');
-          expect(merged['studio'], 'Minnano studio');
+          expect(merged['studio'], 'AvWiki studio');
           expect(merged['duration_minutes'], 120);
           expect(
             (await database.getActressById(actressId))?['birth_date'],
             '1996-05-29',
           );
 
-          minnano.detailRequests.clear();
+          avwiki.detailRequests.clear();
           javbus.detailRequests.clear();
           await service.scrape(
             actressId: actressId,
             actressName: '小湊よつ葉',
             options: const WorkScrapeOptions(),
             sourceSettings: const ScrapeSourceSettings(
-              actressDetailsSource: ScrapeSourceId.minnanoAv,
+              actressDetailsSource: ScrapeSourceId.avwiki,
               worksSources: [ScrapeSourceId.javbus],
             ),
           );
-          expect(minnano.detailRequests, isEmpty);
+          expect(avwiki.detailRequests, isEmpty);
           expect(javbus.detailRequests, isNotEmpty);
         },
       );
@@ -195,20 +195,20 @@ void main() {
               (await (await database.database).query('actresses')).single['id']
                   as int;
 
-          final minnano = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+          final avwiki = _FakeScrapeSource(
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1999-01-01',
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SIVR00303',
                 title: 'SIVR alias',
-                detailUri: Uri.parse('https://www.minnano-av.com/sivr303.html'),
+                detailUri: Uri.parse('https://av-wiki.net/sivr303.html'),
               ),
             ],
             detailsByCode: {
               'SIVR-303': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SIVR00303',
                 title: 'SIVR alias detail',
                 performerCount: 1,
@@ -238,7 +238,7 @@ void main() {
           final service = WorksScrapeService(
             db: database,
             sources: {
-              ScrapeSourceId.minnanoAv: minnano,
+              ScrapeSourceId.avwiki: avwiki,
               ScrapeSourceId.javbus: javbus,
             },
             workImageDownloader: _FakeWorkImageDownloader(),
@@ -264,7 +264,7 @@ void main() {
             works.map((row) => row['code']),
             unorderedEquals(['SIVR-00303', 'SIVR-303']),
           );
-          expect(minnano.detailRequests, ['SIVR-303']);
+          expect(avwiki.detailRequests, ['SIVR-303']);
           expect(javbus.detailRequests, ['SIVR-303']);
 
           final fetching = progress
@@ -303,19 +303,19 @@ void main() {
               (await (await database.database).query('actresses')).single['id']
                   as int;
           final source = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1999-01-01',
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SSIS875',
                 title: 'SSIS 875',
-                detailUri: Uri.parse('https://www.minnano-av.com/ssis875.html'),
+                detailUri: Uri.parse('https://av-wiki.net/ssis875.html'),
               ),
             ],
             detailsByCode: {
               'SSIS-875': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SSIS875',
                 title: 'SSIS 875 detail',
                 performerCount: 1,
@@ -325,7 +325,7 @@ void main() {
           final imageDownloader = _BlockingWorkImageDownloader();
           final service = WorksScrapeService(
             db: database,
-            sources: {ScrapeSourceId.minnanoAv: source},
+            sources: {ScrapeSourceId.avwiki: source},
             workImageDownloader: imageDownloader,
             imageDirectory: directory.path,
           );
@@ -335,7 +335,7 @@ void main() {
             actressName: '河北彩花',
             options: const WorkScrapeOptions(syncDetails: false),
             sourceSettings: const ScrapeSourceSettings(
-              actressDetailsSource: ScrapeSourceId.minnanoAv,
+              actressDetailsSource: ScrapeSourceId.avwiki,
               worksSources: [ScrapeSourceId.javbus],
             ),
             onProgress: progress.add,
@@ -354,13 +354,10 @@ void main() {
           expect(imageProgress.current, 0);
           expect(imageProgress.totalKnown, isTrue);
           expect(
-            imageProgress.sourceProgress[ScrapeSourceId.minnanoAv]?.current,
+            imageProgress.sourceProgress[ScrapeSourceId.avwiki]?.current,
             0,
           );
-          expect(
-            imageProgress.sourceProgress[ScrapeSourceId.minnanoAv]?.total,
-            1,
-          );
+          expect(imageProgress.sourceProgress[ScrapeSourceId.avwiki]?.total, 1);
 
           imageDownloader.releaseFirstImage();
           final result = await scrape;
@@ -396,19 +393,19 @@ void main() {
           final detailStarted = Completer<void>();
           final releaseDetail = Completer<void>();
           final source = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1999-01-01',
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SSIS875',
                 title: 'SSIS 875',
-                detailUri: Uri.parse('https://www.minnano-av.com/ssis875.html'),
+                detailUri: Uri.parse('https://av-wiki.net/ssis875.html'),
               ),
             ],
             detailsByCode: {
               'SSIS-875': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SSIS875',
                 title: 'SSIS 875 detail',
                 performerCount: 1,
@@ -423,7 +420,7 @@ void main() {
           );
           final service = WorksScrapeService(
             db: database,
-            sources: {ScrapeSourceId.minnanoAv: source},
+            sources: {ScrapeSourceId.avwiki: source},
             workImageDownloader: _FakeWorkImageDownloader(),
             imageDirectory: directory.path,
           );
@@ -433,7 +430,7 @@ void main() {
             actressName: '河北彩花',
             options: const WorkScrapeOptions(syncDetails: false),
             sourceSettings: const ScrapeSourceSettings(
-              actressDetailsSource: ScrapeSourceId.minnanoAv,
+              actressDetailsSource: ScrapeSourceId.avwiki,
               worksSources: [ScrapeSourceId.javbus],
             ),
             onProgress: progress.add,
@@ -474,31 +471,27 @@ void main() {
               (await (await database.database).query('actresses')).single['id']
                   as int;
           final source = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1999-01-01',
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: '',
                 title: '同名未知作品',
-                detailUri: Uri.parse(
-                  'https://www.minnano-av.com/unknown-a.html',
-                ),
+                detailUri: Uri.parse('https://av-wiki.net/unknown-a.html'),
               ),
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: '',
                 title: '同名未知作品',
-                detailUri: Uri.parse(
-                  'https://www.minnano-av.com/unknown-b.html',
-                ),
+                detailUri: Uri.parse('https://av-wiki.net/unknown-b.html'),
               ),
             ],
             detailsByCode: const {},
           );
           final service = WorksScrapeService(
             db: database,
-            sources: {ScrapeSourceId.minnanoAv: source},
+            sources: {ScrapeSourceId.avwiki: source},
             workImageDownloader: _FakeWorkImageDownloader(),
             imageDirectory: directory.path,
           );
@@ -508,7 +501,7 @@ void main() {
             actressName: '河北彩花',
             options: const WorkScrapeOptions(syncDetails: false),
             sourceSettings: const ScrapeSourceSettings(
-              actressDetailsSource: ScrapeSourceId.minnanoAv,
+              actressDetailsSource: ScrapeSourceId.avwiki,
               worksSources: [ScrapeSourceId.javbus],
             ),
             onProgress: progress.add,
@@ -548,19 +541,19 @@ void main() {
               (await (await database.database).query('actresses')).single['id']
                   as int;
           final source = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1999-01-01',
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SSIS875',
                 title: 'SSIS 875',
-                detailUri: Uri.parse('https://www.minnano-av.com/ssis875.html'),
+                detailUri: Uri.parse('https://av-wiki.net/ssis875.html'),
               ),
             ],
             detailsByCode: {
               'SSIS-875': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SSIS875',
                 title: 'SSIS 875 detail',
                 performerCount: 1,
@@ -569,7 +562,7 @@ void main() {
           );
           final service = WorksScrapeService(
             db: database,
-            sources: {ScrapeSourceId.minnanoAv: source},
+            sources: {ScrapeSourceId.avwiki: source},
             workImageDownloader: _FailingWorkImageDownloader(),
             imageDirectory: directory.path,
           );
@@ -579,7 +572,7 @@ void main() {
             actressName: '河北彩花',
             options: const WorkScrapeOptions(syncDetails: false),
             sourceSettings: const ScrapeSourceSettings(
-              actressDetailsSource: ScrapeSourceId.minnanoAv,
+              actressDetailsSource: ScrapeSourceId.avwiki,
               worksSources: [ScrapeSourceId.javbus],
             ),
           );
@@ -615,18 +608,18 @@ void main() {
                 as int;
 
         final summary = ScrapeWorkSummary(
-          source: ScrapeSourceId.minnanoAv,
+          source: ScrapeSourceId.avwiki,
           code: 'start－489',
           title: 'Summary title',
-          detailUri: Uri.parse('https://www.minnano-av.com/av489.html'),
+          detailUri: Uri.parse('https://av-wiki.net/av489.html'),
         );
-        final minnano = _FakeScrapeSource(
-          id: ScrapeSourceId.minnanoAv,
+        final avwiki = _FakeScrapeSource(
+          id: ScrapeSourceId.avwiki,
           detailBirthDate: '1999-01-01',
           works: [summary],
           detailsByCode: {
             'START-489': const ScrapeWorkDetails(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'OTHER-999',
               title: 'Wrong detail title',
               studio: 'Wrong studio must not be merged',
@@ -658,7 +651,7 @@ void main() {
         final service = WorksScrapeService(
           db: database,
           sources: {
-            ScrapeSourceId.minnanoAv: minnano,
+            ScrapeSourceId.avwiki: avwiki,
             ScrapeSourceId.javbus: javbus,
           },
           workImageDownloader: _FakeWorkImageDownloader(),
@@ -720,48 +713,46 @@ void main() {
         );
 
         final source = _FakeScrapeSource(
-          id: ScrapeSourceId.minnanoAv,
+          id: ScrapeSourceId.avwiki,
           detailBirthDate: '1996-05-29',
           works: [
             ScrapeWorkSummary(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: '1start00408',
               title: 'START 408 alias',
-              detailUri: Uri.parse('https://www.minnano-av.com/av408-a.html'),
+              detailUri: Uri.parse('https://av-wiki.net/av408-a.html'),
             ),
             ScrapeWorkSummary(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'START-408',
               title: 'START 408 canonical',
-              detailUri: Uri.parse('https://www.minnano-av.com/av408-b.html'),
+              detailUri: Uri.parse('https://av-wiki.net/av408-b.html'),
             ),
             ScrapeWorkSummary(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: '1start00427',
               title: 'START 427 alias',
-              detailUri: Uri.parse('https://www.minnano-av.com/av427-a.html'),
+              detailUri: Uri.parse('https://av-wiki.net/av427-a.html'),
             ),
             ScrapeWorkSummary(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'START-427',
               title: 'START 427 canonical',
-              detailUri: Uri.parse('https://www.minnano-av.com/av427-b.html'),
+              detailUri: Uri.parse('https://av-wiki.net/av427-b.html'),
             ),
           ],
           detailsByCode: {
             'START-408': ScrapeWorkDetails(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: '1start00408',
               title: 'START 408',
               performerCount: 1,
               imageUris: [
-                Uri.parse(
-                  'https://www.minnano-av.com/p_package/2605/195939.jpg',
-                ),
+                Uri.parse('https://av-wiki.net/p_package/2605/195939.jpg'),
               ],
             ),
             'START-427': const ScrapeWorkDetails(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'START-427',
               title: 'START 427',
               performerCount: 1,
@@ -771,7 +762,7 @@ void main() {
         final uriDownloader = _RecordingScrapeImageUriDownloader();
         final service = WorksScrapeService(
           db: database,
-          sources: {ScrapeSourceId.minnanoAv: source},
+          sources: {ScrapeSourceId.avwiki: source},
           workImageDownloader: _FakeWorkImageDownloader(),
           imageUriDownloader: uriDownloader,
           imageDirectory: directory.path,
@@ -782,7 +773,7 @@ void main() {
           actressName: '小湊よつ葉',
           options: const WorkScrapeOptions(),
           sourceSettings: const ScrapeSourceSettings(
-            actressDetailsSource: ScrapeSourceId.minnanoAv,
+            actressDetailsSource: ScrapeSourceId.avwiki,
             worksSources: [ScrapeSourceId.javbus],
           ),
         );
@@ -827,56 +818,56 @@ void main() {
               (await (await database.database).query('actresses')).single['id']
                   as int;
 
-          final minnanoCollectionStarted = Completer<void>();
-          final releaseMinnanoCollection = Completer<void>();
+          final avwikiCollectionStarted = Completer<void>();
+          final releaseAvWikiCollection = Completer<void>();
           final javbusCollectionStarted = Completer<void>();
-          final minnanoDetailStarted = Completer<void>();
-          final releaseMinnanoDetail = Completer<void>();
+          final avwikiDetailStarted = Completer<void>();
+          final releaseAvWikiDetail = Completer<void>();
           final javbusDetailStarted = Completer<void>();
           final releaseJavbusDetail = Completer<void>();
 
-          final minnano = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+          final avwiki = _FakeScrapeSource(
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1996-05-29',
             beforeSearch: () async {
-              if (!minnanoCollectionStarted.isCompleted) {
-                minnanoCollectionStarted.complete();
+              if (!avwikiCollectionStarted.isCompleted) {
+                avwikiCollectionStarted.complete();
               }
-              await releaseMinnanoCollection.future;
+              await releaseAvWikiCollection.future;
             },
             beforeDetail: (code) async {
               if (code == 'M-001') {
-                if (!minnanoDetailStarted.isCompleted) {
-                  minnanoDetailStarted.complete();
+                if (!avwikiDetailStarted.isCompleted) {
+                  avwikiDetailStarted.complete();
                 }
-                await releaseMinnanoDetail.future;
+                await releaseAvWikiDetail.future;
               }
             },
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'M-001',
-                title: 'Minnano 1',
-                detailUri: Uri.parse('https://www.minnano-av.com/m1.html'),
+                title: 'AvWiki 1',
+                detailUri: Uri.parse('https://av-wiki.net/m1.html'),
               ),
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'M-002',
-                title: 'Minnano 2',
-                detailUri: Uri.parse('https://www.minnano-av.com/m2.html'),
+                title: 'AvWiki 2',
+                detailUri: Uri.parse('https://av-wiki.net/m2.html'),
               ),
             ],
             detailsByCode: {
               'M-001': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'M-001',
-                title: 'Minnano 1',
+                title: 'AvWiki 1',
                 performerCount: 1,
               ),
               'M-002': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'M-002',
-                title: 'Minnano 2',
+                title: 'AvWiki 2',
                 performerCount: 1,
               ),
             },
@@ -929,7 +920,7 @@ void main() {
           final service = WorksScrapeService(
             db: database,
             sources: {
-              ScrapeSourceId.minnanoAv: minnano,
+              ScrapeSourceId.avwiki: avwiki,
               ScrapeSourceId.javbus: javbus,
             },
             workImageDownloader: _FakeWorkImageDownloader(),
@@ -943,26 +934,26 @@ void main() {
             sourceSettings: const ScrapeSourceSettings(),
           );
 
-          await minnanoCollectionStarted.future;
+          await avwikiCollectionStarted.future;
           await javbusCollectionStarted.future;
-          expect(minnanoCollectionStarted.isCompleted, isTrue);
+          expect(avwikiCollectionStarted.isCompleted, isTrue);
           expect(javbusCollectionStarted.isCompleted, isTrue);
 
-          // JavBus detail must start while Minnano is still blocked in collection.
+          // JavBus detail must start while AvWiki is still blocked in collection.
           await javbusDetailStarted.future;
-          expect(releaseMinnanoCollection.isCompleted, isFalse);
+          expect(releaseAvWikiCollection.isCompleted, isFalse);
           expect(javbus.detailRequests, ['J-001']);
-          releaseMinnanoCollection.complete();
+          releaseAvWikiCollection.complete();
 
-          await minnanoDetailStarted.future;
-          expect(minnano.detailRequests, ['M-001']);
+          await avwikiDetailStarted.future;
+          expect(avwiki.detailRequests, ['M-001']);
           expect(javbus.detailRequests, ['J-001']);
-          releaseMinnanoDetail.complete();
+          releaseAvWikiDetail.complete();
           releaseJavbusDetail.complete();
 
           final result = await scrape;
           expect(result.saved, 4);
-          expect(minnano.detailRequests, ['M-001', 'M-002']);
+          expect(avwiki.detailRequests, ['M-001', 'M-002']);
           expect(javbus.detailRequests, ['J-001', 'J-002']);
         },
       );
@@ -995,34 +986,32 @@ void main() {
             work: const Work(code: 'STZY-017', title: 'legacy canonical'),
           );
 
-          final minnano = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+          final avwiki = _FakeScrapeSource(
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1996-05-29',
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: '1stzy00017',
                 title: 'STZY alias',
-                detailUri: Uri.parse('https://www.minnano-av.com/stzy017.html'),
+                detailUri: Uri.parse('https://av-wiki.net/stzy017.html'),
               ),
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: '3DSVR-1947',
                 title: 'DSVR alias',
-                detailUri: Uri.parse(
-                  'https://www.minnano-av.com/dsvr1947.html',
-                ),
+                detailUri: Uri.parse('https://av-wiki.net/dsvr1947.html'),
               ),
             ],
             detailsByCode: {
               'STZY-017': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: '1stzy00017',
                 title: 'STZY 017',
                 performerCount: 1,
               ),
               'DSVR-1947': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: '3DSVR-1947',
                 title: 'DSVR 1947',
                 performerCount: 1,
@@ -1066,7 +1055,7 @@ void main() {
           final service = WorksScrapeService(
             db: database,
             sources: {
-              ScrapeSourceId.minnanoAv: minnano,
+              ScrapeSourceId.avwiki: avwiki,
               ScrapeSourceId.javbus: javbus,
             },
             workImageDownloader: _FakeWorkImageDownloader(),
@@ -1093,7 +1082,7 @@ void main() {
               'DSVR-1947',
             ]),
           );
-          expect(minnano.detailRequests, ['STZY-017', 'DSVR-1947']);
+          expect(avwiki.detailRequests, ['STZY-017', 'DSVR-1947']);
           expect(javbus.detailRequests, ['STZY-017', 'DSVR-1947']);
           expect(
             (await (await database.database).query('actress_works')).length,
@@ -1121,31 +1110,31 @@ void main() {
                 as int;
 
         final source = _FakeScrapeSource(
-          id: ScrapeSourceId.minnanoAv,
+          id: ScrapeSourceId.avwiki,
           detailBirthDate: '1999-01-01',
           works: [
             ScrapeWorkSummary(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'SP-001',
               title: '【特典版】同一作品',
-              detailUri: Uri.parse('https://www.minnano-av.com/sp001.html'),
+              detailUri: Uri.parse('https://av-wiki.net/sp001.html'),
             ),
             ScrapeWorkSummary(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'ORD-001',
               title: '同一作品',
-              detailUri: Uri.parse('https://www.minnano-av.com/ord001.html'),
+              detailUri: Uri.parse('https://av-wiki.net/ord001.html'),
             ),
           ],
           detailsByCode: {
             'SP-001': const ScrapeWorkDetails(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'SP-001',
               title: '【特典版】同一作品',
               performerCount: 1,
             ),
             'ORD-001': const ScrapeWorkDetails(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'ORD-001',
               title: '同一作品',
               performerCount: 1,
@@ -1154,7 +1143,7 @@ void main() {
         );
         final service = WorksScrapeService(
           db: database,
-          sources: {ScrapeSourceId.minnanoAv: source},
+          sources: {ScrapeSourceId.avwiki: source},
           workImageDownloader: _FakeWorkImageDownloader(),
           imageDirectory: directory.path,
         );
@@ -1164,7 +1153,7 @@ void main() {
           actressName: '河北彩花',
           options: const WorkScrapeOptions(syncDetails: false),
           sourceSettings: const ScrapeSourceSettings(
-            actressDetailsSource: ScrapeSourceId.minnanoAv,
+            actressDetailsSource: ScrapeSourceId.avwiki,
             worksSources: [ScrapeSourceId.javbus],
           ),
         );
@@ -1195,26 +1184,26 @@ void main() {
             (await (await database.database).query('actresses')).single['id']
                 as int;
         const title = 'Ui 太陽に照らされて';
-        final minnanoUri = 'https://www.minnano-av.com/rebd975.html';
+        final avwikiUri = 'https://av-wiki.net/rebd975.html';
         final javbusUri = 'https://www.javbus.com/REBD-975';
-        final minnano = _FakeScrapeSource(
-          id: ScrapeSourceId.minnanoAv,
+        final avwiki = _FakeScrapeSource(
+          id: ScrapeSourceId.avwiki,
           detailBirthDate: '1999-01-01',
           works: [
             ScrapeWorkSummary(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'H_346REBD00975',
               title: title,
-              detailUri: Uri.parse(minnanoUri),
+              detailUri: Uri.parse(avwikiUri),
             ),
           ],
           detailsByUri: {
-            minnanoUri: const ScrapeWorkDetails(
-              source: ScrapeSourceId.minnanoAv,
+            avwikiUri: const ScrapeWorkDetails(
+              source: ScrapeSourceId.avwiki,
               code: 'H_346REBD00975',
               title: title,
               publisher: 'Rebecca',
-              studio: 'Minnano metadata',
+              studio: 'AvWiki metadata',
               performerCount: 1,
             ),
           },
@@ -1247,7 +1236,7 @@ void main() {
         final service = WorksScrapeService(
           db: database,
           sources: {
-            ScrapeSourceId.minnanoAv: minnano,
+            ScrapeSourceId.avwiki: avwiki,
             ScrapeSourceId.javbus: javbus,
           },
           workImageDownloader: imageDownloader,
@@ -1265,10 +1254,10 @@ void main() {
         expect(result.saved, 1);
         expect(works, hasLength(1));
         expect(works.single['code'], 'REBD-975');
-        expect(works.single['studio'], 'Minnano metadata');
+        expect(works.single['studio'], 'AvWiki metadata');
         expect(works.single['duration_minutes'], 120);
         expect(imageDownloader.requestedCodes, ['REBD-975', 'REBD-975']);
-        expect(minnano.detailUris, [minnanoUri]);
+        expect(avwiki.detailUris, [avwikiUri]);
         expect(javbus.detailUris, [javbusUri]);
       });
 
@@ -1290,22 +1279,22 @@ void main() {
             (await (await database.database).query('actresses')).single['id']
                 as int;
         const title = '同名但非 Rebecca';
-        final minnanoUri = 'https://www.minnano-av.com/non-rebecca-a.html';
+        final avwikiUri = 'https://av-wiki.net/non-rebecca-a.html';
         final javbusUri = 'https://www.javbus.com/NON-REBECCA-B';
-        final minnano = _FakeScrapeSource(
-          id: ScrapeSourceId.minnanoAv,
+        final avwiki = _FakeScrapeSource(
+          id: ScrapeSourceId.avwiki,
           detailBirthDate: '1999-01-01',
           works: [
             ScrapeWorkSummary(
-              source: ScrapeSourceId.minnanoAv,
+              source: ScrapeSourceId.avwiki,
               code: 'NON-A',
               title: title,
-              detailUri: Uri.parse(minnanoUri),
+              detailUri: Uri.parse(avwikiUri),
             ),
           ],
           detailsByUri: {
-            minnanoUri: const ScrapeWorkDetails(
-              source: ScrapeSourceId.minnanoAv,
+            avwikiUri: const ScrapeWorkDetails(
+              source: ScrapeSourceId.avwiki,
               code: 'NON-A',
               title: title,
               publisher: 'Other label',
@@ -1339,7 +1328,7 @@ void main() {
         final service = WorksScrapeService(
           db: database,
           sources: {
-            ScrapeSourceId.minnanoAv: minnano,
+            ScrapeSourceId.avwiki: avwiki,
             ScrapeSourceId.javbus: javbus,
           },
           workImageDownloader: _FakeWorkImageDownloader(),
@@ -1382,32 +1371,32 @@ void main() {
               (await (await database.database).query('actresses')).single['id']
                   as int;
           final token = WorksScrapeCancellationToken();
-          final minnanoCollectionStarted = Completer<void>();
-          final releaseMinnanoCollection = Completer<void>();
+          final avwikiCollectionStarted = Completer<void>();
+          final releaseAvWikiCollection = Completer<void>();
           final javbusDetailStarted = Completer<void>();
 
-          final minnano = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+          final avwiki = _FakeScrapeSource(
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1999-01-01',
             beforeSearch: () async {
-              if (!minnanoCollectionStarted.isCompleted) {
-                minnanoCollectionStarted.complete();
+              if (!avwikiCollectionStarted.isCompleted) {
+                avwikiCollectionStarted.complete();
               }
-              await releaseMinnanoCollection.future;
+              await releaseAvWikiCollection.future;
             },
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'M-001',
-                title: 'Minnano pending',
-                detailUri: Uri.parse('https://www.minnano-av.com/m001.html'),
+                title: 'AvWiki pending',
+                detailUri: Uri.parse('https://av-wiki.net/m001.html'),
               ),
             ],
             detailsByCode: {
               'M-001': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'M-001',
-                title: 'Minnano pending',
+                title: 'AvWiki pending',
                 performerCount: 1,
               ),
             },
@@ -1441,7 +1430,7 @@ void main() {
           final service = WorksScrapeService(
             db: database,
             sources: {
-              ScrapeSourceId.minnanoAv: minnano,
+              ScrapeSourceId.avwiki: avwiki,
               ScrapeSourceId.javbus: javbus,
             },
             workImageDownloader: _FakeWorkImageDownloader(),
@@ -1457,10 +1446,10 @@ void main() {
               actressDetailsSource: ScrapeSourceId.javbus,
             ),
           );
-          await minnanoCollectionStarted.future;
+          await avwikiCollectionStarted.future;
           await javbusDetailStarted.future;
-          expect(minnano.detailRequests, isEmpty);
-          releaseMinnanoCollection.complete();
+          expect(avwiki.detailRequests, isEmpty);
+          releaseAvWikiCollection.complete();
 
           final result = await scrape;
           expect(result.cancelled, isTrue);
@@ -1472,7 +1461,7 @@ void main() {
         'merge priority is independent of source completion order',
         () async {
           Future<Map<String, Object?>> runScenario({
-            required Duration minnanoDelay,
+            required Duration avwikiDelay,
             required Duration javbusDelay,
           }) async {
             final directory = await Directory.systemTemp.createTemp(
@@ -1490,26 +1479,24 @@ void main() {
                         'actresses',
                       )).single['id']
                       as int;
-              final minnano = _FakeScrapeSource(
-                id: ScrapeSourceId.minnanoAv,
+              final avwiki = _FakeScrapeSource(
+                id: ScrapeSourceId.avwiki,
                 detailBirthDate: '1996-05-29',
-                beforeDetail: (_) => Future<void>.delayed(minnanoDelay),
+                beforeDetail: (_) => Future<void>.delayed(avwikiDelay),
                 works: [
                   ScrapeWorkSummary(
-                    source: ScrapeSourceId.minnanoAv,
+                    source: ScrapeSourceId.avwiki,
                     code: 'START-408',
-                    title: 'Minnano summary',
-                    detailUri: Uri.parse(
-                      'https://www.minnano-av.com/start408.html',
-                    ),
+                    title: 'AvWiki summary',
+                    detailUri: Uri.parse('https://av-wiki.net/start408.html'),
                   ),
                 ],
                 detailsByCode: {
                   'START-408': const ScrapeWorkDetails(
-                    source: ScrapeSourceId.minnanoAv,
+                    source: ScrapeSourceId.avwiki,
                     code: 'START-408',
-                    title: 'Minnano title',
-                    studio: 'Minnano studio',
+                    title: 'AvWiki title',
+                    studio: 'AvWiki studio',
                     performerCount: 1,
                   ),
                 },
@@ -1539,7 +1526,7 @@ void main() {
               final service = WorksScrapeService(
                 db: database,
                 sources: {
-                  ScrapeSourceId.minnanoAv: minnano,
+                  ScrapeSourceId.avwiki: avwiki,
                   ScrapeSourceId.javbus: javbus,
                 },
                 workImageDownloader: _FakeWorkImageDownloader(),
@@ -1559,22 +1546,22 @@ void main() {
             }
           }
 
-          final minnanoSlow = await runScenario(
-            minnanoDelay: const Duration(milliseconds: 30),
+          final avwikiSlow = await runScenario(
+            avwikiDelay: const Duration(milliseconds: 30),
             javbusDelay: Duration.zero,
           );
           final javbusSlow = await runScenario(
-            minnanoDelay: Duration.zero,
+            avwikiDelay: Duration.zero,
             javbusDelay: const Duration(milliseconds: 30),
           );
 
-          expect(minnanoSlow['code'], 'START-408');
+          expect(avwikiSlow['code'], 'START-408');
           expect(javbusSlow['code'], 'START-408');
-          expect(minnanoSlow['title'], 'Minnano title');
-          expect(javbusSlow['title'], 'Minnano title');
-          expect(minnanoSlow['studio'], 'Minnano studio');
-          expect(javbusSlow['studio'], 'Minnano studio');
-          expect(minnanoSlow['duration_minutes'], 120);
+          expect(avwikiSlow['title'], 'AvWiki title');
+          expect(javbusSlow['title'], 'AvWiki title');
+          expect(avwikiSlow['studio'], 'AvWiki studio');
+          expect(javbusSlow['studio'], 'AvWiki studio');
+          expect(avwikiSlow['duration_minutes'], 120);
           expect(javbusSlow['duration_minutes'], 120);
         },
       );
@@ -1600,22 +1587,20 @@ void main() {
                   as int;
           final token = WorksScrapeCancellationToken();
           final source = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1996-05-29',
             beforeDetail: (_) async => token.cancel(),
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'START-408',
                 title: 'Cancelled work',
-                detailUri: Uri.parse(
-                  'https://www.minnano-av.com/start408.html',
-                ),
+                detailUri: Uri.parse('https://av-wiki.net/start408.html'),
               ),
             ],
             detailsByCode: {
               'START-408': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'START-408',
                 title: 'Cancelled work',
                 performerCount: 1,
@@ -1624,7 +1609,7 @@ void main() {
           );
           final service = WorksScrapeService(
             db: database,
-            sources: {ScrapeSourceId.minnanoAv: source},
+            sources: {ScrapeSourceId.avwiki: source},
             workImageDownloader: _FakeWorkImageDownloader(),
             imageDirectory: directory.path,
           );
@@ -1634,7 +1619,7 @@ void main() {
             actressName: '小湊よつ葉',
             options: const WorkScrapeOptions(syncDetails: false),
             sourceSettings: const ScrapeSourceSettings(
-              actressDetailsSource: ScrapeSourceId.minnanoAv,
+              actressDetailsSource: ScrapeSourceId.avwiki,
               worksSources: [ScrapeSourceId.javbus],
             ),
             cancellationToken: token,
@@ -1666,24 +1651,22 @@ void main() {
                   as int;
           final token = WorksScrapeCancellationToken();
           final source = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1996-05-29',
             detailAvatarUrl: Uri.parse(
-              'https://www.minnano-av.com/p_actress_125_125/avatar.jpg',
+              'https://av-wiki.net/p_actress_125_125/avatar.jpg',
             ),
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'START-408',
                 title: 'Cancelled actress sync',
-                detailUri: Uri.parse(
-                  'https://www.minnano-av.com/start408.html',
-                ),
+                detailUri: Uri.parse('https://av-wiki.net/start408.html'),
               ),
             ],
             detailsByCode: {
               'START-408': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'START-408',
                 title: 'Cancelled actress sync',
                 performerCount: 1,
@@ -1692,7 +1675,7 @@ void main() {
           );
           final service = WorksScrapeService(
             db: database,
-            sources: {ScrapeSourceId.minnanoAv: source},
+            sources: {ScrapeSourceId.avwiki: source},
             actressImageDownloader: _CancellingActressImageDownloader(token),
             workImageDownloader: _FakeWorkImageDownloader(),
             imageDirectory: directory.path,
@@ -1703,7 +1686,7 @@ void main() {
             actressName: '小湊よつ葉',
             options: const WorkScrapeOptions(replaceActressImage: true),
             sourceSettings: const ScrapeSourceSettings(
-              actressDetailsSource: ScrapeSourceId.minnanoAv,
+              actressDetailsSource: ScrapeSourceId.avwiki,
               worksSources: [ScrapeSourceId.javbus],
             ),
             cancellationToken: token,
@@ -1738,8 +1721,8 @@ void main() {
             (await (await database.database).query('actresses')).single['id']
                 as int;
 
-        final minnano = _FakeScrapeSource(
-          id: ScrapeSourceId.minnanoAv,
+        final avwiki = _FakeScrapeSource(
+          id: ScrapeSourceId.avwiki,
           detailBirthDate: '1999-01-01',
           works: const [],
           detailsByCode: const {},
@@ -1754,7 +1737,7 @@ void main() {
         final service = WorksScrapeService(
           db: database,
           sources: {
-            ScrapeSourceId.minnanoAv: minnano,
+            ScrapeSourceId.avwiki: avwiki,
             ScrapeSourceId.javbus: javbus,
           },
           workImageDownloader: _FakeWorkImageDownloader(),
@@ -1767,7 +1750,7 @@ void main() {
             actressName: '河北彩花',
             options: const WorkScrapeOptions(),
             sourceSettings: const ScrapeSourceSettings(
-              actressDetailsSource: ScrapeSourceId.minnanoAv,
+              actressDetailsSource: ScrapeSourceId.avwiki,
               worksSources: [ScrapeSourceId.javbus],
             ),
           ),
@@ -1794,28 +1777,28 @@ void main() {
               (await (await database.database).query('actresses')).single['id']
                   as int;
 
-          final minnano = _FakeScrapeSource(
-            id: ScrapeSourceId.minnanoAv,
+          final avwiki = _FakeScrapeSource(
+            id: ScrapeSourceId.avwiki,
             detailBirthDate: '1999-01-01',
             works: [
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SSIS875',
                 title: 'SSIS 875',
                 releaseDate: '2026-01-01',
-                detailUri: Uri.parse('https://www.minnano-av.com/ssis875.html'),
+                detailUri: Uri.parse('https://av-wiki.net/ssis875.html'),
               ),
               ScrapeWorkSummary(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: null,
                 title: '新人河北彩花作品',
                 releaseDate: '2026-02-01',
-                detailUri: Uri.parse('https://www.minnano-av.com/no-code.html'),
+                detailUri: Uri.parse('https://av-wiki.net/no-code.html'),
               ),
             ],
             detailsByCode: {
               'SSIS-875': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: 'SSIS875',
                 title: 'SSIS 875',
                 releaseDate: '2026-01-01',
@@ -1823,7 +1806,7 @@ void main() {
                 performerCount: 1,
               ),
               '': const ScrapeWorkDetails(
-                source: ScrapeSourceId.minnanoAv,
+                source: ScrapeSourceId.avwiki,
                 code: '',
                 title: '新人河北彩花作品',
                 releaseDate: '2026-02-01',
@@ -1866,7 +1849,7 @@ void main() {
           final service = WorksScrapeService(
             db: database,
             sources: {
-              ScrapeSourceId.minnanoAv: minnano,
+              ScrapeSourceId.avwiki: avwiki,
               ScrapeSourceId.javbus: javbus,
             },
             workImageDownloader: _FakeWorkImageDownloader(),
@@ -1904,7 +1887,7 @@ void main() {
           );
           expect(
             sourceSnapshot.sourceProgress.keys,
-            containsAll([ScrapeSourceId.minnanoAv, ScrapeSourceId.javbus]),
+            containsAll([ScrapeSourceId.avwiki, ScrapeSourceId.javbus]),
           );
           expect(
             sourceSnapshot.sourceProgress.values,
@@ -2332,8 +2315,8 @@ final class _FakeScrapeSource implements ScrapeSource {
         source: id,
         name: name,
         uri: Uri.parse(
-          id == ScrapeSourceId.minnanoAv
-              ? 'https://www.minnano-av.com/actress618082.html'
+          id == ScrapeSourceId.avwiki
+              ? 'https://av-wiki.net/actress618082.html'
               : 'https://www.javbus.com/star/618082',
         ),
       ),
@@ -2390,7 +2373,9 @@ final class _FakeScrapeSource implements ScrapeSource {
 
   @override
   bool acceptsImageUri(Uri uri) =>
-      uri.host == 'www.minnano-av.com' || uri.host == 'www.javbus.com';
+      uri.host == 'av-wiki.net' ||
+      uri.host == 'www.av-wiki.net' ||
+      uri.host == 'www.javbus.com';
 
   @override
   void close() {}

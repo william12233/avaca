@@ -13,10 +13,6 @@ import 'javbus/javbus_client.dart';
 import 'javbus/javbus_scrape_source.dart';
 import 'javbus/javbus_verification.dart';
 import 'javbus/work_image_downloader.dart';
-import 'minnano/minnano_client.dart';
-import 'minnano/minnano_scrape_source.dart';
-import 'minnano/minnano_transport.dart';
-import 'scrape/scrape_image_downloader.dart';
 import 'scrape/scrape_source.dart';
 import 'scrape/scrape_source_registry.dart';
 import 'works_scrape_service.dart';
@@ -65,13 +61,9 @@ class WorksScrapeSessionFactory {
     }
     final configuredSources = <ScrapeSourceId, ScrapeSource>{};
     HttpJavBusTransport? javBusTransport;
-    HttpMinnanoTransport? minnanoTransport;
-    MinnanoClient? minnanoClient;
-    HttpBinaryTransport? minnanoAvatarTransport;
     HttpAvBaseTransport? avbaseTransport;
     AvBaseClient? avbaseClient;
     HttpBinaryTransport? avbaseAvatarTransport;
-    HttpScrapeImageUriDownloader? imageUriDownloader;
 
     if (requestedSourceIds.contains(ScrapeSourceId.javbus)) {
       javBusTransport = HttpJavBusTransport(
@@ -80,24 +72,6 @@ class WorksScrapeSessionFactory {
       );
       configuredSources[ScrapeSourceId.javbus] = JavBusScrapeSource(
         JavBusClient(transport: javBusTransport),
-      );
-    }
-    if (requestedSourceIds.contains(ScrapeSourceId.minnanoAv)) {
-      minnanoTransport = HttpMinnanoTransport();
-      minnanoClient = MinnanoClient(transport: minnanoTransport);
-      configuredSources[ScrapeSourceId.minnanoAv] = MinnanoScrapeSource(
-        minnanoClient,
-      );
-      minnanoAvatarTransport = HttpBinaryTransport(
-        allowedHosts: const {'www.minnano-av.com'},
-        maxBytes: 5 * 1024 * 1024,
-      );
-      imageUriDownloader = HttpScrapeImageUriDownloader(
-        isAllowed: minnanoClient.acceptsImageUri,
-        transport: HttpBinaryTransport(
-          allowedHosts: const {'www.minnano-av.com'},
-          maxBytes: 15 * 1024 * 1024,
-        ),
       );
     }
     if (requestedSourceIds.contains(ScrapeSourceId.avbase)) {
@@ -119,9 +93,6 @@ class WorksScrapeSessionFactory {
 
     final detailsImageDownloader =
         switch (sourceSettings.actressDetailsSource) {
-          ScrapeSourceId.minnanoAv => HttpActressImageDownloader(
-            transport: minnanoAvatarTransport,
-          ),
           ScrapeSourceId.avbase => HttpActressImageDownloader(
             transport: avbaseAvatarTransport,
           ),
@@ -139,7 +110,6 @@ class WorksScrapeSessionFactory {
       db: db,
       sources: configuredSources,
       actressImageDownloader: detailsImageDownloader,
-      imageUriDownloader: imageUriDownloader,
       categoryEvidenceSources: categoryEvidenceSources,
     );
     return WorksScrapeSession(

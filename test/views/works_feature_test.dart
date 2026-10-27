@@ -859,14 +859,14 @@ void main() {
           excluded: 0,
           failed: 0,
           source: ScrapeSourceId.javbus,
-          worksSources: [ScrapeSourceId.minnanoAv, ScrapeSourceId.javbus],
+          worksSources: [ScrapeSourceId.avwiki, ScrapeSourceId.javbus],
           sourceProgress: {
-            ScrapeSourceId.minnanoAv: WorksScrapeSourceProgress(
+            ScrapeSourceId.avwiki: WorksScrapeSourceProgress(
               phase: WorksScrapePhase.fetchingDetails,
               current: 3,
               total: 10,
               totalKnown: true,
-              workCode: 'MINNANO-TITLE-MUST-NOT-SHOW',
+              workCode: 'AVWIKI-TITLE-MUST-NOT-SHOW',
             ),
             ScrapeSourceId.javbus: WorksScrapeSourceProgress(
               phase: WorksScrapePhase.fetchingDetails,
@@ -888,14 +888,14 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('scrape-progress-sources')), findsOneWidget);
-    expect(find.text('Minnano AV'), findsOneWidget);
+    expect(find.text('AV-Wiki'), findsOneWidget);
     expect(find.text('JavBus'), findsOneWidget);
     expect(find.text('3 / 10'), findsOneWidget);
     expect(find.text('4 / 10'), findsOneWidget);
     expect(find.byKey(const Key('scrape-progress-count')), findsOneWidget);
     expect(find.byKey(const Key('scrape-progress-circular')), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(find.text('MINNANO-TITLE-MUST-NOT-SHOW'), findsNothing);
+    expect(find.text('AVWIKI-TITLE-MUST-NOT-SHOW'), findsNothing);
     expect(find.text('JAVBUS-TITLE-MUST-NOT-SHOW'), findsNothing);
 
     result.complete(
@@ -1171,11 +1171,11 @@ void main() {
             excluded: 1,
             failed: 0,
             cancelled: false,
-            detailsSource: ScrapeSourceId.minnanoAv,
+            detailsSource: ScrapeSourceId.avwiki,
             worksSources: [ScrapeSourceId.javbus],
             sourceResults: {
-              ScrapeSourceId.minnanoAv: ScrapeSourceRunResult(
-                source: ScrapeSourceId.minnanoAv,
+              ScrapeSourceId.avwiki: ScrapeSourceRunResult(
+                source: ScrapeSourceId.avwiki,
                 state: ScrapeSourceRunState.zeroResults,
               ),
               ScrapeSourceId.javbus: ScrapeSourceRunResult(
@@ -1194,7 +1194,7 @@ void main() {
       expect(find.text('詳細資料'), findsOneWidget);
       expect(find.text('作品'), findsOneWidget);
       expect(find.text('下載'), findsOneWidget);
-      expect(find.text('Minnano AV'), findsOneWidget);
+      expect(find.text('AV-Wiki'), findsOneWidget);
       expect(find.text('JavBus'), findsOneWidget);
       expect(find.text('完成，無新增作品'), findsNothing);
       expect(find.textContaining('已儲存'), findsOneWidget);

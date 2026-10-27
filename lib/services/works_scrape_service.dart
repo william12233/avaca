@@ -19,7 +19,6 @@ import 'javbus/javbus_verification.dart';
 import 'javbus/prefix_route_repository.dart';
 import 'javbus/work_image_downloader.dart';
 import 'javbus/work_image_policy.dart';
-import 'minnano/minnano_transport.dart';
 import 'safe_image.dart';
 import 'scrape/scrape_category_classifier.dart';
 import 'scrape/scrape_image_downloader.dart';
@@ -319,6 +318,7 @@ class WorksScrapeService {
   int _uniqueTotal = 0;
   int _supplementalEvidenceCompleted = 0;
   int _supplementalEvidenceTotal = 0;
+  int _skippedExistingCount = 0;
 
   static Map<ScrapeSourceId, ScrapeSource> _singleJavBusSource(
     JavBusClient? client,
@@ -367,6 +367,7 @@ class WorksScrapeService {
     _uniqueTotal = 0;
     _supplementalEvidenceCompleted = 0;
     _supplementalEvidenceTotal = 0;
+    _skippedExistingCount = 0;
     final name = actressName.trim();
     if (name.isEmpty) {
       throw const WorksScrapeException('Actress name is empty.');
@@ -382,6 +383,14 @@ class WorksScrapeService {
     );
     final settings = sourceSettings ?? const ScrapeSourceSettings();
     final queries = _queries(name, aliases);
+    final existingWorkStates = options.fillMissingOnly
+        ? _indexExistingWorks(await db.getWorksForActress(actressId))
+        : const <String, _ExistingWorkState>{};
+    final existingActress = await db.getActressById(actressId);
+    final fetchActressDetails = _shouldFetchActressDetails(
+      options,
+      existingActress,
+    );
     final requestedWorkIds = ScrapeSourceRegistry.resolveWorksSources(
       settings.worksSources,
     );
@@ -482,10 +491,11 @@ class WorksScrapeService {
         includeWorks: true,
       );
     }
-    for (final sourceId in <ScrapeSourceId>{
-      settings.actressDetailsSource,
+    final auxiliarySourceIds = <ScrapeSourceId>{
+      if (fetchActressDetails) settings.actressDetailsSource,
       ?aliasSourceId,
-    }) {
+    };
+    for (final sourceId in auxiliarySourceIds) {
       if (collectionFutures.containsKey(sourceId)) continue;
       auxiliaryCollectionFutures[sourceId] = startCollection(
         sourceId,
@@ -498,6 +508,7 @@ class WorksScrapeService {
       collectedById: collectedById,
       retryWorkCodes: options.retryWorkCodes,
       selectedCategories: options.selectedCategories,
+      existingWorkStates: existingWorkStates,
       ensureCollection: ensureCollection,
       cancellationToken: cancellationToken,
       onProgress: onProgress,
@@ -731,9 +742,11 @@ class WorksScrapeService {
       }
     }
 
-    int savedCount() => outcomes.values
-        .where((outcome) => outcome.status == _CanonicalWorkStatus.saved)
-        .length;
+    int savedCount() =>
+        _skippedExistingCount +
+        outcomes.values
+            .where((outcome) => outcome.status == _CanonicalWorkStatus.saved)
+            .length;
 
     int reviewCount() => outcomes.values
         .where(
@@ -1212,18 +1225,6 @@ class WorksScrapeService {
         AvBaseFailureKind.transientTransport => ScrapeSourceRunState.failed,
       };
     }
-    if (error is MinnanoRequestException) {
-      return switch (error.kind) {
-        MinnanoFailureKind.blocked => ScrapeSourceRunState.blocked,
-        MinnanoFailureKind.rateLimited => ScrapeSourceRunState.rateLimited,
-        MinnanoFailureKind.timeout => ScrapeSourceRunState.timedOut,
-        MinnanoFailureKind.cancelled => ScrapeSourceRunState.cancelled,
-        MinnanoFailureKind.notFound ||
-        MinnanoFailureKind.parserInvalid ||
-        MinnanoFailureKind.transport ||
-        MinnanoFailureKind.transientTransport => ScrapeSourceRunState.failed,
-      };
-    }
     if (error is AvWikiRequestException) {
       return switch (error.kind) {
         AvWikiFailureKind.blocked => ScrapeSourceRunState.blocked,
@@ -1387,6 +1388,7 @@ class WorksScrapeService {
     required Map<ScrapeSourceId, _CollectedSource> collectedById,
     required List<String> retryWorkCodes,
     required List<ScrapeWorkCategory> selectedCategories,
+    required Map<String, _ExistingWorkState> existingWorkStates,
     required Future<_SourceCollectionOutcome> Function(ScrapeSourceId)
     ensureCollection,
     required WorksScrapeCancellationToken? cancellationToken,
@@ -1432,13 +1434,26 @@ class WorksScrapeService {
     final selected = selection;
     _rawDiscovered = selected.rawDiscovered;
     _duplicateCount = selected.duplicateCount;
-    _detailTotal = selected.groups.length;
+    final retryCodeKeys = retryWorkCodes.map(_workCodeKey).toSet();
+    final activeGroups = <_GlobalWorkGroup>[];
+    for (final group in selected.groups) {
+      final codeKey = _workGroupCodeKey(group);
+      final existing = codeKey == null ? null : existingWorkStates[codeKey];
+      if (existing != null &&
+          !existing.needsScrape &&
+          !retryCodeKeys.contains(codeKey)) {
+        _skippedExistingCount++;
+        continue;
+      }
+      activeGroups.add(group);
+    }
+    _detailTotal = activeGroups.length;
     _uniqueTotal = selected.uniqueCount;
 
     final fetched = <_FetchedWorkDetail>[];
     final failedCandidates = <_FailedWorkCandidate>[];
     final pipelineResults = <_SourcePipelineOutcome>[];
-    var unresolved = selected.groups.toList(growable: false);
+    var unresolved = activeGroups;
 
     bool needsSecondaryEvidence(
       _GlobalWorkGroup group,
@@ -1457,9 +1472,9 @@ class WorksScrapeService {
       return decision.evidenceState == ScrapeCategoryEvidenceState.unknown;
     }
 
-    final selectedSourceIndex = requestedWorkIds.indexOf(
-      unresolved.first.candidates.first.source.id,
-    );
+    final selectedSourceIndex = unresolved.isEmpty
+        ? 0
+        : requestedWorkIds.indexOf(unresolved.first.candidates.first.source.id);
     final firstStageIndex = selectedSourceIndex < 0 ? 0 : selectedSourceIndex;
     for (
       var sourceIndex = firstStageIndex;
@@ -2650,9 +2665,8 @@ class WorksScrapeService {
     }
     onImageDownload?.call(details.code, variant);
     // Work images must come only from the explicit WorkImagePolicy hosts
-    // (DMM/MGStage).  Source pages such as JavBus and Minnano AV are metadata
-    // and avatar sources only; never use their jacket/gallery URI as a work
-    // image or as a fallback here.
+    // (DMM/MGStage). Source pages are metadata and avatar sources only; never
+    // use their jacket/gallery URI as a work image or as a fallback here.
     try {
       await _imageSemaphore.withPermit(
         () => workImageDownloader.downloadToFile(
@@ -2713,6 +2727,66 @@ class WorksScrapeService {
           result.state == ScrapeSourceRunState.failed ||
           result.state == ScrapeSourceRunState.zeroResults,
     );
+  }
+
+  Map<String, _ExistingWorkState> _indexExistingWorks(
+    Iterable<Map<String, Object?>> rows,
+  ) {
+    final result = <String, _ExistingWorkState>{};
+    for (final row in rows) {
+      final rawCode = row['code']?.toString().trim() ?? '';
+      if (rawCode.isEmpty) continue;
+      final canonicalCode = scrapeWorkCanonicalStorageCode(rawCode) ?? rawCode;
+      result[_workCodeKey(canonicalCode)] = _ExistingWorkState(
+        needsScrape: _existingWorkNeedsScrape(row),
+      );
+    }
+    return result;
+  }
+
+  bool _existingWorkNeedsScrape(Map<String, Object?> row) {
+    const metadataFields = <String>[
+      'title',
+      'release_date',
+      'duration_minutes',
+      'studio',
+      'publisher',
+      'series',
+    ];
+    for (final field in metadataFields) {
+      if (!_hasStoredValue(row[field])) return true;
+    }
+    for (final field in <String>['card_image_path', 'detail_image_path']) {
+      final value = row[field]?.toString().trim() ?? '';
+      if (value.isEmpty || !File(value).existsSync()) return true;
+    }
+    return false;
+  }
+
+  bool _shouldFetchActressDetails(
+    WorkScrapeOptions options,
+    Map<String, Object?>? existing,
+  ) {
+    if (options.replaceActressImage) return true;
+    if (!options.syncDetails) return false;
+    if (!options.fillMissingOnly || existing == null) return true;
+    return const <String>[
+      'height',
+      'bwh',
+      'cup',
+      'birth_date',
+    ].any((field) => !_hasStoredValue(existing[field]));
+  }
+
+  static bool _hasStoredValue(Object? value) {
+    return value != null && value.toString().trim().isNotEmpty;
+  }
+
+  static String _workCodeKey(String value) => value.trim().toUpperCase();
+
+  String? _workGroupCodeKey(_GlobalWorkGroup group) {
+    final code = group.storageCode.trim();
+    return code.isEmpty ? null : _workCodeKey(code);
   }
 
   bool _isCancelled(WorksScrapeCancellationToken? token) =>
@@ -2880,6 +2954,12 @@ final class _GlobalCandidateSelection {
   final int rawDiscovered;
   final int uniqueCount;
   final int duplicateCount;
+}
+
+final class _ExistingWorkState {
+  const _ExistingWorkState({required this.needsScrape});
+
+  final bool needsScrape;
 }
 
 final class _SourcePipelineOutcome {

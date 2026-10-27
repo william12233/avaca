@@ -10,7 +10,7 @@ import 'package:avaca/services/javbus/javbus_client.dart';
 import 'package:avaca/services/javbus/work_image_downloader.dart';
 import 'package:avaca/services/javbus/work_image_policy.dart';
 import 'package:avaca/services/javbus/work_image_route_resolver.dart';
-import 'package:avaca/services/minnano/minnano_transport.dart';
+import 'package:avaca/services/avwiki/avwiki_models.dart';
 import 'package:avaca/services/scrape/scrape_models.dart';
 import 'package:avaca/services/scrape/scrape_source.dart';
 import 'package:avaca/services/works_scrape_service.dart';
@@ -189,10 +189,10 @@ void main() {
   );
 
   test(
-    'keeps a configured Minnano source failure partial after classifying 403',
+    'keeps a configured AV-Wiki source failure partial after classifying 403',
     () async {
       final directory = await Directory.systemTemp.createTemp(
-        'avaca_minnano_blocked_source_test_',
+        'avaca_avwiki_blocked_source_test_',
       );
       final database = AppDatabase.forTesting(
         baseDir: directory.path,
@@ -209,36 +209,36 @@ void main() {
               as int;
 
       final primary = _CategoryEvidenceSource(
-        id: ScrapeSourceId.avwiki,
+        id: ScrapeSourceId.javbus,
         works: [
           ScrapeWorkSummary(
-            source: ScrapeSourceId.avwiki,
+            source: ScrapeSourceId.javbus,
             code: 'BLOCKED-001',
             title: '仍可取得的作品',
-            detailUri: Uri.parse('https://av-wiki.net/blocked-001/'),
+            detailUri: Uri.parse('https://www.javbus.com/blocked-001'),
           ),
         ],
         detailsByCode: {
           'BLOCKED-001': const ScrapeWorkDetails(
-            source: ScrapeSourceId.avwiki,
+            source: ScrapeSourceId.javbus,
             code: 'BLOCKED-001',
             title: '仍可取得的作品',
           ),
         },
       );
       final blocked = _CategoryEvidenceSource(
-        id: ScrapeSourceId.minnanoAv,
-        searchError: MinnanoRequestException(
-          Uri.parse('https://www.minnano-av.com/search_result.php'),
+        id: ScrapeSourceId.avwiki,
+        searchError: AvWikiRequestException(
+          Uri.parse('https://av-wiki.net/av-actress/來源被擋/'),
           403,
-          kind: MinnanoFailureKind.blocked,
+          kind: AvWikiFailureKind.blocked,
         ),
       );
       final service = WorksScrapeService(
         db: database,
         sources: {
-          ScrapeSourceId.avwiki: primary,
-          ScrapeSourceId.minnanoAv: blocked,
+          ScrapeSourceId.javbus: primary,
+          ScrapeSourceId.avwiki: blocked,
         },
         workImageDownloader: _FakeWorkImageDownloader(),
         imageDirectory: directory.path,
@@ -247,17 +247,17 @@ void main() {
       final result = await service.scrape(
         actressId: actressId,
         actressName: '來源被擋',
-        options: const WorkScrapeOptions(syncDetails: false),
+        options: const WorkScrapeOptions(syncDetails: true),
         sourceSettings: const ScrapeSourceSettings(
-          actressDetailsSource: ScrapeSourceId.minnanoAv,
-          worksSources: [ScrapeSourceId.avwiki],
+          actressDetailsSource: ScrapeSourceId.avwiki,
+          worksSources: [ScrapeSourceId.javbus],
         ),
       );
 
       expect(result.saved, 1);
       expect(result.partialSuccess, isTrue);
       expect(
-        result.sourceResults[ScrapeSourceId.minnanoAv]?.state,
+        result.sourceResults[ScrapeSourceId.avwiki]?.state,
         ScrapeSourceRunState.blocked,
       );
     },

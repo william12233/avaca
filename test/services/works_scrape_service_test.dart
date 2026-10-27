@@ -334,6 +334,77 @@ void main() {
   });
 
   test(
+    'missing-only mode skips a complete existing work before detail fetch',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'avaca_scrape_skip_existing_test_',
+      );
+      final database = AppDatabase.forTesting(
+        baseDir: directory.path,
+        databaseFactory: databaseFactoryFfi,
+      );
+      addTearDown(() async {
+        await database.close();
+        await directory.delete(recursive: true);
+      });
+      await database.init();
+      await database.addActress(name: '涼森れむ');
+      final sqlite = await database.database;
+      final actressId = (await sqlite.query('actresses')).single['id'] as int;
+      final card = File('${directory.path}/complete-card.jpg');
+      final detail = File('${directory.path}/complete-detail.jpg');
+      await card.writeAsBytes([7]);
+      await detail.writeAsBytes([8]);
+      await database.upsertActressWork(
+        actressId: actressId,
+        work: Work(
+          code: 'ABF-367',
+          title: '已完整作品',
+          releaseDate: '2026-01-01',
+          durationMinutes: 100,
+          studio: '既有片商',
+          publisher: '既有發行',
+          series: '既有系列',
+          cardImagePath: card.path,
+          detailImagePath: detail.path,
+        ),
+      );
+      final client = _FakeJavBusClient();
+      final workImages = _FakeWorkImageDownloader();
+      final service = WorksScrapeService(
+        db: database,
+        client: client,
+        workImageDownloader: workImages,
+        actressImageDownloader: _FakeActressImageDownloader(),
+        imageDirectory: directory.path,
+      );
+
+      final result = await service.scrape(
+        actressId: actressId,
+        actressName: '涼森れむ',
+        options: const WorkScrapeOptions(
+          syncDetails: false,
+          fillMissingOnly: true,
+        ),
+        sourceSettings: const ScrapeSourceSettings(
+          actressDetailsSource: ScrapeSourceId.javbus,
+        ),
+      );
+
+      expect(client.detailRequests, ['FC2-PPV_123-999']);
+      expect(workImages.targetPaths.map(path.basename), [
+        'fc2_ppv_123_999ps.jpg',
+        'fc2_ppv_123_999pl.jpg',
+      ]);
+      expect(result.saved, 2);
+      expect(result.failed, 0);
+      expect(await database.getWorkCountForActress(actressId), 2);
+      expect(await card.readAsBytes(), [7]);
+      expect(await detail.readAsBytes(), [8]);
+    },
+  );
+
+  test(
     'does not scrape a different actress when no exact name matches',
     () async {
       final directory = await Directory.systemTemp.createTemp(

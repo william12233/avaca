@@ -3,24 +3,24 @@ import 'package:avaca/services/scrape/scrape_source_registry.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('defaults to Minnano details and JavBus works source', () {
+  test('defaults to AV-Wiki details and JavBus works source', () {
     const settings = ScrapeSourceSettings();
 
-    expect(settings.actressDetailsSource, ScrapeSourceId.minnanoAv);
+    expect(settings.actressDetailsSource, ScrapeSourceId.avwiki);
     expect(settings.worksSources, [ScrapeSourceId.javbus]);
-    expect(settings.aliasSource, ScrapeSourceId.avbase);
+    expect(settings.aliasSource, ScrapeSourceId.avwiki);
   });
 
   test('round trips selections and tolerates malformed values', () {
     const settings = ScrapeSourceSettings(
-      actressDetailsSource: ScrapeSourceId.javbus,
+      actressDetailsSource: ScrapeSourceId.avwiki,
       worksSources: [ScrapeSourceId.avbase, ScrapeSourceId.javbus],
       aliasSource: ScrapeSourceId.avbase,
     );
 
     expect(
       ScrapeSourceSettings.decode(settings.encode()).actressDetailsSource,
-      ScrapeSourceId.javbus,
+      ScrapeSourceId.avwiki,
     );
     expect(ScrapeSourceSettings.decode(settings.encode()).worksSources, [
       ScrapeSourceId.avbase,
@@ -36,7 +36,19 @@ void main() {
     );
     expect(
       ScrapeSourceSettings.decode('not-json').actressDetailsSource,
-      ScrapeSourceId.minnanoAv,
+      ScrapeSourceId.avwiki,
+    );
+    expect(
+      ScrapeSourceSettings.decode(
+        '{"actressDetailsSource":"minnanoAv","aliasSource":"minnanoAv"}',
+      ).actressDetailsSource,
+      ScrapeSourceId.avwiki,
+    );
+    expect(
+      ScrapeSourceSettings.decode(
+        '{"actressDetailsSource":"javbus","aliasSource":"javbus"}',
+      ).aliasSource,
+      ScrapeSourceId.avwiki,
     );
   });
 
