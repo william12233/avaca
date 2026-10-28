@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -127,10 +128,92 @@ void main() {
       );
     },
   );
+
+  testWidgets('download progress indicator follows intermediate percentages', (
+    tester,
+  ) async {
+    final installer = _FakeInstaller();
+    final downloadStarted = Completer<void>();
+    final allowDownload = Completer<void>();
+    late UpdateProgressCallback emitProgress;
+    final controller = await _buildController(
+      installer: installer,
+      downloadOverride: (result, {onProgress}) async {
+        emitProgress = onProgress!;
+        downloadStarted.complete();
+        onProgress(const DownloadProgress(receivedBytes: 0, totalBytes: 100));
+        await allowDownload.future;
+        return DownloadedUpdate(
+          file: File('update.apk'),
+          stagingDirectory: Directory.current,
+          release: result.release!,
+          asset: result.asset!,
+        );
+      },
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(_SettingsHarness(controller: controller));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('System & About'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Software update'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('software-update-check')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('software-update-now')));
+    await tester.runAsync(() => downloadStarted.future);
+    await tester.pump();
+
+    LinearProgressIndicator modalProgress() {
+      return tester.widget<LinearProgressIndicator>(
+        find.byKey(const ValueKey('software-update-progress-indicator')).last,
+      );
+    }
+
+    expect(modalProgress().value, closeTo(0, 0.001));
+
+    emitProgress(const DownloadProgress(receivedBytes: 25, totalBytes: 100));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Downloading update: 25% (25 B / 100 B)').last,
+      findsOneWidget,
+    );
+    expect(modalProgress().value, closeTo(0.25, 0.001));
+
+    emitProgress(const DownloadProgress(receivedBytes: 75, totalBytes: 100));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Downloading update: 75% (75 B / 100 B)').last,
+      findsOneWidget,
+    );
+    expect(modalProgress().value, closeTo(0.75, 0.001));
+
+    emitProgress(const DownloadProgress(receivedBytes: 100, totalBytes: 100));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pumpAndSettle();
+    expect(modalProgress().value, closeTo(1, 0.001));
+
+    allowDownload.complete();
+    await tester.runAsync(() async {
+      for (var attempt = 0; attempt < 20 && !installer.called; attempt++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
+    });
+    await tester.pumpAndSettle();
+    expect(installer.called, isTrue);
+  });
 }
 
 Future<SoftwareUpdateController> _buildController({
   _FakeInstaller? installer,
+  Future<DownloadedUpdate> Function(
+    SoftwareUpdateResult result, {
+    UpdateProgressCallback? onProgress,
+  })?
+  downloadOverride,
 }) async {
   final release = const SoftwareRelease(
     tagName: 'v0.8.2',
@@ -176,10 +259,14 @@ Future<SoftwareUpdateController> _buildController({
     versionProvider: _FakeVersionProvider(),
     platformOverride: SoftwareUpdatePlatform.android,
     architectureOverride: 'arm64-v8a',
-    downloadOverride: (result, {onProgress}) async {
-      onProgress?.call(const DownloadProgress(receivedBytes: 1, totalBytes: 1));
-      return download;
-    },
+    downloadOverride:
+        downloadOverride ??
+        (result, {onProgress}) async {
+          onProgress?.call(
+            const DownloadProgress(receivedBytes: 1, totalBytes: 1),
+          );
+          return download;
+        },
   );
   final controller = SoftwareUpdateController(
     service: service,

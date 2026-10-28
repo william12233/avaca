@@ -95,6 +95,56 @@ void main() {
     );
 
     test(
+      'reports cumulative progress for each streamed download chunk',
+      () async {
+        final bytes = Uint8List.fromList(
+          List<int>.generate(6, (index) => index),
+        );
+        final checksum = sha256.convert(bytes).toString();
+        final metadata = utf8.encode(
+          jsonEncode(_releaseJson(checksum: checksum, size: bytes.length)),
+        );
+        final tempRoot = await Directory.systemTemp.createTemp(
+          'avaca-progress-test-',
+        );
+        addTearDown(() => tempRoot.delete(recursive: true));
+        final client = MockClient.streaming((request, _) async {
+          if (request.url.path.endsWith('/releases/latest')) {
+            return http.StreamedResponse(
+              Stream.value(metadata),
+              200,
+              contentLength: metadata.length,
+            );
+          }
+          return http.StreamedResponse(
+            Stream.fromIterable(<List<int>>[
+              bytes.sublist(0, 2),
+              bytes.sublist(2, 5),
+              bytes.sublist(5),
+            ]),
+            200,
+            contentLength: bytes.length,
+          );
+        });
+        final service = SoftwareUpdateService(
+          client: client,
+          versionProvider: _FakeVersionProvider(_androidVersion('0.8.1')),
+          platformOverride: SoftwareUpdatePlatform.android,
+          architectureOverride: 'arm64-v8a',
+          temporaryDirectoryProvider: () async => tempRoot,
+        );
+        addTearDown(service.dispose);
+
+        final result = await service.checkForUpdates();
+        final progress = <DownloadProgress>[];
+        await service.download(result, onProgress: progress.add);
+
+        expect(progress.map((value) => value.receivedBytes), [0, 2, 5, 6]);
+        expect(progress.map((value) => value.percentage), [0, 33, 83, 100]);
+      },
+    );
+
+    test(
       'fails closed without a compatible asset or source archive fallback',
       () async {
         final client = MockClient((request) async {
@@ -199,7 +249,14 @@ void main() {
         addTearDown(service.dispose);
 
         final result = await service.checkForUpdates();
-        final downloaded = await service.download(result);
+        final progress = <DownloadProgress>[];
+        final downloaded = await service.download(
+          result,
+          onProgress: progress.add,
+        );
+        expect(progress.first.totalBytes, bytes.length);
+        expect(progress.last.receivedBytes, bytes.length);
+        expect(progress.last.percentage, 100);
         final extracted = downloaded.extractedDirectory;
         expect(extracted, isNotNull);
         expect(await File('${extracted!.path}/avaca.exe').exists(), isTrue);

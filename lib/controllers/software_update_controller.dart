@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../core/database.dart';
@@ -43,8 +45,9 @@ class SoftwareUpdateController extends ChangeNotifier {
   Future<SoftwareUpdateResult>? _checkFuture;
   Future<SoftwareInstallResult?>? _installFuture;
   SoftwareUpdateResult? _lastResult;
-  DateTime? _lastProgressNotificationAt;
-  int? _lastProgressPercentage;
+  Timer? _progressNotificationTimer;
+
+  static const _progressNotificationInterval = Duration(milliseconds: 100);
 
   SoftwareUpdateResult? get currentResult => _lastResult;
 
@@ -113,6 +116,8 @@ class SoftwareUpdateController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _progressNotificationTimer?.cancel();
+    _progressNotificationTimer = null;
     if (_disposeService) _service.dispose();
     super.dispose();
   }
@@ -169,32 +174,16 @@ class SoftwareUpdateController extends ChangeNotifier {
       receivedBytes: 0,
       totalBytes: result.asset?.size,
     );
-    _lastProgressNotificationAt = null;
-    _lastProgressPercentage = null;
+    _progressNotificationTimer?.cancel();
+    _progressNotificationTimer = null;
     notifyListeners();
 
     try {
       final downloaded = await _service.download(
         result,
-        onProgress: (progress) {
-          downloadProgress = progress;
-          final percentage = progress.percentage;
-          final now = DateTime.now();
-          final elapsed = _lastProgressNotificationAt == null
-              ? const Duration(days: 1)
-              : now.difference(_lastProgressNotificationAt!);
-          final isFinal =
-              progress.hasTotal &&
-              progress.receivedBytes >= progress.totalBytes!;
-          if (isFinal ||
-              percentage != null && percentage != _lastProgressPercentage ||
-              elapsed >= const Duration(milliseconds: 100)) {
-            _lastProgressNotificationAt = now;
-            _lastProgressPercentage = percentage;
-            notifyListeners();
-          }
-        },
+        onProgress: _publishDownloadProgress,
       );
+      _cancelProgressNotification();
       status = UpdateStatus.verifying;
       notifyListeners();
 
@@ -216,11 +205,13 @@ class SoftwareUpdateController extends ChangeNotifier {
       notifyListeners();
       return installResult;
     } on SoftwareUpdateException catch (exception) {
+      _cancelProgressNotification();
       status = UpdateStatus.failed;
       error = exception;
       notifyListeners();
       return const SoftwareInstallResult(started: false);
     } on Object catch (exception) {
+      _cancelProgressNotification();
       status = UpdateStatus.failed;
       error = SoftwareUpdateException(
         UpdateFailureReason.installer,
@@ -229,6 +220,28 @@ class SoftwareUpdateController extends ChangeNotifier {
       notifyListeners();
       return const SoftwareInstallResult(started: false);
     }
+  }
+
+  void _publishDownloadProgress(DownloadProgress progress) {
+    downloadProgress = progress;
+    final isFinal =
+        progress.hasTotal && progress.receivedBytes >= progress.totalBytes!;
+    if (isFinal) {
+      _cancelProgressNotification();
+      notifyListeners();
+      return;
+    }
+
+    if (_progressNotificationTimer != null) return;
+    _progressNotificationTimer = Timer(_progressNotificationInterval, () {
+      _progressNotificationTimer = null;
+      if (status == UpdateStatus.downloading) notifyListeners();
+    });
+  }
+
+  void _cancelProgressNotification() {
+    _progressNotificationTimer?.cancel();
+    _progressNotificationTimer = null;
   }
 
   Future<AppVersionInfo> _loadCurrentOrFallback() async {

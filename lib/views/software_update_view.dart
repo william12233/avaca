@@ -303,9 +303,48 @@ class _StatusMessage extends StatelessWidget {
           const SizedBox(height: 8),
           Text(_progressLabel(localizations, progress)),
           const SizedBox(height: 6),
-          LinearProgressIndicator(value: progress.fraction),
+          _DownloadProgressIndicator(
+            progress: progress,
+            localizations: localizations,
+          ),
         ],
       ],
+    );
+  }
+}
+
+class _DownloadProgressIndicator extends StatelessWidget {
+  const _DownloadProgressIndicator({
+    required this.progress,
+    required this.localizations,
+  });
+
+  final DownloadProgress progress;
+  final AppLocalizations localizations;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final fraction = progress.fraction;
+
+    LinearProgressIndicator indicator(double? value) {
+      return LinearProgressIndicator(
+        key: const ValueKey('software-update-progress-indicator'),
+        value: value,
+        minHeight: 6,
+        color: colorScheme.primary,
+        backgroundColor: colorScheme.surfaceContainerHighest,
+        semanticsLabel: localizations.downloadingUpdate,
+      );
+    }
+
+    if (fraction == null) return indicator(null);
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: fraction),
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.linear,
+      builder: (context, value, child) => indicator(value),
     );
   }
 }
