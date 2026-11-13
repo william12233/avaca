@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.7 - 2026-11-13
+
+- Added private 1–10 actress ratings for face, chest, figure, and on-screen
+  appeal, with an average that ignores unrated categories.
+- Added home-gallery ranking by each rating and the average, including rank
+  and score badges on actress cards.
+- Moved alias management into the actress detail card while preserving alias
+  use for work search and scraping.
+- Included ratings in portable data exports and imports, with older archives
+  remaining compatible.
+
 ## 1.4.5 - 2026-10-27
 
 - Removed the unavailable Minnano scraper, connection check, image routes, and
