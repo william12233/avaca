@@ -139,6 +139,10 @@ class DataTransferActress {
     required this.bwh,
     required this.cup,
     required this.aliases,
+    this.faceRating,
+    this.chestRating,
+    this.bodyRating,
+    this.charmRating,
   });
 
   final String id;
@@ -153,6 +157,10 @@ class DataTransferActress {
   final String? bwh;
   final String? cup;
   final List<String> aliases;
+  final int? faceRating;
+  final int? chestRating;
+  final int? bodyRating;
+  final int? charmRating;
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -167,6 +175,10 @@ class DataTransferActress {
     'bwh': bwh,
     'cup': cup,
     'aliases': aliases,
+    'faceRating': faceRating,
+    'chestRating': chestRating,
+    'bodyRating': bodyRating,
+    'charmRating': charmRating,
   };
 
   factory DataTransferActress.fromJson(Object? source) {
@@ -184,6 +196,10 @@ class DataTransferActress {
       bwh: _nullableString(map, 'bwh'),
       cup: _nullableString(map, 'cup'),
       aliases: _stringList(map, 'aliases'),
+      faceRating: _ratingInt(map, 'faceRating'),
+      chestRating: _ratingInt(map, 'chestRating'),
+      bodyRating: _ratingInt(map, 'bodyRating'),
+      charmRating: _ratingInt(map, 'charmRating'),
     );
   }
 }
@@ -429,6 +445,14 @@ int? _nullableInt(Map<String, Object?> map, String key) {
   if (value == null) return null;
   if (value is! int) {
     throw FormatException('$key must be an integer or null.');
+  }
+  return value;
+}
+
+int? _ratingInt(Map<String, Object?> map, String key) {
+  final value = _nullableInt(map, key);
+  if (value != null && (value < 1 || value > 10)) {
+    throw FormatException('$key must be between 1 and 10.');
   }
   return value;
 }

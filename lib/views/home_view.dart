@@ -270,10 +270,13 @@ class _HomeViewState extends State<HomeView> {
           itemBuilder: (context, index) {
             final item = actressData[index];
             final actressId = _readActressId(item);
+            final ratingSort = controller.currentSort.startsWith('rating_');
 
             return ActressCard(
               name: item['name']?.toString() ?? '',
               imgPath: item['img_path']?.toString(),
+              rank: ratingSort ? index + 1 : null,
+              ratingLabel: _ratingLabelFor(item),
               onTap: () => goDetail(actressId),
             );
           },
@@ -285,6 +288,22 @@ class _HomeViewState extends State<HomeView> {
   int _readActressId(Map<String, Object?> item) {
     final id = item['id'];
     return id is int ? id : int.tryParse(id.toString()) ?? 0;
+  }
+
+  String? _ratingLabelFor(Map<String, Object?> item) {
+    final value = switch (controller.currentSort) {
+      'rating_face_desc' => item['rating_face'],
+      'rating_chest_desc' => item['rating_chest'],
+      'rating_body_desc' => item['rating_body'],
+      'rating_charm_desc' => item['rating_charm'],
+      'rating_average_desc' => item['rating_average'],
+      _ => null,
+    };
+    if (value == null) return null;
+    if (controller.currentSort == 'rating_average_desc' && value is num) {
+      return value.toDouble().toStringAsFixed(1);
+    }
+    return value.toString();
   }
 
   double _calculateCardAspectRatio(BuildContext context, double width) {
@@ -402,6 +421,11 @@ class _HomeViewState extends State<HomeView> {
       'modified_asc' => l10n.sortModifiedAsc,
       'age_asc' => l10n.sortAgeAsc,
       'age_desc' => l10n.sortAgeDesc,
+      'rating_face_desc' => l10n.sortRatingFace,
+      'rating_chest_desc' => l10n.sortRatingChest,
+      'rating_body_desc' => l10n.sortRatingBody,
+      'rating_charm_desc' => l10n.sortRatingCharm,
+      'rating_average_desc' => l10n.sortRatingAverage,
       _ => key,
     };
   }

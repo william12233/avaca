@@ -111,6 +111,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sortAgeDesc => '年齡（高到低）';
 
   @override
+  String get sortRatingFace => '臉部評價（高到低）';
+
+  @override
+  String get sortRatingChest => '胸部評價（高到低）';
+
+  @override
+  String get sortRatingBody => '身材評價（高到低）';
+
+  @override
+  String get sortRatingCharm => '鏡頭魅力（高到低）';
+
+  @override
+  String get sortRatingAverage => '總平均評價（高到低）';
+
+  @override
   String get birthDate => '生日';
 
   @override
@@ -367,6 +382,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noAliases => '尚無別名';
+
+  @override
+  String get rating => '評價';
+
+  @override
+  String get ratingDialogTitle => '女優主觀評價';
+
+  @override
+  String get ratingFace => '臉';
+
+  @override
+  String get ratingChest => '胸部';
+
+  @override
+  String get ratingBody => '身材';
+
+  @override
+  String get ratingCharm => '鏡頭魅力';
+
+  @override
+  String get ratingAverage => '總平均';
+
+  @override
+  String get saveRating => '儲存評價';
+
+  @override
+  String get ratingCharmDescription => '評估 AV 氣質與演出表現';
+
+  @override
+  String get unrated => '未評';
+
+  @override
+  String get ratingSaveFailed => '評價儲存失敗';
 
   @override
   String get deleteWorks => '刪除作品';
@@ -1375,6 +1423,21 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get sortAgeDesc => '年龄（高到低）';
 
   @override
+  String get sortRatingFace => '脸部评价（高到低）';
+
+  @override
+  String get sortRatingChest => '胸部评价（高到低）';
+
+  @override
+  String get sortRatingBody => '身材评价（高到低）';
+
+  @override
+  String get sortRatingCharm => '镜头魅力（高到低）';
+
+  @override
+  String get sortRatingAverage => '总平均评价（高到低）';
+
+  @override
   String get birthDate => '生日';
 
   @override
@@ -1631,6 +1694,39 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get noAliases => '暂无别名';
+
+  @override
+  String get rating => '评价';
+
+  @override
+  String get ratingDialogTitle => '女优主观评价';
+
+  @override
+  String get ratingFace => '脸';
+
+  @override
+  String get ratingChest => '胸部';
+
+  @override
+  String get ratingBody => '身材';
+
+  @override
+  String get ratingCharm => '镜头魅力';
+
+  @override
+  String get ratingAverage => '总平均';
+
+  @override
+  String get saveRating => '保存评价';
+
+  @override
+  String get ratingCharmDescription => '评价 AV 气质与演出表现';
+
+  @override
+  String get unrated => '未评';
+
+  @override
+  String get ratingSaveFailed => '评价保存失败';
 
   @override
   String get deleteWorks => '删除作品';
@@ -2639,6 +2735,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sortAgeDesc => '年齡（高到低）';
 
   @override
+  String get sortRatingFace => '臉部評價（高到低）';
+
+  @override
+  String get sortRatingChest => '胸部評價（高到低）';
+
+  @override
+  String get sortRatingBody => '身材評價（高到低）';
+
+  @override
+  String get sortRatingCharm => '鏡頭魅力（高到低）';
+
+  @override
+  String get sortRatingAverage => '總平均評價（高到低）';
+
+  @override
   String get birthDate => '生日';
 
   @override
@@ -2895,6 +3006,39 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noAliases => '尚無別名';
+
+  @override
+  String get rating => '評價';
+
+  @override
+  String get ratingDialogTitle => '女優主觀評價';
+
+  @override
+  String get ratingFace => '臉';
+
+  @override
+  String get ratingChest => '胸部';
+
+  @override
+  String get ratingBody => '身材';
+
+  @override
+  String get ratingCharm => '鏡頭魅力';
+
+  @override
+  String get ratingAverage => '總平均';
+
+  @override
+  String get saveRating => '儲存評價';
+
+  @override
+  String get ratingCharmDescription => '評估 AV 氣質與演出表現';
+
+  @override
+  String get unrated => '未評';
+
+  @override
+  String get ratingSaveFailed => '評價儲存失敗';
 
   @override
   String get deleteWorks => '刪除作品';

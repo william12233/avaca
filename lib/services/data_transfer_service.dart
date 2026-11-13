@@ -62,6 +62,10 @@ class DataTransferService {
         'weight',
         'bwh',
         'cup',
+        'rating_face',
+        'rating_chest',
+        'rating_body',
+        'rating_charm',
       ],
       orderBy: 'name COLLATE NOCASE ASC, name ASC, id ASC',
     );
@@ -194,6 +198,10 @@ class DataTransferService {
           weight: _asNullableString(row['weight']),
           bwh: _asNullableString(row['bwh']),
           cup: _asNullableString(row['cup']),
+          faceRating: _asInt(row['rating_face']),
+          chestRating: _asInt(row['rating_chest']),
+          bodyRating: _asInt(row['rating_body']),
+          charmRating: _asInt(row['rating_charm']),
           aliases: List.unmodifiable(aliasesByActress[id] ?? const []),
         ),
       );
@@ -277,6 +285,10 @@ class DataTransferService {
           weight: draft.weight,
           bwh: draft.bwh,
           cup: draft.cup,
+          faceRating: draft.faceRating,
+          chestRating: draft.chestRating,
+          bodyRating: draft.bodyRating,
+          charmRating: draft.charmRating,
           aliases: [...draft.aliases]
             ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
         ),
@@ -359,6 +371,10 @@ class DataTransferService {
               weight: item.weight,
               bwh: item.bwh,
               cup: item.cup,
+              faceRating: item.faceRating,
+              chestRating: item.chestRating,
+              bodyRating: item.bodyRating,
+              charmRating: item.charmRating,
               aliases: item.aliases,
             ),
           )
@@ -1011,6 +1027,10 @@ class DataTransferService {
         'weight',
         'bwh',
         'cup',
+        'rating_face',
+        'rating_chest',
+        'rating_body',
+        'rating_charm',
       ],
     );
     final existingByName = <String, Map<String, Object?>>{};
@@ -1038,6 +1058,10 @@ class DataTransferService {
           'weight': actress.weight ?? '',
           'bwh': actress.bwh ?? '',
           'cup': actress.cup ?? '',
+          'rating_face': actress.faceRating,
+          'rating_chest': actress.chestRating,
+          'rating_body': actress.bodyRating,
+          'rating_charm': actress.charmRating,
           'modified_at': DateTime.now().toUtc().toIso8601String(),
         });
         actressIds[actress.id] = id;
@@ -1078,6 +1102,10 @@ class DataTransferService {
             'weight': actress.weight ?? '',
             'bwh': actress.bwh ?? '',
             'cup': actress.cup ?? '',
+            'rating_face': actress.faceRating,
+            'rating_chest': actress.chestRating,
+            'rating_body': actress.bodyRating,
+            'rating_charm': actress.charmRating,
             'modified_at': DateTime.now().toUtc().toIso8601String(),
           },
           where: 'id = ?',
@@ -1402,6 +1430,10 @@ class _ExportActressDraft {
     required this.bwh,
     required this.cup,
     required this.aliases,
+    required this.faceRating,
+    required this.chestRating,
+    required this.bodyRating,
+    required this.charmRating,
   });
 
   final int sourceId;
@@ -1416,6 +1448,10 @@ class _ExportActressDraft {
   final String? bwh;
   final String? cup;
   final List<String> aliases;
+  final int? faceRating;
+  final int? chestRating;
+  final int? bodyRating;
+  final int? charmRating;
 }
 
 class _ExportWorkDraft {

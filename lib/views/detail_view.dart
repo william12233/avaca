@@ -587,17 +587,17 @@ class _DetailViewState extends State<DetailView> {
             buttonKey: const Key('detail-works-button'),
             countKey: const Key('detail-works-count'),
             label: AppLocalizations.of(context).works,
-            count: controller.workCount,
+            value: '${controller.workCount}',
             onPressed: _openWorks,
             radius: tokens.cardRadius,
           ),
           const SizedBox(height: 12),
           _buildDetailActionButton(
-            buttonKey: const Key('detail-aliases-button'),
-            countKey: const Key('detail-aliases-count'),
-            label: AppLocalizations.of(context).aliases,
-            count: controller.aliases.length,
-            onPressed: _openAliases,
+            buttonKey: const Key('detail-rating-button'),
+            countKey: const Key('detail-rating-average'),
+            label: AppLocalizations.of(context).rating,
+            value: _ratingAverageLabel,
+            onPressed: _openRatings,
             radius: tokens.cardRadius,
           ),
           const SizedBox(height: 12),
@@ -614,7 +614,7 @@ class _DetailViewState extends State<DetailView> {
     required Key buttonKey,
     required Key countKey,
     required String label,
-    required int count,
+    required String value,
     required VoidCallback onPressed,
     required double radius,
   }) {
@@ -649,7 +649,7 @@ class _DetailViewState extends State<DetailView> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Text('$count', key: countKey, style: textStyle),
+            Text(value, key: countKey, style: textStyle),
             const SizedBox(width: 6),
             Icon(
               Icons.chevron_right,
@@ -767,17 +767,17 @@ class _DetailViewState extends State<DetailView> {
                       buttonKey: const Key('detail-works-button'),
                       countKey: const Key('detail-works-count'),
                       label: AppLocalizations.of(context).works,
-                      count: controller.workCount,
+                      value: '${controller.workCount}',
                       onPressed: _openWorks,
                       radius: tokens.cardRadius,
                     ),
                     const SizedBox(height: 12),
                     _buildDetailActionButton(
-                      buttonKey: const Key('detail-aliases-button'),
-                      countKey: const Key('detail-aliases-count'),
-                      label: AppLocalizations.of(context).aliases,
-                      count: controller.aliases.length,
-                      onPressed: _openAliases,
+                      buttonKey: const Key('detail-rating-button'),
+                      countKey: const Key('detail-rating-average'),
+                      label: AppLocalizations.of(context).rating,
+                      value: _ratingAverageLabel,
+                      onPressed: _openRatings,
                       radius: tokens.cardRadius,
                     ),
                     if (isEditing) ...[
@@ -986,6 +986,25 @@ class _DetailViewState extends State<DetailView> {
     );
   }
 
+  String get _ratingAverageLabel =>
+      controller.actressData.ratingAverage?.toStringAsFixed(1) ??
+      AppLocalizations.of(context).unrated;
+
+  Future<void> _openRatings() async {
+    _dismissKeyboard();
+    final ratings = controller.actressData;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => _RatingsDialog(
+        initialFace: ratings.faceRating,
+        initialChest: ratings.chestRating,
+        initialBody: ratings.bodyRating,
+        initialCharm: ratings.charmRating,
+        onSave: controller.saveRatings,
+      ),
+    );
+  }
+
   void _dismissKeyboard() {
     FocusManager.instance.primaryFocus?.unfocus();
   }
@@ -1052,6 +1071,7 @@ class _DetailViewState extends State<DetailView> {
           controller: bwhController,
           radius: radius,
         ),
+        _buildAliasesField(),
       ],
     );
   }
@@ -1092,7 +1112,54 @@ class _DetailViewState extends State<DetailView> {
           labelWidth: labelWidth,
           radius: radius,
         ),
+        const SizedBox(height: _detailEditableFieldGap),
+        _buildAliasesField(),
       ],
+    );
+  }
+
+  Widget _buildAliasesField() {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final visibleAliases = controller.aliases.take(2).join('、');
+    final summary = visibleAliases.isEmpty ? l10n.noAliases : visibleAliases;
+
+    return SizedBox(
+      height: _detailReadOnlyRowHeight,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              l10n.aliases,
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              summary,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          TextButton(
+            key: const Key('detail-aliases-ellipsis'),
+            onPressed: _openAliases,
+            style: TextButton.styleFrom(
+              foregroundColor: colorScheme.onSurfaceVariant,
+              minimumSize: const Size(28, _detailReadOnlyRowHeight),
+              padding: EdgeInsets.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            child: const Text('…', style: TextStyle(fontSize: 17)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1678,6 +1745,154 @@ class _AliasesDialogState extends State<_AliasesDialog> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RatingsDialog extends StatefulWidget {
+  const _RatingsDialog({
+    required this.initialFace,
+    required this.initialChest,
+    required this.initialBody,
+    required this.initialCharm,
+    required this.onSave,
+  });
+
+  final int? initialFace;
+  final int? initialChest;
+  final int? initialBody;
+  final int? initialCharm;
+  final Future<bool> Function({
+    required int? face,
+    required int? chest,
+    required int? body,
+    required int? charm,
+  })
+  onSave;
+
+  @override
+  State<_RatingsDialog> createState() => _RatingsDialogState();
+}
+
+class _RatingsDialogState extends State<_RatingsDialog> {
+  late int? face = widget.initialFace;
+  late int? chest = widget.initialChest;
+  late int? body = widget.initialBody;
+  late int? charm = widget.initialCharm;
+  var saving = false;
+
+  Future<void> _save() async {
+    if (saving) return;
+    setState(() => saving = true);
+    final success = await widget.onSave(
+      face: face,
+      chest: chest,
+      body: body,
+      charm: charm,
+    );
+    if (!mounted) return;
+    if (success) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    setState(() => saving = false);
+    AppSnackBar.showError(
+      context,
+      AppLocalizations.of(context).ratingSaveFailed,
+    );
+  }
+
+  Widget _buildRatingRow({
+    required Key key,
+    required String label,
+    required int? value,
+    required ValueChanged<int?> onChanged,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      key: key,
+      children: [
+        Expanded(child: Text(label)),
+        DropdownButton<int?>(
+          value: value,
+          onChanged: saving ? null : onChanged,
+          items: [
+            DropdownMenuItem<int?>(value: null, child: Text(l10n.unrated)),
+            for (var score = 1; score <= 10; score++)
+              DropdownMenuItem<int?>(value: score, child: Text('$score')),
+          ],
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final dialogRadius = BorderRadius.circular(AppShapeTokens.dialogRadius);
+    return AlertDialog(
+      key: const Key('detail-ratings-dialog'),
+      shape: RoundedRectangleBorder(borderRadius: dialogRadius),
+      title: Text(l10n.ratingDialogTitle),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.ratingCharmDescription,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildRatingRow(
+                key: const Key('detail-rating-face'),
+                label: l10n.ratingFace,
+                value: face,
+                onChanged: (value) => setState(() => face = value),
+              ),
+              _buildRatingRow(
+                key: const Key('detail-rating-chest'),
+                label: l10n.ratingChest,
+                value: chest,
+                onChanged: (value) => setState(() => chest = value),
+              ),
+              _buildRatingRow(
+                key: const Key('detail-rating-body'),
+                label: l10n.ratingBody,
+                value: body,
+                onChanged: (value) => setState(() => body = value),
+              ),
+              _buildRatingRow(
+                key: const Key('detail-rating-charm'),
+                label: l10n.ratingCharm,
+                value: charm,
+                onChanged: (value) => setState(() => charm = value),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: saving ? null : () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: saving ? null : _save,
+          child: saving
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(l10n.saveRating),
+        ),
+      ],
     );
   }
 }

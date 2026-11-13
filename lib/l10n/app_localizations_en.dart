@@ -112,6 +112,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortAgeDesc => 'Age (High to Low)';
 
   @override
+  String get sortRatingFace => 'Face rating (High to Low)';
+
+  @override
+  String get sortRatingChest => 'Chest rating (High to Low)';
+
+  @override
+  String get sortRatingBody => 'Figure rating (High to Low)';
+
+  @override
+  String get sortRatingCharm => 'On-screen appeal (High to Low)';
+
+  @override
+  String get sortRatingAverage => 'Average rating (High to Low)';
+
+  @override
   String get birthDate => 'Birthday';
 
   @override
@@ -370,6 +385,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noAliases => 'No aliases';
+
+  @override
+  String get rating => 'Rating';
+
+  @override
+  String get ratingDialogTitle => 'Personal actress ratings';
+
+  @override
+  String get ratingFace => 'Face';
+
+  @override
+  String get ratingChest => 'Chest';
+
+  @override
+  String get ratingBody => 'Figure';
+
+  @override
+  String get ratingCharm => 'On-screen appeal';
+
+  @override
+  String get ratingAverage => 'Average';
+
+  @override
+  String get saveRating => 'Save ratings';
+
+  @override
+  String get ratingCharmDescription => 'Rate AV presence and performance';
+
+  @override
+  String get unrated => 'Unrated';
+
+  @override
+  String get ratingSaveFailed => 'Failed to save ratings';
 
   @override
   String get deleteWorks => 'Delete works';

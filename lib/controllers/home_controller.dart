@@ -38,6 +38,11 @@ class HomeController {
       'modified_asc',
       'age_asc',
       'age_desc',
+      'rating_face_desc',
+      'rating_chest_desc',
+      'rating_body_desc',
+      'rating_charm_desc',
+      'rating_average_desc',
     ];
   }
 

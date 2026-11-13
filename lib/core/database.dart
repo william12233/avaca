@@ -536,6 +536,18 @@ class AppDatabase {
         'ALTER TABLE actresses ADD COLUMN birth_date TEXT DEFAULT NULL',
       );
     }
+
+    const ratingColumns = {
+      'rating_face',
+      'rating_chest',
+      'rating_body',
+      'rating_charm',
+    };
+    for (final column in ratingColumns) {
+      if (!columns.contains(column)) {
+        await db.execute('ALTER TABLE actresses ADD COLUMN $column INTEGER');
+      }
+    }
   }
 
   // 讀取指定資料表目前擁有的欄位名稱。
@@ -833,6 +845,20 @@ class AppDatabase {
       params.add('%$filterType%');
     }
 
+    const ratingAverage = '''
+      CASE
+        WHEN rating_face IS NULL AND rating_chest IS NULL
+          AND rating_body IS NULL AND rating_charm IS NULL THEN NULL
+        ELSE (
+          (COALESCE(rating_face, 0) + COALESCE(rating_chest, 0) +
+           COALESCE(rating_body, 0) + COALESCE(rating_charm, 0)) * 1.0 /
+          ((CASE WHEN rating_face IS NULL THEN 0 ELSE 1 END) +
+           (CASE WHEN rating_chest IS NULL THEN 0 ELSE 1 END) +
+           (CASE WHEN rating_body IS NULL THEN 0 ELSE 1 END) +
+           (CASE WHEN rating_charm IS NULL THEN 0 ELSE 1 END))
+        )
+      END
+    ''';
     final orderBy = switch (sortBy) {
       '新增時間 (新到舊)' => 'id DESC',
       '新增時間 (舊到新)' => 'id ASC',
@@ -842,11 +868,23 @@ class AppDatabase {
       '年齡 (高到低)' => 'birth_date IS NULL, birth_date ASC, id DESC',
       '名稱 (A-Z)' => 'name ASC',
       '名稱 (Z-A)' => 'name DESC',
+      'rating_face_desc' =>
+        'rating_face IS NULL ASC, rating_face DESC, name COLLATE NOCASE ASC, id ASC',
+      'rating_chest_desc' =>
+        'rating_chest IS NULL ASC, rating_chest DESC, name COLLATE NOCASE ASC, id ASC',
+      'rating_body_desc' =>
+        'rating_body IS NULL ASC, rating_body DESC, name COLLATE NOCASE ASC, id ASC',
+      'rating_charm_desc' =>
+        'rating_charm IS NULL ASC, rating_charm DESC, name COLLATE NOCASE ASC, id ASC',
+      'rating_average_desc' =>
+        '($ratingAverage) IS NULL ASC, ($ratingAverage) DESC, name COLLATE NOCASE ASC, id ASC',
       _ => 'id DESC',
     };
 
     final rows = await db.rawQuery('''
-      SELECT id, name, img_path
+      SELECT id, name, img_path,
+             rating_face, rating_chest, rating_body, rating_charm,
+             $ratingAverage AS rating_average
       FROM actresses
       WHERE ${whereClauses.join(' AND ')}
       ORDER BY $orderBy
@@ -858,6 +896,11 @@ class AppDatabase {
             'id': row['id'],
             'name': row['name'],
             'img_path': row['img_path'],
+            'rating_face': row['rating_face'],
+            'rating_chest': row['rating_chest'],
+            'rating_body': row['rating_body'],
+            'rating_charm': row['rating_charm'],
+            'rating_average': row['rating_average'],
           },
         )
         .toList();
@@ -870,7 +913,7 @@ class AppDatabase {
     final rows = await db.rawQuery(
       '''
       SELECT id, name, img_path, main_type, memo, height, weight, bwh, cup,
-             birth_date
+             birth_date, rating_face, rating_chest, rating_body, rating_charm
       FROM actresses
       WHERE id = ?
       ''',
@@ -895,6 +938,10 @@ class AppDatabase {
       'bwh': row['bwh'],
       'cup': row['cup'],
       'birth_date': row['birth_date'],
+      'rating_face': row['rating_face'],
+      'rating_chest': row['rating_chest'],
+      'rating_body': row['rating_body'],
+      'rating_charm': row['rating_charm'],
       'aliases': aliases,
     };
   }
@@ -961,6 +1008,40 @@ class AppDatabase {
         });
       }
     });
+  }
+
+  Future<bool> updateActressRatings({
+    required int actressId,
+    required int? face,
+    required int? chest,
+    required int? body,
+    required int? charm,
+  }) async {
+    final ratings = [face, chest, body, charm];
+    if (ratings.any(
+      (rating) => rating != null && (rating < 1 || rating > 10),
+    )) {
+      return false;
+    }
+
+    try {
+      final db = await database;
+      final changed = await db.rawUpdate(
+        '''
+        UPDATE actresses
+        SET rating_face = ?,
+            rating_chest = ?,
+            rating_body = ?,
+            rating_charm = ?,
+            modified_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        ''',
+        [face, chest, body, charm, actressId],
+      );
+      return changed > 0;
+    } on DatabaseException {
+      return false;
+    }
   }
 
   static const _workColumns = <String>[

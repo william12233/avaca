@@ -4,13 +4,26 @@ import 'package:avaca/l10n/app_localizations.dart';
 
 /// 顯示單一演員資料的卡片。
 class ActressCard extends StatelessWidget {
-  const ActressCard({super.key, required this.name, this.imgPath, this.onTap});
+  const ActressCard({
+    super.key,
+    required this.name,
+    this.imgPath,
+    this.rank,
+    this.ratingLabel,
+    this.onTap,
+  });
 
   /// 演員名稱。
   final String name;
 
   /// 演員圖片的本機檔案路徑。
   final String? imgPath;
+
+  /// Position in the currently selected rating ranking.
+  final int? rank;
+
+  /// Score for the selected ranking criterion.
+  final String? ratingLabel;
 
   /// 點擊卡片時執行的回呼。
   final VoidCallback? onTap;
@@ -60,7 +73,51 @@ class ActressCard extends StatelessWidget {
 
   /// 建立固定為正方形的圖片區塊。
   Widget _buildImageBox(BuildContext context) {
-    return AspectRatio(aspectRatio: 1.0, child: _buildCoverContent(context));
+    return AspectRatio(
+      aspectRatio: 1.0,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _buildCoverContent(context),
+          if (rank != null)
+            Positioned(
+              top: 4,
+              left: 4,
+              child: IgnorePointer(
+                child: _buildRankingBadge(context, '#$rank'),
+              ),
+            ),
+          if (ratingLabel != null)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: IgnorePointer(
+                child: _buildRankingBadge(context, ratingLabel!),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRankingBadge(BuildContext context, String text) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 10,
+          height: 1,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 
   /// 根據圖片路徑決定顯示圖片或預設佔位內容。

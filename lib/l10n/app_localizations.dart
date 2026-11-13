@@ -307,6 +307,36 @@ abstract class AppLocalizations {
   /// **'年齡（高到低）'**
   String get sortAgeDesc;
 
+  /// No description provided for @sortRatingFace.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'臉部評價（高到低）'**
+  String get sortRatingFace;
+
+  /// No description provided for @sortRatingChest.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'胸部評價（高到低）'**
+  String get sortRatingChest;
+
+  /// No description provided for @sortRatingBody.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'身材評價（高到低）'**
+  String get sortRatingBody;
+
+  /// No description provided for @sortRatingCharm.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'鏡頭魅力（高到低）'**
+  String get sortRatingCharm;
+
+  /// No description provided for @sortRatingAverage.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'總平均評價（高到低）'**
+  String get sortRatingAverage;
+
   /// No description provided for @birthDate.
   ///
   /// In zh_TW, this message translates to:
@@ -810,6 +840,72 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'尚無別名'**
   String get noAliases;
+
+  /// No description provided for @rating.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'評價'**
+  String get rating;
+
+  /// No description provided for @ratingDialogTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'女優主觀評價'**
+  String get ratingDialogTitle;
+
+  /// No description provided for @ratingFace.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'臉'**
+  String get ratingFace;
+
+  /// No description provided for @ratingChest.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'胸部'**
+  String get ratingChest;
+
+  /// No description provided for @ratingBody.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'身材'**
+  String get ratingBody;
+
+  /// No description provided for @ratingCharm.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'鏡頭魅力'**
+  String get ratingCharm;
+
+  /// No description provided for @ratingAverage.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'總平均'**
+  String get ratingAverage;
+
+  /// No description provided for @saveRating.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'儲存評價'**
+  String get saveRating;
+
+  /// No description provided for @ratingCharmDescription.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'評估 AV 氣質與演出表現'**
+  String get ratingCharmDescription;
+
+  /// No description provided for @unrated.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'未評'**
+  String get unrated;
+
+  /// No description provided for @ratingSaveFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'評價儲存失敗'**
+  String get ratingSaveFailed;
 
   /// No description provided for @deleteWorks.
   ///

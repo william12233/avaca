@@ -19,6 +19,10 @@ final class DetailActressData {
     required this.bwh,
     required this.cup,
     required this.birthDate,
+    this.faceRating,
+    this.chestRating,
+    this.bodyRating,
+    this.charmRating,
     List<String> aliases = const [],
   }) : aliases = List.unmodifiable(aliases);
 
@@ -32,6 +36,10 @@ final class DetailActressData {
       bwh = '',
       cup = '',
       birthDate = null,
+      faceRating = null,
+      chestRating = null,
+      bodyRating = null,
+      charmRating = null,
       aliases = const [];
 
   factory DetailActressData.fromRow(Map<String, Object?> row) {
@@ -53,6 +61,10 @@ final class DetailActressData {
       bwh: text('bwh'),
       cup: text('cup'),
       birthDate: row['birth_date']?.toString(),
+      faceRating: _ratingValue(row['rating_face']),
+      chestRating: _ratingValue(row['rating_chest']),
+      bodyRating: _ratingValue(row['rating_body']),
+      charmRating: _ratingValue(row['rating_charm']),
       aliases: aliases,
     );
   }
@@ -66,7 +78,22 @@ final class DetailActressData {
   final String bwh;
   final String cup;
   final String? birthDate;
+  final int? faceRating;
+  final int? chestRating;
+  final int? bodyRating;
+  final int? charmRating;
   final List<String> aliases;
+
+  double? get ratingAverage {
+    final ratings = [
+      faceRating,
+      chestRating,
+      bodyRating,
+      charmRating,
+    ].whereType<int>().toList(growable: false);
+    if (ratings.isEmpty) return null;
+    return ratings.reduce((total, value) => total + value) / ratings.length;
+  }
 
   DetailActressData copyWith({String? imgPath, List<String>? aliases}) {
     return DetailActressData(
@@ -79,9 +106,16 @@ final class DetailActressData {
       bwh: bwh,
       cup: cup,
       birthDate: birthDate,
+      faceRating: faceRating,
+      chestRating: chestRating,
+      bodyRating: bodyRating,
+      charmRating: charmRating,
       aliases: aliases ?? this.aliases,
     );
   }
+
+  static int? _ratingValue(Object? value) =>
+      value is num ? value.toInt() : null;
 }
 
 final class DetailFormData {
@@ -183,6 +217,30 @@ class DetailController extends ChangeNotifier {
       _notifyIfActive();
       return true;
     } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> saveRatings({
+    required int? face,
+    required int? chest,
+    required int? body,
+    required int? charm,
+  }) async {
+    try {
+      final success = await db.updateActressRatings(
+        actressId: actressId,
+        face: face,
+        chest: chest,
+        body: body,
+        charm: charm,
+      );
+      if (!success) return false;
+      actressData = await _loadActressData();
+      actressAliases = actressData.aliases;
+      _notifyIfActive();
+      return true;
+    } on Object {
       return false;
     }
   }
@@ -443,6 +501,10 @@ class DetailController extends ChangeNotifier {
       bwh: formData.bwh,
       cup: formData.cup,
       birthDate: formData.birthDate,
+      faceRating: actressData.faceRating,
+      chestRating: actressData.chestRating,
+      bodyRating: actressData.bodyRating,
+      charmRating: actressData.charmRating,
       aliases: actressAliases,
     );
   }

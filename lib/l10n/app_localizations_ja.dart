@@ -111,6 +111,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sortAgeDesc => '年齢（高い順）';
 
   @override
+  String get sortRatingFace => '顔の評価（高い順）';
+
+  @override
+  String get sortRatingChest => '胸の評価（高い順）';
+
+  @override
+  String get sortRatingBody => '体型の評価（高い順）';
+
+  @override
+  String get sortRatingCharm => '画面での魅力（高い順）';
+
+  @override
+  String get sortRatingAverage => '総合平均（高い順）';
+
+  @override
   String get birthDate => '生年月日';
 
   @override
@@ -368,6 +383,39 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noAliases => '別名はありません';
+
+  @override
+  String get rating => '評価';
+
+  @override
+  String get ratingDialogTitle => '女優の主観評価';
+
+  @override
+  String get ratingFace => '顔';
+
+  @override
+  String get ratingChest => '胸';
+
+  @override
+  String get ratingBody => '体型';
+
+  @override
+  String get ratingCharm => '画面での魅力';
+
+  @override
+  String get ratingAverage => '総合平均';
+
+  @override
+  String get saveRating => '評価を保存';
+
+  @override
+  String get ratingCharmDescription => 'AV の雰囲気と演技を評価';
+
+  @override
+  String get unrated => '未評価';
+
+  @override
+  String get ratingSaveFailed => '評価を保存できませんでした';
 
   @override
   String get deleteWorks => '作品を削除';
@@ -1386,6 +1434,21 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get sortAgeDesc => '年齢（高い順）';
 
   @override
+  String get sortRatingFace => '顔の評価（高い順）';
+
+  @override
+  String get sortRatingChest => '胸の評価（高い順）';
+
+  @override
+  String get sortRatingBody => '体型の評価（高い順）';
+
+  @override
+  String get sortRatingCharm => '画面での魅力（高い順）';
+
+  @override
+  String get sortRatingAverage => '総合平均（高い順）';
+
+  @override
   String get birthDate => '生年月日';
 
   @override
@@ -1643,6 +1706,39 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
 
   @override
   String get noAliases => '別名はありません';
+
+  @override
+  String get rating => '評価';
+
+  @override
+  String get ratingDialogTitle => '女優の主観評価';
+
+  @override
+  String get ratingFace => '顔';
+
+  @override
+  String get ratingChest => '胸';
+
+  @override
+  String get ratingBody => '体型';
+
+  @override
+  String get ratingCharm => '画面での魅力';
+
+  @override
+  String get ratingAverage => '総合平均';
+
+  @override
+  String get saveRating => '評価を保存';
+
+  @override
+  String get ratingCharmDescription => 'AV の雰囲気と演技を評価';
+
+  @override
+  String get unrated => '未評価';
+
+  @override
+  String get ratingSaveFailed => '評価を保存できませんでした';
 
   @override
   String get deleteWorks => '作品を削除';
