@@ -2,12 +2,15 @@ import 'package:avaca/core/config.dart';
 import 'package:avaca/core/database.dart';
 import 'package:avaca/core/shapes.dart';
 import 'package:avaca/l10n/app_localizations.dart';
+import 'package:avaca/models/scrape_job.dart';
 import 'package:avaca/models/scrape_source_settings.dart';
 import 'package:avaca/models/scrape_work_category.dart';
 import 'package:avaca/models/work_scrape_options.dart';
 import 'package:avaca/services/javbus/prefix_route_repository.dart';
 import 'package:avaca/services/javbus/javbus_verification.dart';
 import 'package:avaca/services/javbus/work_image_route_resolver.dart';
+import 'package:avaca/services/scrape_job_coordinator.dart';
+import 'package:avaca/services/scrape_job_repository.dart';
 import 'package:avaca/views/settings_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -99,6 +102,12 @@ void main() {
 
     expect(find.text('About'), findsOneWidget);
     expect(find.byIcon(Icons.info_outline), findsOneWidget);
+    expect(
+      tester
+          .getSize(find.byKey(const PageStorageKey('system-software-update')))
+          .height,
+      tester.getSize(find.byKey(const PageStorageKey('system-about'))).height,
+    );
 
     await tester.tap(find.text('About'));
     await tester.pumpAndSettle();
@@ -118,6 +127,23 @@ void main() {
       Uri.parse('https://github.com/william12233/avaca'),
       Uri.parse('https://github.com/william12233/avaca/issues'),
     ]);
+  });
+
+  testWidgets('scrape jobs card opens the job page directly', (tester) async {
+    await _pumpSettings(tester, withScrapeJobs: true);
+    await tester.tap(find.text('Scrape settings'));
+    await tester.pumpAndSettle();
+
+    final jobsCard = find.byKey(const ValueKey('scrape-jobs'));
+    await tester.ensureVisible(jobsCard);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const PageStorageKey('scrape-jobs')), findsNothing);
+
+    await tester.tap(jobsCard);
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(AppBar, 'Scrape jobs'), findsOneWidget);
+    expect(find.text('There are no scrape jobs yet.'), findsOneWidget);
   });
 
   testWidgets('scrape settings expands Prefix route rules inline', (
@@ -1109,12 +1135,14 @@ Future<void> _pumpSettings(
   TextScaler textScaler = TextScaler.noScaling,
   ExternalUrlLauncher? externalUrlLauncher,
   ScrapeSourceConnectionTester? scrapeSourceConnectionTester,
+  bool withScrapeJobs = false,
 }) async {
   await tester.pumpWidget(
     _SettingsHarness(
       textScaler: textScaler,
       externalUrlLauncher: externalUrlLauncher,
       scrapeSourceConnectionTester: scrapeSourceConnectionTester,
+      withScrapeJobs: withScrapeJobs,
     ),
   );
   await tester.pumpAndSettle();
@@ -1125,11 +1153,13 @@ class _SettingsHarness extends StatefulWidget {
     this.textScaler = TextScaler.noScaling,
     this.externalUrlLauncher,
     this.scrapeSourceConnectionTester,
+    this.withScrapeJobs = false,
   });
 
   final TextScaler textScaler;
   final ExternalUrlLauncher? externalUrlLauncher;
   final ScrapeSourceConnectionTester? scrapeSourceConnectionTester;
+  final bool withScrapeJobs;
 
   @override
   State<_SettingsHarness> createState() => _SettingsHarnessState();
@@ -1139,6 +1169,24 @@ class _SettingsHarnessState extends State<_SettingsHarness> {
   ThemeMode _themeMode = ThemeMode.system;
   Locale? _locale = const Locale('en');
   final database = _FakeAppDatabase();
+  ScrapeJobCoordinator? _scrapeJobCoordinator;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.withScrapeJobs) {
+      _scrapeJobCoordinator = ScrapeJobCoordinator(
+        db: database,
+        repository: _EmptyScrapeJobRepository(db: database),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrapeJobCoordinator?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1165,6 +1213,7 @@ class _SettingsHarnessState extends State<_SettingsHarness> {
         },
         externalUrlLauncher: widget.externalUrlLauncher ?? (_) async => true,
         scrapeSourceConnectionTester: widget.scrapeSourceConnectionTester,
+        scrapeJobCoordinator: _scrapeJobCoordinator,
       ),
     );
   }
@@ -1180,4 +1229,12 @@ class _FakeAppDatabase extends AppDatabase {
   Future<void> setSetting(String key, String value) async {
     _settings[key] = value;
   }
+}
+
+class _EmptyScrapeJobRepository extends ScrapeJobRepository {
+  _EmptyScrapeJobRepository({required super.db});
+
+  @override
+  Future<List<ScrapeJob>> list({int? actressId, int limit = 100}) async =>
+      const <ScrapeJob>[];
 }

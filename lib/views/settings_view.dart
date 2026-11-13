@@ -618,6 +618,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
           icon: Icons.system_update_alt_outlined,
           title: localizations.softwareUpdate,
           helpText: localizations.softwareUpdateDescription,
+          minTileHeight: tokens.controlHeight + 16,
           child: SoftwareUpdateView(
             controller: updateController,
             shrinkWrap: true,
@@ -630,6 +631,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
           feedbackId: 'system-about',
           icon: Icons.info_outline,
           title: localizations.about,
+          minTileHeight: tokens.controlHeight + 16,
           child: _buildAboutSettingsEmbedded(context, tokens),
         ),
       ],
@@ -652,28 +654,27 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         const SizedBox(height: 12),
         _ScrapePreferencesSettingsBody(database: widget.db, tokens: tokens),
         const SizedBox(height: 8),
-        _settingsExpansionCard(
+        _settingsActionCard(
           tokens: tokens,
           context: context,
           feedbackId: 'scrape-jobs',
           icon: Icons.queue_play_next_outlined,
           title: localizations.settingsScrapeJobsTitle,
           helpText: localizations.settingsScrapeJobsSubtitle,
-          child: widget.scrapeJobCoordinator == null
-              ? Text(localizations.scrapeJobsEmpty)
-              : ListTile(
-                  minTileHeight: tokens.controlHeight,
-                  leading: const Icon(Icons.open_in_new),
-                  title: Text(localizations.scrapeJobsTitle),
-                  onTap: () => Navigator.of(context).push<void>(
-                    MaterialPageRoute(
-                      builder: (_) => ScrapeJobsView(
-                        db: widget.db,
-                        coordinator: widget.scrapeJobCoordinator!,
-                      ),
-                    ),
-                  ),
-                ),
+          statusText: widget.scrapeJobCoordinator == null
+              ? localizations.scrapeJobsEmpty
+              : null,
+          enabled: widget.scrapeJobCoordinator != null,
+          onTap: () {
+            final coordinator = widget.scrapeJobCoordinator;
+            if (coordinator == null) return;
+            Navigator.of(context).push<void>(
+              MaterialPageRoute(
+                builder: (_) =>
+                    ScrapeJobsView(db: widget.db, coordinator: coordinator),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 8),
         _settingsExpansionCard(
@@ -868,6 +869,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     required IconData icon,
     required String title,
     String? helpText,
+    double? minTileHeight,
     required Widget child,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -876,7 +878,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     final expansionTile = ExpansionTile(
       key: PageStorageKey(feedbackId),
       tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-      minTileHeight: tokens.controlHeight,
+      minTileHeight: minTileHeight ?? tokens.controlHeight,
       childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
       backgroundColor: colorScheme.surfaceContainerHighest,
       collapsedBackgroundColor: colorScheme.surfaceContainerHighest,

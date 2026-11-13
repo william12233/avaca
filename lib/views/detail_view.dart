@@ -1810,20 +1810,45 @@ class _RatingsDialogState extends State<_RatingsDialog> {
     required ValueChanged<int?> onChanged,
   }) {
     final l10n = AppLocalizations.of(context);
-    return Row(
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
       key: key,
-      children: [
-        Expanded(child: Text(label)),
-        DropdownButton<int?>(
-          value: value,
-          onChanged: saving ? null : onChanged,
-          items: [
-            DropdownMenuItem<int?>(value: null, child: Text(l10n.unrated)),
-            for (var score = 1; score <= 10; score++)
-              DropdownMenuItem<int?>(value: score, child: Text('$score')),
-          ],
-        ),
-      ],
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(label)),
+              Text(
+                value?.toString() ?? l10n.unrated,
+                style: TextStyle(
+                  color: value == null
+                      ? colorScheme.onSurfaceVariant
+                      : colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              IconButton(
+                tooltip: l10n.clear,
+                onPressed: saving || value == null
+                    ? null
+                    : () => onChanged(null),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          Slider(
+            min: 1,
+            max: 10,
+            divisions: 9,
+            value: (value ?? 5).toDouble(),
+            label: value?.toString() ?? l10n.unrated,
+            semanticFormatterCallback: (score) => score.round().toString(),
+            onChanged: saving ? null : (score) => onChanged(score.round()),
+          ),
+        ],
+      ),
     );
   }
 

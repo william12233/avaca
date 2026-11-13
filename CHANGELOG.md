@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.8 - 2026-11-13
+
+- Replaced actress rating dropdowns with discrete horizontal sliders while
+  preserving unrated values and explicit save/cancel behavior.
+- Grouped rating sorts into a collapsed home-sheet section and kept the active
+  rating criterion visible when collapsed.
+- Made Scrape jobs a direct Settings destination and aligned the collapsed
+  System and About card headers.
+
 ## 1.4.7 - 2026-11-13
 
 - Added private 1–10 actress ratings for face, chest, figure, and on-screen

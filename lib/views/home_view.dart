@@ -316,7 +316,13 @@ class _HomeViewState extends State<HomeView> {
 
   Widget _buildFilterSheet() {
     final filterOptions = controller.getFilterOptions();
-    final sortOptions = controller.getSortOptions();
+    final allSortOptions = controller.getSortOptions();
+    final sortOptions = allSortOptions
+        .where((option) => !option.startsWith('rating_'))
+        .toList(growable: false);
+    final ratingSortOptions = allSortOptions
+        .where((option) => option.startsWith('rating_'))
+        .toList(growable: false);
 
     return StatefulBuilder(
       builder: (context, sheetSetState) {
@@ -361,12 +367,47 @@ class _HomeViewState extends State<HomeView> {
                     onSelected: controller.changeSort,
                     sheetSetState: sheetSetState,
                   ),
+                  const SizedBox(height: 4),
+                  _buildRatingSortOptions(
+                    options: ratingSortOptions,
+                    selectedValue: controller.currentSort,
+                    labelBuilder: _sortLabel,
+                    onSelected: controller.changeSort,
+                    sheetSetState: sheetSetState,
+                  ),
                 ],
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildRatingSortOptions({
+    required List<String> options,
+    required String selectedValue,
+    required String Function(String value) labelBuilder,
+    required void Function(String value) onSelected,
+    required StateSetter sheetSetState,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final isRatingSort = selectedValue.startsWith('rating_');
+    return ExpansionTile(
+      key: const ValueKey('home-rating-sort-expansion'),
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: EdgeInsets.zero,
+      title: Text(l10n.rating),
+      subtitle: isRatingSort ? Text(labelBuilder(selectedValue)) : null,
+      children: [
+        _buildOptions(
+          options: options,
+          selectedValue: selectedValue,
+          labelBuilder: labelBuilder,
+          onSelected: onSelected,
+          sheetSetState: sheetSetState,
+        ),
+      ],
     );
   }
 

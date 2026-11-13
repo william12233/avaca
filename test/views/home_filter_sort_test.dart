@@ -89,6 +89,40 @@ void main() {
     expect(filterTops.toSet(), hasLength(1));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('rating sorts live in a collapsed group with selected summary', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final database = _RecordingHomeDatabase();
+    await tester.pumpWidget(_homeApp(database));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.tune));
+    await tester.pumpAndSettle();
+
+    final ratingGroup = find.byKey(
+      const ValueKey('home-rating-sort-expansion'),
+    );
+    expect(ratingGroup, findsOneWidget);
+    expect(find.byType(ChoiceChip), findsNWidgets(12));
+    expect(find.text('臉部評價（高到低）'), findsNothing);
+
+    await tester.tap(ratingGroup);
+    await tester.pumpAndSettle();
+    expect(find.byType(ChoiceChip), findsNWidgets(17));
+    await tester.tap(find.text('臉部評價（高到低）'));
+    await tester.pumpAndSettle();
+
+    expect(database.queries.last.sort, 'rating_face_desc');
+    await tester.tap(ratingGroup);
+    await tester.pumpAndSettle();
+    expect(find.text('臉部評價（高到低）'), findsOneWidget);
+    expect(find.byType(ChoiceChip), findsNWidgets(12));
+  });
 }
 
 Widget _homeApp(AppDatabase database) {

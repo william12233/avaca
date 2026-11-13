@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('alias button matches works and saves each alias immediately', (
+  testWidgets('detail alias row opens the editor and saves aliases', (
     tester,
   ) async {
     final database = _AliasDetailDatabase();
@@ -20,33 +20,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final works = tester.getRect(find.byKey(const Key('detail-works-button')));
-    final aliases = tester.getRect(
-      find.byKey(const Key('detail-aliases-button')),
-    );
-    final attributes = tester.getRect(
-      find.byKey(const Key('detail-attributes')),
-    );
-    expect(works.bottom, lessThanOrEqualTo(aliases.top));
-    expect(aliases.bottom, lessThanOrEqualTo(attributes.top));
-    expect(works.width, aliases.width);
-    expect(works.height, 52);
-    expect(aliases.height, 52);
-    expect(find.byKey(const Key('detail-works-count')), findsOneWidget);
-    expect(find.byKey(const Key('detail-aliases-count')), findsOneWidget);
+    expect(find.text('舊別名'), findsOneWidget);
+    final aliasEditor = find.byKey(const Key('detail-aliases-ellipsis'));
+    expect(aliasEditor, findsOneWidget);
 
-    final expectedTextColor = Theme.of(
-      tester.element(find.byType(DetailView)),
-    ).colorScheme.onSurface;
-    for (final key in const ['detail-works-button', 'detail-aliases-button']) {
-      final button = tester.widget<OutlinedButton>(find.byKey(Key(key)));
-      expect(
-        button.style?.foregroundColor?.resolve(<WidgetState>{}),
-        expectedTextColor,
-      );
-    }
-
-    await tester.tap(find.byKey(const Key('detail-aliases-button')));
+    await tester.tap(aliasEditor);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('detail-aliases-dialog')), findsOneWidget);
     expect(find.byKey(const Key('detail-alias-input')), findsOneWidget);

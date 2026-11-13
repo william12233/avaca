@@ -45,6 +45,11 @@ void main() {
         'modified_asc',
         'age_asc',
         'age_desc',
+        'rating_face_desc',
+        'rating_chest_desc',
+        'rating_body_desc',
+        'rating_charm_desc',
+        'rating_average_desc',
       ]);
     });
 
@@ -58,6 +63,11 @@ void main() {
         'modified_asc': '修改時間 (舊到新)',
         'age_asc': '年齡 (低到高)',
         'age_desc': '年齡 (高到低)',
+        'rating_face_desc': 'rating_face_desc',
+        'rating_chest_desc': 'rating_chest_desc',
+        'rating_body_desc': 'rating_body_desc',
+        'rating_charm_desc': 'rating_charm_desc',
+        'rating_average_desc': 'rating_average_desc',
       };
 
       for (final entry in expectedMappings.entries) {
