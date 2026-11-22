@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0 - 2026-11-22
+
+- Tap the AVACA title on the home screen to draw a random work from the entire
+  local collection and see its thumbnail, code, and title.
+- Removed the divider lines above and below the rating section in the home
+  filter and sort sheet.
+
 ## 1.4.8 - 2026-11-13
 
 - Replaced actress rating dropdowns with discrete horizontal sliders while

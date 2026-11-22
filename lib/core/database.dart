@@ -1063,6 +1063,17 @@ class AppDatabase {
     'storage_frame_rate',
   ];
 
+  Future<Map<String, Object?>?> getRandomWork() async {
+    final db = await database;
+    final rows = await db.query(
+      'works',
+      columns: const ['code', 'title', 'card_image_path'],
+      orderBy: 'RANDOM()',
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.single;
+  }
+
   // 取得指定女優的本機作品，最新發行日期優先。
   Future<List<Map<String, Object?>>> getWorksForActress(int actressId) async {
     final db = await database;

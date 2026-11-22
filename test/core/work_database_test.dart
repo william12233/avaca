@@ -36,6 +36,25 @@ void main() {
 
     tearDown(() => fixture.dispose());
 
+    test('draws a work directly from the entire local catalog', () async {
+      expect(await database.getRandomWork(), isNull);
+
+      await database.upsertWork(
+        const Work(
+          code: 'TEST-001',
+          title: '測試作品',
+          cardImagePath: 'images/test-001-card.jpg',
+        ),
+      );
+
+      expect(await database.getWorksForActress(actressId), isEmpty);
+      expect(await database.getRandomWork(), {
+        'code': 'TEST-001',
+        'title': '測試作品',
+        'card_image_path': 'images/test-001-card.jpg',
+      });
+    });
+
     test('creates work tables and round-trips rows for an actress', () async {
       final workId = await database.upsertActressWork(
         actressId: actressId,

@@ -8,6 +8,7 @@ import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/app_snackbar.dart';
 import '../components/javbus_verification_dialog.dart';
+import '../components/local_work_image.dart';
 import '../controllers/works_controller.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
@@ -1051,10 +1052,7 @@ class _WorkCard extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: SizedBox.expand(
-                    child: _LocalWorkImage(
-                      path: imagePath,
-                      icon: Icons.movie_outlined,
-                    ),
+                    child: LocalWorkImage(path: imagePath),
                   ),
                 ),
               ),
@@ -1114,35 +1112,6 @@ class _WorkCard extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _LocalWorkImage extends StatelessWidget {
-  const _LocalWorkImage({required this.path, required this.icon});
-
-  final String path;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    if (path.isNotEmpty && File(path).existsSync()) {
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _placeholder(context),
-      );
-    }
-    return _placeholder(context);
-  }
-
-  Widget _placeholder(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return ColoredBox(
-      color: colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(icon, color: colorScheme.onSurfaceVariant, size: 36),
-      ),
     );
   }
 }

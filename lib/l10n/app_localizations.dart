@@ -1075,6 +1075,12 @@ abstract class AppLocalizations {
   /// **'尚無作品'**
   String get noWorks;
 
+  /// No description provided for @randomWork.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'隨機作品'**
+  String get randomWork;
+
   /// No description provided for @durationMinutes.
   ///
   /// In zh_TW, this message translates to:

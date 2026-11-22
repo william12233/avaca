@@ -512,6 +512,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noWorks => 'No works yet';
 
   @override
+  String get randomWork => 'Random Work';
+
+  @override
   String durationMinutes(int minutes) {
     return '$minutes min';
   }

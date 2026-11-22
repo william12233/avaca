@@ -187,6 +187,7 @@
   "fillMissingOnly": "再取得時は未入力の情報のみ補完",
   "startScrape": "取得を開始",
   "noWorks": "作品はまだありません",
+  "randomWork": "ランダムな作品",
   "durationMinutes": "{minutes}分",
   "studio": "メーカー",
   "publisher": "レーベル",

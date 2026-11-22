@@ -508,6 +508,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noWorks => '作品はまだありません';
 
   @override
+  String get randomWork => 'ランダムな作品';
+
+  @override
   String durationMinutes(int minutes) {
     return '$minutes分';
   }
@@ -1829,6 +1832,9 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
 
   @override
   String get noWorks => '作品はまだありません';
+
+  @override
+  String get randomWork => 'ランダムな作品';
 
   @override
   String durationMinutes(int minutes) {

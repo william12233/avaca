@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import '../components/adaptive_page_layout.dart';
 import '../components/actress_card.dart';
+import '../components/local_work_image.dart';
 import '../controllers/home_controller.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
@@ -69,6 +70,68 @@ class _HomeViewState extends State<HomeView> {
     refreshGallery();
   }
 
+  Future<void> _openRandomWork() async {
+    _dismissKeyboard();
+    late final workFuture = widget.db.getRandomWork();
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final l10n = AppLocalizations.of(dialogContext);
+        return AlertDialog(
+          title: Text(l10n.randomWork),
+          scrollable: true,
+          content: SizedBox(
+            width: 320,
+            child: FutureBuilder<Map<String, Object?>?>(
+              future: workFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Text(l10n.loadFailed(snapshot.error.toString()));
+                }
+                final work = snapshot.data;
+                if (work == null) {
+                  return Text(l10n.noWorks);
+                }
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: AspectRatio(
+                        aspectRatio: 1.48,
+                        child: LocalWorkImage(
+                          path: work['card_image_path']?.toString() ?? '',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      work['code'] as String,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(work['title'] as String),
+                  ],
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(l10n.close),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> openFilterSheet() async {
     _dismissKeyboard();
     await showModalBottomSheet<void>(
@@ -128,26 +191,47 @@ class _HomeViewState extends State<HomeView> {
   }
 
   AppBar _buildAppBar() {
+    final l10n = AppLocalizations.of(context);
     return AppBar(
-      title: Text(AppLocalizations.of(context).appTitle),
+      title: Tooltip(
+        message: l10n.randomWork,
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: _openRandomWork,
+            borderRadius: BorderRadius.circular(6),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: kMinInteractiveDimension,
+              ),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                widthFactor: 1,
+                heightFactor: 1,
+                child: Text(l10n.appTitle),
+              ),
+            ),
+          ),
+        ),
+      ),
       actions: [
         IconButton(
-          tooltip: AppLocalizations.of(context).search,
+          tooltip: l10n.search,
           icon: const Icon(Icons.search),
           onPressed: toggleSearch,
         ),
         IconButton(
-          tooltip: AppLocalizations.of(context).filterAndSort,
+          tooltip: l10n.filterAndSort,
           icon: const Icon(Icons.tune),
           onPressed: openFilterSheet,
         ),
         IconButton(
-          tooltip: AppLocalizations.of(context).add,
+          tooltip: l10n.add,
           icon: const Icon(Icons.add),
           onPressed: goAdd,
         ),
         IconButton(
-          tooltip: AppLocalizations.of(context).settings,
+          tooltip: l10n.settings,
           icon: const Icon(Icons.settings),
           onPressed: goSettings,
         ),
@@ -395,6 +479,8 @@ class _HomeViewState extends State<HomeView> {
     final isRatingSort = selectedValue.startsWith('rating_');
     return ExpansionTile(
       key: const ValueKey('home-rating-sort-expansion'),
+      shape: const Border(),
+      collapsedShape: const Border(),
       tilePadding: EdgeInsets.zero,
       childrenPadding: EdgeInsets.zero,
       title: Text(l10n.rating),

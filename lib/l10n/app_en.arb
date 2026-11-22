@@ -188,6 +188,7 @@
   "startScrape": "Start scraping",
   "cancel": "Cancel",
   "noWorks": "No works yet",
+  "randomWork": "Random Work",
   "durationMinutes": "{minutes} min",
   "studio": "Studio",
   "publisher": "Publisher",

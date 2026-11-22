@@ -507,6 +507,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noWorks => '尚無作品';
 
   @override
+  String get randomWork => '隨機作品';
+
+  @override
   String durationMinutes(int minutes) {
     return '$minutes 分鐘';
   }
@@ -1819,6 +1822,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get noWorks => '暂无作品';
 
   @override
+  String get randomWork => '随机作品';
+
+  @override
   String durationMinutes(int minutes) {
     return '$minutes 分钟';
   }
@@ -3129,6 +3135,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noWorks => '尚無作品';
+
+  @override
+  String get randomWork => '隨機作品';
 
   @override
   String durationMinutes(int minutes) {
