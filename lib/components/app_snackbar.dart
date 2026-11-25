@@ -6,75 +6,69 @@ class AppSnackBar {
   AppSnackBar._();
 
   static const _maxWidth = 400.0;
-  static const _duration = Duration(milliseconds: 3000);
-  static const _horizontalPadding = 3.0;
-  static const _verticalPadding = 2.0;
+  static const _duration = Duration(seconds: 3);
   static const _contentPadding = EdgeInsets.symmetric(
-    horizontal: _horizontalPadding,
-    vertical: _verticalPadding,
+    horizontal: 16,
+    vertical: 10,
   );
 
-  // 依照目前主題、字型與文字縮放實際測量提示內容，並限制在可用寬度內。
   static double _calculateWidth(
     BuildContext context,
+    MediaQueryData viewport,
     String message,
     TextStyle textStyle,
+    EdgeInsets insetPadding,
   ) {
+    final measurementStyle = MediaQuery.boldTextOf(context)
+        ? textStyle.merge(const TextStyle(fontWeight: FontWeight.bold))
+        : textStyle;
     final textPainter = TextPainter(
-      text: TextSpan(text: message, style: textStyle),
+      text: TextSpan(text: message, style: measurementStyle),
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
+      locale: Localizations.maybeLocaleOf(context),
     )..layout();
 
-    final viewportWidth = MediaQuery.maybeSizeOf(context)?.width ?? _maxWidth;
-    final maxWidth = math.max(
-      _horizontalPadding * 2,
-      math.min(_maxWidth, viewportWidth),
-    );
-    final contentWidth = textPainter.size.width + (_horizontalPadding * 2);
+    final contentWidth =
+        textPainter.width.ceilToDouble() + _contentPadding.horizontal;
     textPainter.dispose();
 
-    return contentWidth.clamp(_horizontalPadding * 2, maxWidth);
+    // Flutter applies the horizontal SafeArea inside its centered SnackBar.
+    final availableWidth =
+        viewport.size.width -
+        insetPadding.horizontal -
+        2 * viewport.padding.horizontal;
+    return math.min(contentWidth, availableWidth.clamp(0.0, _maxWidth));
   }
 
-  static TextStyle _textStyle(BuildContext context) {
-    final theme = Theme.of(context);
-    final base =
-        theme.snackBarTheme.contentTextStyle ??
-        theme.textTheme.bodyMedium ??
-        const TextStyle();
-    return base.copyWith(color: theme.colorScheme.onSurface);
-  }
-
-  static Color _backgroundColor(BuildContext context) {
-    final theme = Theme.of(context);
-    return theme.snackBarTheme.backgroundColor ??
-        (theme.brightness == Brightness.dark ? Colors.black : Colors.white);
-  }
-
-  // 顯示新的提示前先收起目前提示，讓畫面上一次只保留一個提示。
   static void _show(BuildContext context, String message) {
-    final textStyle = _textStyle(context);
+    final theme = Theme.of(context);
+    final snackBarTheme = SnackBarTheme.of(context);
+    final textStyle =
+        snackBarTheme.contentTextStyle ??
+        theme.textTheme.bodyMedium!.copyWith(
+          color: theme.colorScheme.onInverseSurface,
+        );
     final messenger = ScaffoldMessenger.of(context);
-
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          textAlign: TextAlign.center,
-          softWrap: true,
-          style: textStyle,
-        ),
-        backgroundColor: _backgroundColor(context),
-        behavior: SnackBarBehavior.floating,
-        elevation: 0,
-        duration: _duration,
-        width: _calculateWidth(context, message, textStyle),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: _contentPadding,
-      ),
+    final width = _calculateWidth(
+      context,
+      MediaQuery.of(messenger.context),
+      message,
+      textStyle,
+      snackBarTheme.insetPadding ?? const EdgeInsets.all(16),
     );
+
+    messenger
+      ..removeCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message, textAlign: TextAlign.center),
+          behavior: SnackBarBehavior.floating,
+          duration: _duration,
+          width: width,
+          padding: _contentPadding,
+        ),
+      );
   }
 
   // 顯示成功提示。

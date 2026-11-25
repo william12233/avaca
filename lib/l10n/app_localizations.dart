@@ -562,7 +562,7 @@ abstract class AppLocalizations {
   /// No description provided for @detailSaved.
   ///
   /// In zh_TW, this message translates to:
-  /// **'詳細資料已儲存！'**
+  /// **'詳細資料已儲存'**
   String get detailSaved;
 
   /// No description provided for @saveFailedDuplicateName.
@@ -1468,7 +1468,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataTransferImportSuccess.
   ///
   /// In zh_TW, this message translates to:
-  /// **'匯入完成，資料已可直接使用。'**
+  /// **'匯入完成'**
   String get dataTransferImportSuccess;
 
   /// No description provided for @dataTransferDuplicateTitle.
@@ -2326,8 +2326,14 @@ abstract class AppLocalizations {
   /// No description provided for @scrapeJobsDeleteFailed.
   ///
   /// In zh_TW, this message translates to:
-  /// **'刪除刮削紀錄失敗。'**
+  /// **'刪除刮削紀錄失敗'**
   String get scrapeJobsDeleteFailed;
+
+  /// No description provided for @scrapeJobActionFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刮削工作操作失敗，請再試一次'**
+  String get scrapeJobActionFailed;
 
   /// No description provided for @scrapeJobDetailTitle.
   ///

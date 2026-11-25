@@ -26,6 +26,20 @@ void main() {
     expect(theme.snackBarTheme.behavior, SnackBarBehavior.floating);
   });
 
+  test('Snackbar theme picks readable dark text on a light custom surface', () {
+    const background = Color(0xFFCCDDCC);
+    final theme = AppTheme.fromPalette(
+      AppPalettes.dark.copyWith(
+        snackbarBackground: background,
+        onSurface: Colors.white,
+      ),
+    );
+
+    expect(theme.snackBarTheme.backgroundColor, background);
+    expect(theme.snackBarTheme.contentTextStyle?.color, Colors.black);
+    expect(theme.colorScheme.onSurface, Colors.white);
+  });
+
   test('popup menus use the shared compact surface shape', () {
     final theme = AppTheme.fromPalette(AppPalettes.light);
     final shape = theme.popupMenuTheme.shape! as RoundedRectangleBorder;

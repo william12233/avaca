@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_snackbar.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../l10n/app_localizations.dart';
@@ -233,13 +234,10 @@ class _ScrapeJobsViewState extends State<ScrapeJobsView> {
         .where((job) => _selectedJobIds.contains(job.id))
         .toList(growable: false);
     if (selectedJobs.any((job) => job.isActive)) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).scrapeJobsDeleteActive),
-          ),
-        );
+      AppSnackBar.showError(
+        context,
+        AppLocalizations.of(context).scrapeJobsDeleteActive,
+      );
       return;
     }
 
@@ -273,19 +271,14 @@ class _ScrapeJobsViewState extends State<ScrapeJobsView> {
         _selectedJobIds.clear();
         _deleting = false;
       });
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(l10n.scrapeJobsDeleted(selectedIds.length))),
-        );
-    } on Object catch (error) {
+      AppSnackBar.showSuccess(
+        context,
+        l10n.scrapeJobsDeleted(selectedIds.length),
+      );
+    } on Object {
       if (!mounted) return;
       setState(() => _deleting = false);
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text('${l10n.scrapeJobsDeleteFailed}: $error')),
-        );
+      AppSnackBar.showError(context, l10n.scrapeJobsDeleteFailed);
     }
   }
 

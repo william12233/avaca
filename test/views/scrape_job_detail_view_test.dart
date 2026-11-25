@@ -199,6 +199,43 @@ void main() {
     expect(await pending, {'answer': 'yes'});
   });
 
+  testWidgets('shows a localized notification when a job action fails', (
+    tester,
+  ) async {
+    final db = AppDatabase();
+    final job = _job(id: 'running-job', name: '測試女優');
+    final repository = _FakeScrapeJobRepository(db: db, job: job);
+    final coordinator = _FailingPauseCoordinator(
+      db: db,
+      repository: repository,
+    );
+    addTearDown(coordinator.dispose);
+
+    await tester.pumpWidget(
+      _testApp(
+        ScrapeJobDetailView(db: db, coordinator: coordinator, jobId: job.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('暫停'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(SnackBar),
+        matching: find.text('刮削工作操作失敗，請再試一次'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Internal pause error'), findsNothing);
+    expect(
+      tester
+          .widget<OutlinedButton>(find.widgetWithText(OutlinedButton, '暫停'))
+          .onPressed,
+      isNotNull,
+    );
+  });
+
   testWidgets('jobs view ignores an out-of-order stale read', (tester) async {
     final db = AppDatabase();
     final staleRead = Completer<List<ScrapeJob>>();
@@ -364,4 +401,13 @@ class _FakeScrapeJobRepository extends ScrapeJobRepository {
   Future<List<ScrapeJobSourceProgress>> listSourceProgress(
     String jobId,
   ) async => const [];
+}
+
+class _FailingPauseCoordinator extends ScrapeJobCoordinator {
+  _FailingPauseCoordinator({required super.db, required super.repository});
+
+  @override
+  Future<void> pause(String jobId) async {
+    throw StateError('Internal pause error');
+  }
 }

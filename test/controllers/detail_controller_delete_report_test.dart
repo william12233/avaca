@@ -17,8 +17,10 @@ void main() {
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => Scaffold(
+        initialRoute: '/detail',
+        home: const Scaffold(body: Text('Home')),
+        routes: {
+          '/detail': (context) => Scaffold(
             body: ElevatedButton(
               onPressed: () {
                 deletion = controller.executeDelete(context);
@@ -26,7 +28,7 @@ void main() {
               child: const Text('delete'),
             ),
           ),
-        ),
+        },
       ),
     );
 
@@ -35,8 +37,14 @@ void main() {
     await deletion;
     await tester.pumpAndSettle();
 
-    expect(find.byType(AlertDialog), findsNothing);
-    expect(find.text('已刪除 0 個圖片檔，共釋放 0.00 MB'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(SnackBar),
+        matching: find.text('已刪除 0 個圖片檔，共釋放 0.00 MB'),
+      ),
+      findsOneWidget,
+    );
   });
 }
 

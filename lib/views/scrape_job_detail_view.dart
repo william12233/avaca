@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_snackbar.dart';
 import '../components/javbus_verification_dialog.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
@@ -448,11 +449,12 @@ class _ScrapeJobDetailViewState extends State<ScrapeJobDetailView> {
     setState(() => _actionBusy = true);
     try {
       await action();
-    } on Object catch (error) {
+    } on Object {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(error.toString())));
+      AppSnackBar.showError(
+        context,
+        AppLocalizations.of(context).scrapeJobActionFailed,
+      );
     } finally {
       if (mounted) setState(() => _actionBusy = false);
     }

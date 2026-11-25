@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.1 - 2026-11-25
+
+- Unified in-app feedback for saving, importing, deleting, and other actions
+  into compact, rounded messages at the bottom of the screen.
+- Made messages follow the selected theme and wrap on narrow screens. New
+  messages replace the current one and dismiss after three seconds.
+- Shortened result messages and localized errors for scrape-job actions.
+
 ## 1.5.0 - 2026-11-22
 
 - Tap the AVACA title on the home screen to draw a random work from the entire

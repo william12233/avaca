@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'shapes.dart';
@@ -241,12 +243,41 @@ class AppTheme {
   }
 
   static SnackBarThemeData _snackBarTheme(AppPalette palette) {
+    final background = Color.alphaBlend(
+      palette.snackbarBackground,
+      palette.surface,
+    );
+    final backgroundLuminance = background.computeLuminance();
+    double contrast(double luminance) {
+      return (math.max(backgroundLuminance, luminance) + 0.05) /
+          (math.min(backgroundLuminance, luminance) + 0.05);
+    }
+
+    final textLuminance = Color.alphaBlend(
+      palette.onSurface,
+      background,
+    ).computeLuminance();
+    final foreground = contrast(textLuminance) >= 4.5
+        ? palette.onSurface
+        : contrast(1) > contrast(0)
+        ? Colors.white
+        : Colors.black;
+
     return SnackBarThemeData(
       backgroundColor: palette.snackbarBackground,
-      contentTextStyle: _appTextStyle(color: palette.onSurface),
+      contentTextStyle: _appTextStyle(color: foreground, fontSize: 14),
       behavior: SnackBarBehavior.floating,
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppShapeTokens.defaultCardRadius),
+        side: BorderSide(
+          color: Color.alphaBlend(
+            foreground,
+            background,
+          ).withValues(alpha: 0.18),
+        ),
+      ),
     );
   }
 

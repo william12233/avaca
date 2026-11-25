@@ -12,6 +12,7 @@ import '../app/app_providers.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
 import '../components/app_help_tooltip.dart';
+import '../components/app_snackbar.dart';
 import '../components/javbus_verification_dialog.dart';
 import '../controllers/data_transfer_controller.dart';
 import '../controllers/prefix_route_file_transfer.dart';
@@ -1072,9 +1073,11 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   }
 
   void _showDataTransferMessage(String message, {required bool isError}) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    if (isError) {
+      AppSnackBar.showError(context, message);
+    } else {
+      AppSnackBar.showSuccess(context, message);
+    }
   }
 
   Widget _themeModeSelector(BuildContext context, AppLayoutTokens tokens) {
@@ -1496,13 +1499,10 @@ class _ScrapeSourcesSettingsBodyState
         return;
       }
       setState(() => _settings = persisted);
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).scrapeSourceSaveFailed),
-          ),
-        );
+      AppSnackBar.showError(
+        context,
+        AppLocalizations.of(context).scrapeSourceSaveFailed,
+      );
     }
   }
 

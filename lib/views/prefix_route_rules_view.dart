@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../components/app_help_tooltip.dart';
+import '../components/app_snackbar.dart';
 import '../controllers/prefix_route_file_transfer.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
@@ -342,9 +343,11 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
         dialogTitle: localizations.prefixRouteExportDialogTitle,
       );
       if (!mounted || savedPath == null) return;
-      _showMessage(localizations.prefixRouteExportSuccess);
+      AppSnackBar.showSuccess(context, localizations.prefixRouteExportSuccess);
     } on Object {
-      if (mounted) _showMessage(localizations.prefixRouteOperationFailed);
+      if (mounted) {
+        AppSnackBar.showError(context, localizations.prefixRouteOperationFailed);
+      }
     }
   }
 
@@ -422,11 +425,14 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
       );
       await _refresh();
       if (!mounted) return;
-      _showMessage(
+      AppSnackBar.showSuccess(
+        context,
         localizations.prefixRouteImportSuccess(result.importedRuleCount),
       );
     } on Object {
-      if (mounted) _showMessage(localizations.prefixRouteOperationFailed);
+      if (mounted) {
+        AppSnackBar.showError(context, localizations.prefixRouteOperationFailed);
+      }
     }
   }
 
@@ -487,16 +493,16 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
     try {
       await _repository.clearAutomaticLearning();
       await _refresh();
-      if (mounted) _showMessage(localizations.prefixRouteClearAutomaticSuccess);
+      if (!mounted) return;
+      AppSnackBar.showSuccess(
+        context,
+        localizations.prefixRouteClearAutomaticSuccess,
+      );
     } on Object {
-      if (mounted) _showMessage(localizations.prefixRouteOperationFailed);
+      if (mounted) {
+        AppSnackBar.showError(context, localizations.prefixRouteOperationFailed);
+      }
     }
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   (IconData, Color, String) _statusPresentation(

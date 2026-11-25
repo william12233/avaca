@@ -732,8 +732,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dataTransferImportSuccess =>
-      'Import complete. The data is ready to use.';
+  String get dataTransferImportSuccess => 'Import complete';
 
   @override
   String get dataTransferDuplicateTitle => 'Duplicate actor found';
@@ -1222,7 +1221,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get scrapeJobsDeleteFailed => 'Could not delete scrape-job records.';
+  String get scrapeJobsDeleteFailed => 'Could not delete scrape-job records';
+
+  @override
+  String get scrapeJobActionFailed =>
+      'Could not update the scrape job. Try again.';
 
   @override
   String get scrapeJobDetailTitle => 'Scrape job details';

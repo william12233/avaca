@@ -721,7 +721,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get dataTransferImportSuccess => 'インポートが完了しました。データをすぐに使用できます。';
+  String get dataTransferImportSuccess => 'インポートが完了しました';
 
   @override
   String get dataTransferDuplicateTitle => '重複する女優が見つかりました';
@@ -1189,7 +1189,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get scrapeJobsDeleteFailed => 'スクレイプジョブの記録を削除できませんでした。';
+  String get scrapeJobsDeleteFailed => 'スクレイプジョブの記録を削除できませんでした';
+
+  @override
+  String get scrapeJobActionFailed => 'スクレイプジョブを操作できませんでした。もう一度お試しください。';
 
   @override
   String get scrapeJobDetailTitle => 'スクレイプジョブ詳細';
@@ -2047,7 +2050,7 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   }
 
   @override
-  String get dataTransferImportSuccess => 'インポートが完了しました。データをすぐに使用できます。';
+  String get dataTransferImportSuccess => 'インポートが完了しました';
 
   @override
   String get dataTransferDuplicateTitle => '重複する女優が見つかりました';
@@ -2515,7 +2518,10 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   }
 
   @override
-  String get scrapeJobsDeleteFailed => 'スクレイプジョブの記録を削除できませんでした。';
+  String get scrapeJobsDeleteFailed => 'スクレイプジョブの記録を削除できませんでした';
+
+  @override
+  String get scrapeJobActionFailed => 'スクレイプジョブを操作できませんでした。もう一度お試しください。';
 
   @override
   String get scrapeJobDetailTitle => 'スクレイプジョブ詳細';

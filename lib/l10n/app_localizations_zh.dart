@@ -243,7 +243,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get photoCroppedRememberSave => '照片裁切完成，請記得按下儲存！';
 
   @override
-  String get detailSaved => '詳細資料已儲存！';
+  String get detailSaved => '詳細資料已儲存';
 
   @override
   String get saveFailedDuplicateName => '儲存失敗，可能是姓名與他人重複';
@@ -719,7 +719,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get dataTransferImportSuccess => '匯入完成，資料已可直接使用。';
+  String get dataTransferImportSuccess => '匯入完成';
 
   @override
   String get dataTransferDuplicateTitle => '發現重複演員';
@@ -1178,7 +1178,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get scrapeJobsDeleteFailed => '删除刮削记录失败。';
+  String get scrapeJobsDeleteFailed => '刪除刮削紀錄失敗';
+
+  @override
+  String get scrapeJobActionFailed => '刮削工作操作失敗，請再試一次';
 
   @override
   String get scrapeJobDetailTitle => '刮削工作詳情';
@@ -1558,7 +1561,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get photoCroppedRememberSave => '照片裁切完成，请记得按下保存！';
 
   @override
-  String get detailSaved => '详细资料已保存！';
+  String get detailSaved => '详细资料已保存';
 
   @override
   String get saveFailedDuplicateName => '保存失败，可能是姓名与他人重复';
@@ -2034,7 +2037,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get dataTransferImportSuccess => '导入完成，数据已可直接使用。';
+  String get dataTransferImportSuccess => '导入完成';
 
   @override
   String get dataTransferDuplicateTitle => '发现重复女优';
@@ -2493,7 +2496,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get scrapeJobsDeleteFailed => '删除刮削记录失败。';
+  String get scrapeJobsDeleteFailed => '删除刮削记录失败';
+
+  @override
+  String get scrapeJobActionFailed => '刮削任务操作失败，请重试';
 
   @override
   String get scrapeJobDetailTitle => '刮削任务详情';
@@ -2873,7 +2879,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get photoCroppedRememberSave => '照片裁切完成，請記得按下儲存！';
 
   @override
-  String get detailSaved => '詳細資料已儲存！';
+  String get detailSaved => '詳細資料已儲存';
 
   @override
   String get saveFailedDuplicateName => '儲存失敗，可能是姓名與他人重複';
@@ -3349,7 +3355,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get dataTransferImportSuccess => '匯入完成，資料已可直接使用。';
+  String get dataTransferImportSuccess => '匯入完成';
 
   @override
   String get dataTransferDuplicateTitle => '發現重複演員';
@@ -3808,7 +3814,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get scrapeJobsDeleteFailed => '刪除刮削紀錄失敗。';
+  String get scrapeJobsDeleteFailed => '刪除刮削紀錄失敗';
+
+  @override
+  String get scrapeJobActionFailed => '刮削工作操作失敗，請再試一次';
 
   @override
   String get scrapeJobDetailTitle => '刮削工作詳情';
