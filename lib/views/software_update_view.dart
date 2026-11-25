@@ -4,6 +4,7 @@ import 'package:avaca/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/software_update_controller.dart';
+import '../core/app_motion.dart';
 import '../core/layout.dart';
 import '../models/software_update_models.dart';
 
@@ -112,6 +113,7 @@ Future<void> showSoftwareUpdateDialog(
   final localizations = AppLocalizations.of(context);
   await showDialog<void>(
     context: context,
+    animationStyle: AppMotion.instantIfReduced(context),
     builder: (dialogContext) {
       return ListenableBuilder(
         listenable: controller,
@@ -235,6 +237,7 @@ Future<void> _showInstallFailure(
       : localizations.updateInstallerFailed;
   return showDialog<void>(
     context: context,
+    animationStyle: AppMotion.instantIfReduced(context),
     builder: (dialogContext) => AlertDialog(
       title: Text(localizations.updateCheckFailed),
       content: Text(message),

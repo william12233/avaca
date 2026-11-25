@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../core/app_motion.dart';
+
 class AppSnackBar {
   AppSnackBar._();
 
@@ -68,6 +70,7 @@ class AppSnackBar {
           width: width,
           padding: _contentPadding,
         ),
+        snackBarAnimationStyle: AppMotion.instantIfReduced(context),
       );
   }
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_scaffold.dart';
+import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../l10n/app_localizations.dart';
@@ -33,7 +35,7 @@ class _DataHealthViewState extends State<DataHealthView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         leading: const AlignedAppBarBackButton(),
         title: Text(l10n.dataHealthTitle),
@@ -249,6 +251,7 @@ class _DataHealthViewState extends State<DataHealthView> {
     return Card(
       margin: EdgeInsets.zero,
       child: ExpansionTile(
+        expansionAnimationStyle: AppMotion.instantIfReduced(context),
         title: Text(title),
         children: values.isEmpty
             ? [const ListTile(title: Text('—'))]

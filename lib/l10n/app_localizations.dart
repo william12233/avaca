@@ -382,7 +382,7 @@ abstract class AppLocalizations {
   /// No description provided for @themeAndColors.
   ///
   /// In zh_TW, this message translates to:
-  /// **'主題與色彩'**
+  /// **'外觀'**
   String get themeAndColors;
 
   /// No description provided for @interfaceSettings.
@@ -418,7 +418,7 @@ abstract class AppLocalizations {
   /// No description provided for @themeMode.
   ///
   /// In zh_TW, this message translates to:
-  /// **'主題模式'**
+  /// **'顯示模式'**
   String get themeMode;
 
   /// No description provided for @followSystem.
@@ -442,8 +442,62 @@ abstract class AppLocalizations {
   /// No description provided for @customTheme.
   ///
   /// In zh_TW, this message translates to:
-  /// **'自訂主題'**
+  /// **'自訂配色'**
   String get customTheme;
+
+  /// No description provided for @visualTheme.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'主題'**
+  String get visualTheme;
+
+  /// No description provided for @visualThemeStandard.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'預設'**
+  String get visualThemeStandard;
+
+  /// No description provided for @visualThemeFrostedGlass.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'霧面玻璃'**
+  String get visualThemeFrostedGlass;
+
+  /// No description provided for @motionEffects.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'動態效果'**
+  String get motionEffects;
+
+  /// No description provided for @motionEffectsSystemReduced.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'系統已開啟減少動態效果'**
+  String get motionEffectsSystemReduced;
+
+  /// No description provided for @motionPreviewToggle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'切換預覽'**
+  String get motionPreviewToggle;
+
+  /// No description provided for @motionPreviewExpanded.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'預覽已展開'**
+  String get motionPreviewExpanded;
+
+  /// No description provided for @motionPreviewCollapsed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'預覽已收合'**
+  String get motionPreviewCollapsed;
+
+  /// No description provided for @appearanceSaveFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'無法儲存外觀設定'**
+  String get appearanceSaveFailed;
 
   /// No description provided for @pureBlackAmoled.
   ///
@@ -454,7 +508,7 @@ abstract class AppLocalizations {
   /// No description provided for @pureBlackOnlyDark.
   ///
   /// In zh_TW, this message translates to:
-  /// **'僅深色主題有效'**
+  /// **'僅深色模式有效'**
   String get pureBlackOnlyDark;
 
   /// No description provided for @colorSurface.

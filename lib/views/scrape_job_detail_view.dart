@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../components/javbus_verification_dialog.dart';
+import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../l10n/app_localizations.dart';
@@ -130,6 +132,7 @@ class _ScrapeJobDetailViewState extends State<ScrapeJobDetailView> {
     if (!mounted) return Future.value(null);
     return showDialog<Map<String, String>>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       barrierDismissible: false,
       builder: (_) => JavBusVerificationDialog(challenge: challenge),
     );
@@ -137,7 +140,7 @@ class _ScrapeJobDetailViewState extends State<ScrapeJobDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         leading: const AlignedAppBarBackButton(),
         title: Text(AppLocalizations.of(context).scrapeJobDetailTitle),

@@ -149,7 +149,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settings => '設定';
 
   @override
-  String get themeAndColors => '主題與色彩';
+  String get themeAndColors => '外觀';
 
   @override
   String get interfaceSettings => '介面';
@@ -169,7 +169,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get applySettings => '套用設定';
 
   @override
-  String get themeMode => '主題模式';
+  String get themeMode => '顯示模式';
 
   @override
   String get followSystem => '跟隨系統';
@@ -181,13 +181,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get darkTheme => '深色';
 
   @override
-  String get customTheme => '自訂主題';
+  String get customTheme => '自訂配色';
+
+  @override
+  String get visualTheme => '主題';
+
+  @override
+  String get visualThemeStandard => '預設';
+
+  @override
+  String get visualThemeFrostedGlass => '霧面玻璃';
+
+  @override
+  String get motionEffects => '動態效果';
+
+  @override
+  String get motionEffectsSystemReduced => '系統已開啟減少動態效果';
+
+  @override
+  String get motionPreviewToggle => '切換預覽';
+
+  @override
+  String get motionPreviewExpanded => '預覽已展開';
+
+  @override
+  String get motionPreviewCollapsed => '預覽已收合';
+
+  @override
+  String get appearanceSaveFailed => '無法儲存外觀設定';
 
   @override
   String get pureBlackAmoled => '純黑 AMOLED';
 
   @override
-  String get pureBlackOnlyDark => '僅深色主題有效';
+  String get pureBlackOnlyDark => '僅深色模式有效';
 
   @override
   String get colorSurface => '背景';
@@ -1467,7 +1494,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settings => '设置';
 
   @override
-  String get themeAndColors => '主题与色彩';
+  String get themeAndColors => '外观';
 
   @override
   String get interfaceSettings => '界面';
@@ -1487,7 +1514,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get applySettings => '应用设置';
 
   @override
-  String get themeMode => '主题模式';
+  String get themeMode => '显示模式';
 
   @override
   String get followSystem => '跟随系统';
@@ -1499,13 +1526,40 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get darkTheme => '深色';
 
   @override
-  String get customTheme => '自定义主题';
+  String get customTheme => '自定义配色';
+
+  @override
+  String get visualTheme => '主题';
+
+  @override
+  String get visualThemeStandard => '默认';
+
+  @override
+  String get visualThemeFrostedGlass => '磨砂玻璃';
+
+  @override
+  String get motionEffects => '动态效果';
+
+  @override
+  String get motionEffectsSystemReduced => '系统已开启减少动态效果';
+
+  @override
+  String get motionPreviewToggle => '切换预览';
+
+  @override
+  String get motionPreviewExpanded => '预览已展开';
+
+  @override
+  String get motionPreviewCollapsed => '预览已收起';
+
+  @override
+  String get appearanceSaveFailed => '无法保存外观设置';
 
   @override
   String get pureBlackAmoled => '纯黑 AMOLED';
 
   @override
-  String get pureBlackOnlyDark => '仅深色主题有效';
+  String get pureBlackOnlyDark => '仅深色模式有效';
 
   @override
   String get colorSurface => '背景';
@@ -2785,7 +2839,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settings => '設定';
 
   @override
-  String get themeAndColors => '主題與色彩';
+  String get themeAndColors => '外觀';
 
   @override
   String get interfaceSettings => '介面';
@@ -2805,7 +2859,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get applySettings => '套用設定';
 
   @override
-  String get themeMode => '主題模式';
+  String get themeMode => '顯示模式';
 
   @override
   String get followSystem => '跟隨系統';
@@ -2817,13 +2871,40 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get darkTheme => '深色';
 
   @override
-  String get customTheme => '自訂主題';
+  String get customTheme => '自訂配色';
+
+  @override
+  String get visualTheme => '主題';
+
+  @override
+  String get visualThemeStandard => '預設';
+
+  @override
+  String get visualThemeFrostedGlass => '霧面玻璃';
+
+  @override
+  String get motionEffects => '動態效果';
+
+  @override
+  String get motionEffectsSystemReduced => '系統已開啟減少動態效果';
+
+  @override
+  String get motionPreviewToggle => '切換預覽';
+
+  @override
+  String get motionPreviewExpanded => '預覽已展開';
+
+  @override
+  String get motionPreviewCollapsed => '預覽已收合';
+
+  @override
+  String get appearanceSaveFailed => '無法儲存外觀設定';
 
   @override
   String get pureBlackAmoled => '純黑 AMOLED';
 
   @override
-  String get pureBlackOnlyDark => '僅深色主題有效';
+  String get pureBlackOnlyDark => '僅深色模式有效';
 
   @override
   String get colorSurface => '背景';

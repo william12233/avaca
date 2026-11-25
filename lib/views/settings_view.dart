@@ -11,13 +11,17 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/app_providers.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
+import '../components/app_appearance_controls.dart';
 import '../components/app_help_tooltip.dart';
+import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../components/javbus_verification_dialog.dart';
 import '../controllers/data_transfer_controller.dart';
 import '../controllers/prefix_route_file_transfer.dart';
 import '../controllers/settings_controller.dart';
 import '../controllers/software_update_controller.dart';
+import '../core/app_appearance.dart';
+import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../core/shapes.dart';
@@ -58,6 +62,13 @@ Future<bool> _launchExternalUrl(Uri uri) {
 AppLayoutTokens _settingsTokensForContext(BuildContext context) {
   return AppLayoutPolicy.resolve(
     BoxConstraints.tightFor(width: MediaQuery.sizeOf(context).width),
+  );
+}
+
+RoundedRectangleBorder _settingsCardShape(BuildContext context) {
+  return RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(AppShapeTokens.defaultCardRadius),
+    side: AppSurfaces.of(context).edge(Theme.of(context).colorScheme),
   );
 }
 
@@ -192,12 +203,13 @@ class _SettingsTapFeedbackState extends State<_SettingsTapFeedback> {
 
   @override
   Widget build(BuildContext context) {
-    final position = _position;
+    final enabled = AppMotion.enabledOf(context);
+    final position = enabled ? _position : null;
 
     return Listener(
-      onPointerDown: _show,
-      onPointerUp: _hide,
-      onPointerCancel: _hide,
+      onPointerDown: enabled ? _show : null,
+      onPointerUp: enabled ? _hide : null,
+      onPointerCancel: enabled ? _hide : null,
       child: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
@@ -238,6 +250,7 @@ class SettingsView extends StatelessWidget {
     required this.db,
     required this.onThemeChanged,
     required this.onLocaleChanged,
+    this.settingsController,
     this.transferController,
     this.softwareUpdateController,
     this.prefixRouteFilePicker,
@@ -254,6 +267,7 @@ class SettingsView extends StatelessWidget {
   )
   onThemeChanged;
   final void Function(Locale? locale) onLocaleChanged;
+  final SettingsController? settingsController;
   final DataTransferController? transferController;
   final SoftwareUpdateController? softwareUpdateController;
   final PrefixRouteFilePicker? prefixRouteFilePicker;
@@ -265,6 +279,8 @@ class SettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final overrides = [
       appDatabaseProvider.overrideWithValue(db),
+      if (settingsController != null)
+        settingsControllerProvider.overrideWithValue(settingsController!),
       if (transferController != null)
         dataTransferControllerProvider.overrideWithValue(transferController!),
       if (softwareUpdateController != null)
@@ -323,12 +339,6 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   static final Uri _issuesUri = Uri.parse(
     'https://github.com/william12233/avaca/issues',
   );
-  static const AnimationStyle _expansionAnimationStyle = AnimationStyle(
-    duration: Duration(milliseconds: 180),
-    curve: Curves.easeOutCubic,
-    reverseCurve: Curves.easeInCubic,
-  );
-
   late final SettingsController controller;
   late final DataTransferController dataTransferController;
   late final SoftwareUpdateController updateController;
@@ -339,7 +349,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     controller = ref.read(settingsControllerProvider);
     dataTransferController = ref.read(dataTransferControllerProvider);
     updateController = ref.read(softwareUpdateControllerProvider);
-    controller.loadFromPrefs();
+    if (!controller.preferencesLoaded) controller.loadFromPrefs();
     controller.loadCustomTheme();
     controller.addListener(_onControllerChanged);
   }
@@ -364,7 +374,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   @override
   Widget build(BuildContext context) {
     return _SettingsInteractionTheme(
-      child: Scaffold(
+      child: AppScaffold(
         appBar: AppBar(
           title: Text(AppLocalizations.of(context).settings),
           leading: _SettingsTapFeedback(
@@ -476,9 +486,11 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       child: Card(
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
-        color: colorScheme.surfaceContainerHighest,
+        color: AppSurfaces.of(
+          context,
+        ).panel(colorScheme.surfaceContainerHighest),
         elevation: 0,
-        shape: _settingsCardShape(),
+        shape: _settingsCardShape(context),
         child: ListTile(
           minTileHeight: tokens.controlHeight,
           leading: Icon(icon),
@@ -487,12 +499,6 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         ),
       ),
     );
-  }
-
-  RoundedRectangleBorder _settingsCardShape({
-    double radius = _settingsCardRadius,
-  }) {
-    return RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius));
   }
 
   RoundedRectangleBorder _outlinedCardShape(
@@ -524,7 +530,11 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   Widget _buildThemeAndColors(BuildContext context, AppLayoutTokens tokens) {
     return ListView(
       padding: EdgeInsets.zero,
-      children: [_themeModeSelector(context, tokens)],
+      children: [
+        _themeModeSelector(context, tokens),
+        const SizedBox(height: 16),
+        AppAppearanceControls(controller: controller, tokens: tokens),
+      ],
     );
   }
 
@@ -771,6 +781,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
 
     return showDialog<Map<String, String>>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       barrierDismissible: false,
       builder: (context) => JavBusVerificationDialog(challenge: challenge),
     );
@@ -844,9 +855,11 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       child: Card(
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
-        color: colorScheme.surfaceContainerHighest,
+        color: AppSurfaces.of(
+          context,
+        ).panel(colorScheme.surfaceContainerHighest),
         elevation: 0,
-        shape: _settingsCardShape(),
+        shape: _settingsCardShape(context),
         child: ListTile(
           key: ValueKey(feedbackId),
           enabled: enabled,
@@ -874,19 +887,23 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     required Widget child,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final shape = _settingsCardShape();
+    final shape = _settingsCardShape(context);
     final hasHelp = helpText != null && helpText.isNotEmpty;
     final expansionTile = ExpansionTile(
       key: PageStorageKey(feedbackId),
       tilePadding: const EdgeInsets.symmetric(horizontal: 16),
       minTileHeight: minTileHeight ?? tokens.controlHeight,
       childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-      backgroundColor: colorScheme.surfaceContainerHighest,
-      collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
+      backgroundColor: AppSurfaces.of(
+        context,
+      ).panel(colorScheme.surfaceContainerHighest),
+      collapsedBackgroundColor: AppSurfaces.of(
+        context,
+      ).panel(colorScheme.surfaceContainerHighest),
       shape: shape,
       collapsedShape: shape,
       clipBehavior: Clip.antiAlias,
-      expansionAnimationStyle: _expansionAnimationStyle,
+      expansionAnimationStyle: AppMotion.expansionOf(context),
       leading: Icon(icon),
       title: _settingsTitle(context, title: title, helpText: helpText),
       children: [child],
@@ -935,6 +952,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     DataTransferDuplicateResolution? selected;
     return showDialog<DataTransferDuplicateResolution>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {
@@ -1084,7 +1102,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     final current = controller.themeModeString;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
-    final shape = _settingsCardShape();
+    final shape = _settingsCardShape(context);
 
     return _SettingsTapFeedback(
       id: 'theme-mode',
@@ -1093,12 +1111,16 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
         minTileHeight: tokens.controlHeight,
         childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        backgroundColor: colorScheme.surfaceContainerHighest,
-        collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
+        backgroundColor: AppSurfaces.of(
+          context,
+        ).panel(colorScheme.surfaceContainerHighest),
+        collapsedBackgroundColor: AppSurfaces.of(
+          context,
+        ).panel(colorScheme.surfaceContainerHighest),
         shape: shape,
         collapsedShape: shape,
         clipBehavior: Clip.antiAlias,
-        expansionAnimationStyle: _expansionAnimationStyle,
+        expansionAnimationStyle: AppMotion.expansionOf(context),
         title: _settingsTitle(
           context,
           title: AppLocalizations.of(context).themeMode,
@@ -1174,7 +1196,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       collapsedBackgroundColor: Colors.transparent,
       shape: const Border(),
       collapsedShape: const Border(),
-      expansionAnimationStyle: _expansionAnimationStyle,
+      expansionAnimationStyle: AppMotion.expansionOf(context),
       children: [child],
     );
   }
@@ -1182,7 +1204,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   Widget _languageSelector(BuildContext context, AppLayoutTokens tokens) {
     final current = controller.localeString;
     final colorScheme = Theme.of(context).colorScheme;
-    final shape = _settingsCardShape();
+    final shape = _settingsCardShape(context);
 
     return _SettingsTapFeedback(
       id: 'language',
@@ -1191,12 +1213,16 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
         minTileHeight: tokens.controlHeight,
         childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        backgroundColor: colorScheme.surfaceContainerHighest,
-        collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
+        backgroundColor: AppSurfaces.of(
+          context,
+        ).panel(colorScheme.surfaceContainerHighest),
+        collapsedBackgroundColor: AppSurfaces.of(
+          context,
+        ).panel(colorScheme.surfaceContainerHighest),
         shape: shape,
         collapsedShape: shape,
         clipBehavior: Clip.antiAlias,
-        expansionAnimationStyle: _expansionAnimationStyle,
+        expansionAnimationStyle: AppMotion.expansionOf(context),
         title: _settingsTitle(
           context,
           title: AppLocalizations.of(context).language,
@@ -1228,7 +1254,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   Widget _worksPageSizeSelector(BuildContext context, AppLayoutTokens tokens) {
     final current = controller.worksPageSize;
     final colorScheme = Theme.of(context).colorScheme;
-    final shape = _settingsCardShape();
+    final shape = _settingsCardShape(context);
 
     return _SettingsTapFeedback(
       id: 'works-page-size',
@@ -1237,12 +1263,16 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
         minTileHeight: tokens.controlHeight,
         childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        backgroundColor: colorScheme.surfaceContainerHighest,
-        collapsedBackgroundColor: colorScheme.surfaceContainerHighest,
+        backgroundColor: AppSurfaces.of(
+          context,
+        ).panel(colorScheme.surfaceContainerHighest),
+        collapsedBackgroundColor: AppSurfaces.of(
+          context,
+        ).panel(colorScheme.surfaceContainerHighest),
         shape: shape,
         collapsedShape: shape,
         clipBehavior: Clip.antiAlias,
-        expansionAnimationStyle: _expansionAnimationStyle,
+        expansionAnimationStyle: AppMotion.expansionOf(context),
         title: _settingsTitle(
           context,
           title: AppLocalizations.of(context).worksPageSize,
@@ -1371,6 +1401,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
 
     await showDialog<void>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => _SettingsTapFeedback(
           id: 'color-dialog',
@@ -1627,10 +1658,13 @@ class _ScrapeSourcesSettingsBodyState
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
+      color: AppSurfaces.of(context).panel(colorScheme.surfaceContainer),
+      shape: _settingsCardShape(context),
       clipBehavior: Clip.antiAlias,
       child: ListTileTheme.merge(
         horizontalTitleGap: AppHelpTitleRow.gap,
         child: ExpansionTile(
+          expansionAnimationStyle: AppMotion.instantIfReduced(context),
           key: const PageStorageKey('scrape-source-connection-status'),
           minTileHeight: tokens.controlHeight,
           title: _settingsOptionTitle(
@@ -1638,8 +1672,6 @@ class _ScrapeSourcesSettingsBodyState
             title: localizations.scrapeSourceConnectionTitle,
             helpText: localizations.scrapeSourceConnectionSubtitle,
           ),
-          backgroundColor: colorScheme.surfaceContainer,
-          collapsedBackgroundColor: colorScheme.surfaceContainer,
           shape: const Border(),
           collapsedShape: const Border(),
           clipBehavior: Clip.antiAlias,
@@ -1747,14 +1779,15 @@ class _ScrapeSourcesSettingsBodyState
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
+      color: AppSurfaces.of(context).panel(colorScheme.surfaceContainer),
+      shape: _settingsCardShape(context),
       clipBehavior: Clip.antiAlias,
       child: ListTileTheme.merge(
         horizontalTitleGap: AppHelpTitleRow.gap,
         child: ExpansionTile(
+          expansionAnimationStyle: AppMotion.instantIfReduced(context),
           key: const PageStorageKey('scrape-works-source'),
           minTileHeight: tokens.controlHeight,
-          backgroundColor: colorScheme.surfaceContainer,
-          collapsedBackgroundColor: colorScheme.surfaceContainer,
           shape: const Border(),
           collapsedShape: const Border(),
           clipBehavior: Clip.antiAlias,
@@ -1836,12 +1869,13 @@ class _ScrapeSourcesSettingsBodyState
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
+      color: AppSurfaces.of(context).panel(colorScheme.surfaceContainer),
+      shape: _settingsCardShape(context),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
+        expansionAnimationStyle: AppMotion.instantIfReduced(context),
         key: key,
         minTileHeight: tokens.controlHeight,
-        backgroundColor: colorScheme.surfaceContainer,
-        collapsedBackgroundColor: colorScheme.surfaceContainer,
         shape: const Border(),
         collapsedShape: const Border(),
         clipBehavior: Clip.antiAlias,
@@ -1998,6 +2032,10 @@ class _ScrapePreferencesSettingsBodyState
         }
         return Card(
           key: const Key('settings-scrape-preferences'),
+          color: AppSurfaces.of(
+            context,
+          ).panel(Theme.of(context).colorScheme.surfaceContainer),
+          shape: _settingsCardShape(context),
           margin: EdgeInsets.zero,
           elevation: 0,
           clipBehavior: Clip.antiAlias,
@@ -2134,7 +2172,7 @@ class _SettingsCategoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SettingsInteractionTheme(
-      child: Scaffold(
+      child: AppScaffold(
         appBar: AppBar(
           title: Text(titleBuilder(context)),
           leading: _SettingsTapFeedback(

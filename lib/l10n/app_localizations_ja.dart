@@ -149,7 +149,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings => '設定';
 
   @override
-  String get themeAndColors => 'テーマと色';
+  String get themeAndColors => '外観';
 
   @override
   String get interfaceSettings => 'インターフェース';
@@ -169,7 +169,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get applySettings => '設定を適用';
 
   @override
-  String get themeMode => 'テーマモード';
+  String get themeMode => '表示モード';
 
   @override
   String get followSystem => 'システム設定に従う';
@@ -181,13 +181,40 @@ class AppLocalizationsJa extends AppLocalizations {
   String get darkTheme => 'ダーク';
 
   @override
-  String get customTheme => 'カスタムテーマ';
+  String get customTheme => 'カスタム配色';
+
+  @override
+  String get visualTheme => 'テーマ';
+
+  @override
+  String get visualThemeStandard => '標準';
+
+  @override
+  String get visualThemeFrostedGlass => 'すりガラス';
+
+  @override
+  String get motionEffects => 'モーション効果';
+
+  @override
+  String get motionEffectsSystemReduced => 'システムで視差効果を減らす設定が有効です';
+
+  @override
+  String get motionPreviewToggle => 'プレビューを切り替え';
+
+  @override
+  String get motionPreviewExpanded => 'プレビューを展開しました';
+
+  @override
+  String get motionPreviewCollapsed => 'プレビューを折りたたみました';
+
+  @override
+  String get appearanceSaveFailed => '外観設定を保存できませんでした';
 
   @override
   String get pureBlackAmoled => 'ピュアブラック AMOLED';
 
   @override
-  String get pureBlackOnlyDark => 'ダークテーマでのみ有効です';
+  String get pureBlackOnlyDark => 'ダークモードでのみ有効';
 
   @override
   String get colorSurface => '背景';
@@ -1478,7 +1505,7 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get settings => '設定';
 
   @override
-  String get themeAndColors => 'テーマと色';
+  String get themeAndColors => '外観';
 
   @override
   String get interfaceSettings => 'インターフェース';
@@ -1498,7 +1525,7 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get applySettings => '設定を適用';
 
   @override
-  String get themeMode => 'テーマモード';
+  String get themeMode => '表示モード';
 
   @override
   String get followSystem => 'システム設定に従う';
@@ -1510,13 +1537,40 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get darkTheme => 'ダーク';
 
   @override
-  String get customTheme => 'カスタムテーマ';
+  String get customTheme => 'カスタム配色';
+
+  @override
+  String get visualTheme => 'テーマ';
+
+  @override
+  String get visualThemeStandard => '標準';
+
+  @override
+  String get visualThemeFrostedGlass => 'すりガラス';
+
+  @override
+  String get motionEffects => 'モーション効果';
+
+  @override
+  String get motionEffectsSystemReduced => 'システムで視差効果を減らす設定が有効です';
+
+  @override
+  String get motionPreviewToggle => 'プレビューを切り替え';
+
+  @override
+  String get motionPreviewExpanded => 'プレビューを展開しました';
+
+  @override
+  String get motionPreviewCollapsed => 'プレビューを折りたたみました';
+
+  @override
+  String get appearanceSaveFailed => '外観設定を保存できませんでした';
 
   @override
   String get pureBlackAmoled => 'ピュアブラック AMOLED';
 
   @override
-  String get pureBlackOnlyDark => 'ダークテーマでのみ有効です';
+  String get pureBlackOnlyDark => 'ダークモードでのみ有効';
 
   @override
   String get colorSurface => '背景';

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:avaca/components/app_scaffold.dart';
+import 'package:avaca/main.dart';
 import 'package:avaca/views/add_view.dart';
 import 'package:avaca/views/detail_view.dart';
 import 'package:avaca/views/home_view.dart';
@@ -10,6 +12,7 @@ import 'package:avaca/models/scrape_source_settings.dart';
 import 'package:avaca/services/works_scrape_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/ui_test_harness.dart';
 
@@ -301,6 +304,33 @@ void main() {
       await expectLater(
         find.byType(Scaffold).last,
         matchesGoldenFile('goldens/compact/settings-theme-expanded.png'),
+      );
+    });
+
+    testWidgets('Settings frosted glass and motion preview golden', (
+      tester,
+    ) async {
+      await loadUiTestFonts();
+      SharedPreferences.setMockInitialValues({
+        'app_locale': 'zh_TW',
+        'theme_mode': 'dark',
+        'visual_theme': 'frostedGlass',
+      });
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = _expandedViewport;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      await tester.pumpWidget(AvacaApp(db: GoldenFixtureDatabase()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('設定'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('外觀'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('切換預覽'));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(AppScaffold).last,
+        matchesGoldenFile('goldens/expanded/settings-appearance-glass.png'),
       );
     });
 

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../components/app_help_tooltip.dart';
 import '../components/app_snackbar.dart';
 import '../controllers/prefix_route_file_transfer.dart';
+import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../core/shapes.dart';
@@ -318,6 +319,7 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
   Future<void> _openDetail(WorkImagePrefixRouteRule rule) async {
     await showModalBottomSheet<void>(
       context: context,
+      sheetAnimationStyle: AppMotion.instantIfReduced(context),
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => _PrefixRouteRuleDetailSheet(
@@ -359,6 +361,7 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
     var includeStatistics = false;
     return showDialog<bool>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: Text(localizations.prefixRouteExportDialogTitle),
@@ -442,6 +445,7 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
     final localizations = AppLocalizations.of(context);
     return showDialog<PrefixRouteImportMode>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => AlertDialog(
         title: Text(localizations.prefixRouteImportDialogTitle),
         content: Text(
@@ -474,6 +478,7 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
     final localizations = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => AlertDialog(
         title: Text(localizations.prefixRouteClearAutomaticTitle),
         content: Text(localizations.prefixRouteClearAutomaticMessage),
@@ -613,6 +618,7 @@ class _PrefixRouteRuleDetailSheetState
     final localizations = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => AlertDialog(
         title: Text(localizations.prefixRouteResetTitle),
         content: Text(localizations.prefixRouteResetMessage),
@@ -642,6 +648,7 @@ class _PrefixRouteRuleDetailSheetState
     final localizations = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => AlertDialog(
         title: Text(localizations.prefixRouteForgetTitle),
         content: Text(localizations.prefixRouteForgetMessage),

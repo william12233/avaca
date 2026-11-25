@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
+import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../l10n/app_localizations.dart';
@@ -85,7 +87,7 @@ class _ScrapeJobsViewState extends State<ScrapeJobsView> {
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop && selecting && !_deleting) _clearSelection();
       },
-      child: Scaffold(
+      child: AppScaffold(
         appBar: AppBar(
           leading: AlignedAppBarBackButton(
             enabled: !_deleting,
@@ -244,6 +246,7 @@ class _ScrapeJobsViewState extends State<ScrapeJobsView> {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => AlertDialog(
         title: Text(l10n.scrapeJobsDeleteTitle),
         content: Text(l10n.scrapeJobsDeleteMessage(selectedIds.length)),

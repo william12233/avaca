@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'app_appearance.dart';
 import 'shapes.dart';
 
 /// 使用者可選擇的主題模式。
@@ -201,17 +202,30 @@ class AppTheme {
   static ThemeData fromOptions({
     required AppThemeOptions options,
     required Brightness systemBrightness,
+    AppVisualTheme visualTheme = AppVisualTheme.standard,
   }) {
     final palette = AppThemeResolver.resolve(
       options: options,
       systemBrightness: systemBrightness,
     );
 
-    return fromPalette(palette);
+    return fromPalette(
+      palette,
+      visualTheme: visualTheme,
+      pureBlack:
+          options.oledBlack &&
+          options.mode != AppThemeMode.custom &&
+          palette.brightness == Brightness.dark,
+    );
   }
 
-  static ThemeData fromPalette(AppPalette palette) {
+  static ThemeData fromPalette(
+    AppPalette palette, {
+    AppVisualTheme visualTheme = AppVisualTheme.standard,
+    bool pureBlack = false,
+  }) {
     final scheme = _colorSchemeFromPalette(palette);
+    final surfaces = AppSurfaces.forTheme(visualTheme, pureBlack: pureBlack);
 
     return ThemeData(
       useMaterial3: true,
@@ -219,7 +233,14 @@ class AppTheme {
       fontFamily: fontFamily,
       colorScheme: scheme,
       scaffoldBackgroundColor: palette.surface,
-      appBarTheme: _appBarTheme(palette),
+      extensions: [surfaces],
+      appBarTheme: _appBarTheme(palette).copyWith(
+        backgroundColor: surfaces.toolbar(palette.surface),
+        scrolledUnderElevation: surfaces.glass == 0 ? null : 0,
+        shape: surfaces.glass == 0
+            ? null
+            : Border(bottom: surfaces.edge(scheme)),
+      ),
       cardTheme: _cardTheme(palette),
       textTheme: _textTheme(palette),
       inputDecorationTheme: _inputDecorationTheme(palette),

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import '../components/adaptive_page_layout.dart';
 import '../components/actress_card.dart';
+import '../components/app_scaffold.dart';
 import '../components/local_work_image.dart';
 import '../controllers/home_controller.dart';
+import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 
@@ -75,6 +77,7 @@ class _HomeViewState extends State<HomeView> {
     late final workFuture = widget.db.getRandomWork();
     await showDialog<void>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) {
         final l10n = AppLocalizations.of(dialogContext);
         return AlertDialog(
@@ -136,6 +139,7 @@ class _HomeViewState extends State<HomeView> {
     _dismissKeyboard();
     await showModalBottomSheet<void>(
       context: context,
+      sheetAnimationStyle: AppMotion.instantIfReduced(context),
       showDragHandle: true,
       builder: (_) => _buildFilterSheet(),
     );
@@ -171,7 +175,7 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: _buildAppBar(),
       body: AdaptivePageLayout(
         padding: EdgeInsets.zero,
@@ -272,7 +276,7 @@ class _HomeViewState extends State<HomeView> {
     final isOpen = controller.isSearchOpen;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+      duration: AppMotion.duration(context, const Duration(milliseconds: 250)),
       curve: Curves.decelerate,
       height: isOpen ? 55 : 0,
       margin: EdgeInsets.only(
@@ -478,6 +482,7 @@ class _HomeViewState extends State<HomeView> {
     final l10n = AppLocalizations.of(context);
     final isRatingSort = selectedValue.startsWith('rating_');
     return ExpansionTile(
+      expansionAnimationStyle: AppMotion.instantIfReduced(context),
       key: const ValueKey('home-rating-sort-expansion'),
       shape: const Border(),
       collapsedShape: const Border(),

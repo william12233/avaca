@@ -4,11 +4,13 @@ import 'dart:convert';
 import 'package:avaca/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app_providers.dart';
 import 'controllers/data_transfer_controller.dart';
+import 'controllers/settings_controller.dart';
 import 'controllers/software_update_controller.dart';
+import 'core/app_appearance.dart';
+import 'core/app_motion.dart';
 import 'core/config.dart';
 import 'core/database.dart';
 import 'core/keyboard_dismiss_navigator_observer.dart';
@@ -93,9 +95,11 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
   ThemeMode _themeMode = ThemeMode.system;
   bool _isPureBlack = false;
   Map<String, Color>? _customColors;
+  AppAppearance _appearance = defaultAppearance;
   Locale? _locale;
   bool _ready = false;
   late final SoftwareUpdateController _softwareUpdateController;
+  late final SettingsController _settingsController;
   late final DataTransferController _dataTransferController;
   late final ScrapeJobCoordinator _scrapeJobCoordinator;
   late final ScrapeBackgroundController _scrapeBackgroundController;
@@ -112,6 +116,8 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
     _softwareUpdateController =
         widget.softwareUpdateController ??
         ref.read(softwareUpdateControllerProvider);
+    _settingsController = ref.read(settingsControllerProvider);
+    _settingsController.addListener(_syncAppearance);
     _dataTransferController = ref.read(dataTransferControllerProvider);
     _scrapeJobCoordinator = ref.read(scrapeJobCoordinatorProvider);
     _scrapeBackgroundController = ScrapeBackgroundController(
@@ -137,15 +143,9 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
   }
 
   Future<void> _restoreThemeState() async {
-    var modeString = 'system';
-    var pureBlack = false;
-    var localeString = 'system';
     String? rawCustom;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      modeString = prefs.getString('theme_mode') ?? 'system';
-      pureBlack = prefs.getBool('pure_black') ?? false;
-      localeString = prefs.getString('app_locale') ?? 'system';
+      await _settingsController.loadFromPrefs();
       rawCustom = await widget.db.getSetting('custom_theme');
     } on Object catch (error) {
       debugPrint('Theme state restore failed: $error');
@@ -171,10 +171,11 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
 
     if (!mounted) return;
     setState(() {
-      _themeMode = _themeModeFromString(modeString);
-      _isPureBlack = pureBlack;
-      _customColors = modeString == 'custom' ? customColors : null;
-      _locale = _localeFromString(localeString);
+      _themeMode = _settingsController.themeMode;
+      _isPureBlack = _settingsController.isPureBlack;
+      _customColors = _settingsController.isCustomTheme ? customColors : null;
+      _locale = _settingsController.appLocale;
+      _appearance = _settingsController.appearance;
       _ready = true;
     });
     _scrapeBackgroundController.setLocale(_locale);
@@ -184,6 +185,13 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
 
     if (widget.enableAutomaticUpdateCheck) {
       unawaited(_initializeAndCheckForUpdates());
+    }
+  }
+
+  void _syncAppearance() {
+    final appearance = _settingsController.appearance;
+    if (_ready && appearance != _appearance) {
+      setState(() => _appearance = appearance);
     }
   }
 
@@ -223,12 +231,15 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
     }
 
     final useCustomTheme = _customColors != null;
+    final systemReducedMotion = MediaQuery.disableAnimationsOf(context);
+    final motionEnabled = _appearance.motionEnabled && !systemReducedMotion;
 
     final lightTheme = _buildThemeData(
       mode: useCustomTheme ? AppThemeMode.custom : AppThemeMode.light,
       brightness: Brightness.light,
       oledBlack: false,
       fallbackPalette: AppPalettes.light,
+      motionEnabled: motionEnabled,
     );
 
     final darkTheme = _buildThemeData(
@@ -236,6 +247,7 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
       brightness: Brightness.dark,
       oledBlack: _isPureBlack,
       fallbackPalette: AppPalettes.dark,
+      motionEnabled: motionEnabled,
     );
 
     return MaterialApp(
@@ -245,6 +257,22 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
       themeMode: _themeMode,
       theme: lightTheme,
       darkTheme: darkTheme,
+      themeAnimationStyle: motionEnabled
+          ? const AnimationStyle(
+              duration: AppMotion.themeDuration,
+              curve: Curves.easeOutCubic,
+            )
+          : AnimationStyle.noAnimation,
+      builder: (context, child) {
+        final viewport = MediaQuery.of(context);
+        return AppMotion(
+          systemReduced: systemReducedMotion,
+          child: MediaQuery(
+            data: viewport.copyWith(disableAnimations: !motionEnabled),
+            child: child!,
+          ),
+        );
+      },
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       navigatorObservers: [_keyboardObserver],
@@ -252,32 +280,14 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
     );
   }
 
-  ThemeMode _themeModeFromString(String modeString) {
-    return switch (modeString) {
-      'light' => ThemeMode.light,
-      'dark' => ThemeMode.dark,
-      'custom' => ThemeMode.dark,
-      _ => ThemeMode.system,
-    };
-  }
-
-  Locale? _localeFromString(String localeString) {
-    return switch (localeString) {
-      'zh_TW' => const Locale('zh', 'TW'),
-      'zh_CN' => const Locale('zh', 'CN'),
-      'ja_JP' => const Locale('ja', 'JP'),
-      'en' => const Locale('en'),
-      _ => null,
-    };
-  }
-
   ThemeData _buildThemeData({
     required AppThemeMode mode,
     required Brightness brightness,
     required bool oledBlack,
     required AppPalette fallbackPalette,
+    required bool motionEnabled,
   }) {
-    return AppTheme.fromOptions(
+    final theme = AppTheme.fromOptions(
       options: AppThemeOptions(
         mode: mode,
         oledBlack: oledBlack,
@@ -288,7 +298,13 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
         ),
       ),
       systemBrightness: brightness,
+      visualTheme: _appearance.visualTheme,
     );
+    return motionEnabled
+        ? theme
+        : theme.copyWith(
+            pageTransitionsTheme: AppMotion.instantPageTransitions,
+          );
   }
 
   AppPalette? _buildCustomPalette({
@@ -334,6 +350,7 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
           scrapeJobCoordinator: _scrapeJobCoordinator,
           transferController: _dataTransferController,
           softwareUpdateController: _softwareUpdateController,
+          settingsController: _settingsController,
           onThemeChanged: (mode, pureBlack, custom) {
             setState(() {
               _themeMode = mode;
@@ -438,6 +455,7 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
 
   @override
   void dispose() {
+    _settingsController.removeListener(_syncAppearance);
     _scrapeBackgroundController.dispose();
     super.dispose();
   }

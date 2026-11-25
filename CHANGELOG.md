@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0 - 2026-11-25
+
+- Added selectable Default and Frosted Glass themes with side-by-side previews
+  in Settings → Appearance.
+- Renamed Custom Theme to Custom Palette and made both visual themes work with
+  the existing display modes and AMOLED black setting.
+- Added a Motion Effects switch and an interactive expand-and-collapse preview.
+  Interface transitions respect the system's reduced-motion setting.
+
 ## 1.5.1 - 2026-11-25
 
 - Unified in-app feedback for saving, importing, deleting, and other actions

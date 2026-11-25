@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../components/javbus_verification_dialog.dart';
 import '../components/local_work_image.dart';
 import '../controllers/works_controller.dart';
+import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../core/shapes.dart';
@@ -232,6 +234,7 @@ class _WorksViewState extends State<WorksView> {
 
     final confirmed = await showDialog<bool>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
 
       barrierDismissible: false,
 
@@ -338,7 +341,7 @@ class _WorksViewState extends State<WorksView> {
             }
           },
 
-          child: Scaffold(
+          child: AppScaffold(
             appBar: AppBar(
               leading: AlignedAppBarBackButton(onPressed: _handleBack),
 
@@ -378,6 +381,7 @@ class _WorksViewState extends State<WorksView> {
     final enabled = controller.status == WorksLoadStatus.loaded;
 
     return PopupMenuButton<_WorksMenuAction>(
+      popUpAnimationStyle: AppMotion.instantIfReduced(context),
       key: const Key('works-overflow-menu'),
       icon: const Icon(Icons.more_vert),
       onSelected: (action) {
@@ -497,7 +501,7 @@ class _WorksViewState extends State<WorksView> {
     final l10n = AppLocalizations.of(context);
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+      duration: AppMotion.duration(context, const Duration(milliseconds: 250)),
       curve: Curves.decelerate,
       height: isOpen ? 55 : 0,
       margin: EdgeInsets.only(
@@ -769,6 +773,7 @@ class _WorksViewState extends State<WorksView> {
 
     final dialog = showDialog<void>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
 
       barrierDismissible: false,
 
@@ -878,6 +883,7 @@ class _WorksViewState extends State<WorksView> {
     }
     await showDialog<void>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       barrierDismissible: false,
       builder: (dialogContext) => PopScope(
         canPop: false,
@@ -1008,6 +1014,7 @@ class _WorksViewState extends State<WorksView> {
 
     return showDialog<Map<String, String>>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
 
       barrierDismissible: false,
 

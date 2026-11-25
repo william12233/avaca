@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../core/app_motion.dart';
 import 'package:image/image.dart' as img;
 import 'package:avaca/l10n/app_localizations.dart';
 
@@ -21,6 +22,7 @@ class ImageCropper {
 
     return showDialog<bool>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       barrierDismissible: false,
       builder: (_) {
         return _ImageCropperDialog(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/app_appearance.dart';
 import '../core/database.dart';
 
 enum WorksPageSize { small, large }
@@ -15,11 +16,15 @@ class SettingsController extends ChangeNotifier {
   static const String _customThemeKey = 'custom_theme';
   static const String _localeKey = 'app_locale';
   static const String _worksPageSizeKey = 'works_page_size';
+  static const String _visualThemeKey = 'visual_theme';
+  static const String _motionEnabledKey = 'motion_enabled';
 
   ThemeMode themeMode = ThemeMode.system;
   bool isPureBlack = false;
   WorksPageSize _worksPageSize = WorksPageSize.small;
+  AppAppearance _appearance = defaultAppearance;
   bool _disposed = false;
+  bool _preferencesLoaded = false;
 
   String _themeModeString = 'system';
   String _localeString = 'system';
@@ -32,6 +37,16 @@ class SettingsController extends ChangeNotifier {
   Locale? get appLocale => _localeFromString(_localeString);
 
   WorksPageSize get worksPageSize => _worksPageSize;
+
+  AppAppearance get appearance => _appearance;
+  bool get preferencesLoaded => _preferencesLoaded;
+
+  static AppAppearance _appearanceFromPrefs(SharedPreferences prefs) => (
+    visualTheme: prefs.get(_visualThemeKey) == AppVisualTheme.frostedGlass.name
+        ? AppVisualTheme.frostedGlass
+        : AppVisualTheme.standard,
+    motionEnabled: prefs.get(_motionEnabledKey) != false,
+  );
 
   /// 提供 UI 使用的語言選項（分層用）
   List<String> getLocaleOptions() {
@@ -63,8 +78,50 @@ class SettingsController extends ChangeNotifier {
     isPureBlack = pure;
     _localeString = locale;
     _worksPageSize = _worksPageSizeFromString(worksPageSize);
+    _appearance = _appearanceFromPrefs(prefs);
+    _preferencesLoaded = true;
 
     _notifyIfActive();
+  }
+
+  Future<bool> visualThemeChanged(AppVisualTheme theme) async {
+    final saved = await _writeAppearance(
+      (prefs) => prefs.setString(_visualThemeKey, theme.name),
+    );
+    if (!saved) return false;
+    _appearance = (
+      visualTheme: theme,
+      motionEnabled: _appearance.motionEnabled,
+    );
+    _notifyIfActive();
+    return true;
+  }
+
+  Future<bool> motionEnabledChanged(bool enabled) async {
+    final saved = await _writeAppearance(
+      (prefs) => prefs.setBool(_motionEnabledKey, enabled),
+    );
+    if (!saved) return false;
+    _appearance = (
+      visualTheme: _appearance.visualTheme,
+      motionEnabled: enabled,
+    );
+    _notifyIfActive();
+    return true;
+  }
+
+  Future<bool> _writeAppearance(
+    Future<bool> Function(SharedPreferences prefs) write,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      if (await write(prefs)) return true;
+    } on Exception {
+      await prefs.reload();
+      rethrow;
+    }
+    await prefs.reload();
+    return false;
   }
 
   // 更新主題模式，並將選擇結果寫入裝置儲存。

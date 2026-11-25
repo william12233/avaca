@@ -150,7 +150,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
-  String get themeAndColors => 'Theme & Colors';
+  String get themeAndColors => 'Appearance';
 
   @override
   String get interfaceSettings => 'Interface';
@@ -170,7 +170,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get applySettings => 'Apply Settings';
 
   @override
-  String get themeMode => 'Theme Mode';
+  String get themeMode => 'Display Mode';
 
   @override
   String get followSystem => 'Follow System';
@@ -182,13 +182,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get darkTheme => 'Dark';
 
   @override
-  String get customTheme => 'Custom Theme';
+  String get customTheme => 'Custom Palette';
+
+  @override
+  String get visualTheme => 'Theme';
+
+  @override
+  String get visualThemeStandard => 'Default';
+
+  @override
+  String get visualThemeFrostedGlass => 'Frosted Glass';
+
+  @override
+  String get motionEffects => 'Motion Effects';
+
+  @override
+  String get motionEffectsSystemReduced =>
+      'Your system is set to reduce motion';
+
+  @override
+  String get motionPreviewToggle => 'Toggle preview';
+
+  @override
+  String get motionPreviewExpanded => 'Preview expanded';
+
+  @override
+  String get motionPreviewCollapsed => 'Preview collapsed';
+
+  @override
+  String get appearanceSaveFailed => 'Could not save appearance settings';
 
   @override
   String get pureBlackAmoled => 'Pure Black AMOLED';
 
   @override
-  String get pureBlackOnlyDark => 'Only works with dark theme';
+  String get pureBlackOnlyDark => 'Only works in dark mode';
 
   @override
   String get colorSurface => 'Background';

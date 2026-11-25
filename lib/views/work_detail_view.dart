@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../components/adaptive_page_layout.dart';
+import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../l10n/app_localizations.dart';
@@ -45,7 +47,7 @@ class _WorkDetailViewState extends State<WorkDetailView> {
       future: workFuture,
       builder: (context, snapshot) {
         final work = snapshot.data;
-        return Scaffold(
+        return AppScaffold(
           appBar: AppBar(
             leading: Navigator.canPop(context)
                 ? const AlignedAppBarBackButton()
@@ -135,6 +137,7 @@ class _WorkDetailViewState extends State<WorkDetailView> {
   Future<void> _editWorkStorage(WorkStorageRecord initial) async {
     final updated = await showDialog<WorkStorageRecord>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (context) => _WorkStorageDialog(initial: initial),
     );
     if (updated == null || !mounted) {

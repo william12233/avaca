@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
+import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../controllers/detail_controller.dart';
+import '../core/app_appearance.dart';
+import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../core/shapes.dart';
@@ -394,13 +397,13 @@ class _DetailViewState extends State<DetailView> {
       future: initFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
+          return const AppScaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
         if (snapshot.hasError || _initError != null) {
-          return Scaffold(
+          return AppScaffold(
             appBar: AppBar(leading: const AlignedAppBarBackButton()),
             body: Center(
               child: Column(
@@ -429,11 +432,13 @@ class _DetailViewState extends State<DetailView> {
               _cancelEditMode();
             }
           },
-          child: Scaffold(
+          child: AppScaffold(
             backgroundColor: colorScheme.surface,
             appBar: AppBar(
               centerTitle: true,
-              backgroundColor: colorScheme.surfaceContainerHighest,
+              backgroundColor: AppSurfaces.of(
+                context,
+              ).toolbar(colorScheme.surfaceContainerHighest),
               leading: controller.isEditing || Navigator.canPop(context)
                   ? AlignedAppBarBackButton(
                       onPressed: controller.isEditing ? _cancelEditMode : null,
@@ -667,6 +672,7 @@ class _DetailViewState extends State<DetailView> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return PopupMenuButton<_DetailMenuAction>(
+      popUpAnimationStyle: AppMotion.instantIfReduced(context),
       key: const Key('detail-overflow-menu'),
       icon: const Icon(Icons.more_vert),
       onSelected: (action) {
@@ -979,6 +985,7 @@ class _DetailViewState extends State<DetailView> {
     _dismissKeyboard();
     await showDialog<void>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => _AliasesDialog(
         initialAliases: controller.getCurrentAliases(),
         onSave: (aliases) => controller.saveAliases(aliases),
@@ -995,6 +1002,7 @@ class _DetailViewState extends State<DetailView> {
     final ratings = controller.actressData;
     await showDialog<void>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => _RatingsDialog(
         initialFace: ratings.faceRating,
         initialChest: ratings.chestRating,
@@ -1328,6 +1336,7 @@ class _DetailViewState extends State<DetailView> {
     _dismissKeyboard();
     final result = await showModalBottomSheet<_BirthDatePickerResult>(
       context: context,
+      sheetAnimationStyle: AppMotion.instantIfReduced(context),
       isScrollControlled: true,
       builder: (context) => _BirthDatePickerSheet(initialDate: birthDate),
     );
@@ -1554,6 +1563,7 @@ class _DetailViewState extends State<DetailView> {
     _dismissKeyboard();
     await showDialog<void>(
       context: context,
+      animationStyle: AppMotion.instantIfReduced(context),
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(

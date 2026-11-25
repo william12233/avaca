@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
+import '../components/app_scaffold.dart';
 import '../controllers/add_controller.dart';
+import '../core/app_appearance.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 
@@ -65,7 +67,7 @@ class _AddViewState extends State<AddView> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
@@ -73,7 +75,9 @@ class _AddViewState extends State<AddView> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         leading: AlignedAppBarBackButton(onPressed: goBack),
-        backgroundColor: colorScheme.surfaceContainerHighest,
+        backgroundColor: AppSurfaces.of(
+          context,
+        ).toolbar(colorScheme.surfaceContainerHighest),
       ),
       body: SafeArea(
         child: AdaptivePageLayout(

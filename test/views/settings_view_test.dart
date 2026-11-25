@@ -33,7 +33,7 @@ void main() {
   ) async {
     await _pumpSettings(tester);
 
-    expect(find.text('Theme & Colors'), findsOneWidget);
+    expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('Interface'), findsOneWidget);
     expect(find.text('Scrape settings'), findsOneWidget);
     expect(find.text('Data management'), findsOneWidget);
@@ -41,11 +41,11 @@ void main() {
     expect(find.byIcon(Icons.palette_outlined), findsOneWidget);
     expect(find.byIcon(Icons.language), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right), findsNothing);
-    _expectBorderlessCategoryCard(tester, 'Theme & Colors');
+    _expectBorderlessCategoryCard(tester, 'Appearance');
     _expectBorderlessCategoryCard(tester, 'Interface');
     _expectBorderlessCategoryCard(tester, 'Data management');
     _expectBorderlessCategoryCard(tester, 'System & About');
-    expect(find.text('Theme Mode'), findsNothing);
+    expect(find.text('Display Mode'), findsNothing);
     expect(find.text('Language'), findsNothing);
     expect(find.text('Pure Black AMOLED'), findsNothing);
   });
@@ -54,13 +54,11 @@ void main() {
     tester,
   ) async {
     await _pumpSettings(tester);
-    await tester.tap(find.text('Theme & Colors'));
+    await tester.tap(find.text('Appearance'));
     await tester.pumpAndSettle();
 
     final backRect = tester.getRect(find.byIcon(Icons.arrow_back));
-    final titleRect = tester.getRect(
-      find.widgetWithText(AppBar, 'Theme & Colors'),
-    );
+    final titleRect = tester.getRect(find.widgetWithText(AppBar, 'Appearance'));
     expect(backRect.center.dy, closeTo(titleRect.center.dy, 0.5));
   });
 
@@ -527,24 +525,24 @@ void main() {
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
       await _pumpSettings(tester);
-      await tester.tap(find.text('Theme & Colors'));
+      await tester.tap(find.text('Appearance'));
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(AppBar, 'Theme & Colors'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Appearance'), findsOneWidget);
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-      expect(find.text('Theme Mode'), findsOneWidget);
-      _expectBorderlessExpansionTile(tester, 'Theme Mode');
+      expect(find.text('Display Mode'), findsOneWidget);
+      _expectBorderlessExpansionTile(tester, 'Display Mode');
       expect(find.text('Follow System'), findsNothing);
       expect(find.text('Dark'), findsNothing);
       expect(find.text('Pure Black AMOLED'), findsNothing);
 
-      await tester.tap(find.text('Theme Mode'));
+      await tester.tap(find.text('Display Mode'));
       await tester.pumpAndSettle();
 
       expect(find.text('Follow System'), findsOneWidget);
       expect(find.text('Light'), findsOneWidget);
       expect(find.text('Dark'), findsOneWidget);
-      expect(find.text('Custom Theme'), findsOneWidget);
+      expect(find.text('Custom Palette'), findsOneWidget);
       final darkOption = find.byKey(const PageStorageKey('theme-option-dark'));
       expect(darkOption, findsOneWidget);
       _expectSecondaryExpansionTile(tester, darkOption);
@@ -590,9 +588,9 @@ void main() {
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
       await _pumpSettings(tester);
-      await tester.tap(find.text('Theme & Colors'));
+      await tester.tap(find.text('Appearance'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Theme Mode'));
+      await tester.tap(find.text('Display Mode'));
       await tester.pumpAndSettle();
 
       expect(
@@ -626,9 +624,9 @@ void main() {
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
       await _pumpSettings(tester);
-      await tester.tap(find.text('Theme & Colors'));
+      await tester.tap(find.text('Appearance'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Theme Mode'));
+      await tester.tap(find.text('Display Mode'));
       await tester.pumpAndSettle();
 
       expect(
@@ -655,18 +653,18 @@ void main() {
     });
 
     await _pumpSettings(tester);
-    await tester.tap(find.text('Theme & Colors'));
+    await tester.tap(find.text('Appearance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Theme Mode'));
+    await tester.tap(find.text('Display Mode'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const PageStorageKey('theme-option-dark')));
     await tester.pumpAndSettle();
 
-    final pureBlackHelp = find.byTooltip('Only works with dark theme');
+    final pureBlackHelp = find.byTooltip('Only works in dark mode');
     expect(pureBlackHelp, findsOneWidget);
     await tester.tap(pureBlackHelp);
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Only works with dark theme'), findsOneWidget);
+    expect(find.text('Only works in dark mode'), findsOneWidget);
     expect(find.textContaining('/ custom theme'), findsNothing);
   });
 
@@ -677,9 +675,9 @@ void main() {
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
     await _pumpSettings(tester);
-    await tester.tap(find.text('Theme & Colors'));
+    await tester.tap(find.text('Appearance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Theme Mode'));
+    await tester.tap(find.text('Display Mode'));
     await tester.pumpAndSettle();
 
     expect(
@@ -688,7 +686,7 @@ void main() {
     );
     final customRadio = find.widgetWithText(
       RadioListTile<String>,
-      'Custom Theme',
+      'Custom Palette',
     );
     expect(customRadio, findsOneWidget);
 
@@ -787,9 +785,9 @@ void main() {
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
     await _pumpSettings(tester);
-    await tester.tap(find.text('Theme & Colors'));
+    await tester.tap(find.text('Appearance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Theme Mode'));
+    await tester.tap(find.text('Display Mode'));
     await tester.pumpAndSettle();
 
     expect(find.text('Pure Black AMOLED'), findsNothing);
@@ -803,7 +801,7 @@ void main() {
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
       await _pumpSettings(tester);
-      await tester.tap(find.text('Theme & Colors'));
+      await tester.tap(find.text('Appearance'));
       await tester.pumpAndSettle();
 
       expect(find.text('Pure Black AMOLED'), findsNothing);
@@ -811,7 +809,7 @@ void main() {
       tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Theme Mode'));
+      await tester.tap(find.text('Display Mode'));
       await tester.pumpAndSettle();
 
       final darkOption = find.byKey(const PageStorageKey('theme-option-dark'));
@@ -839,13 +837,13 @@ void main() {
     });
 
     await _pumpSettings(tester);
-    await tester.tap(find.text('Theme & Colors'));
+    await tester.tap(find.text('Appearance'));
     await tester.pumpAndSettle();
 
     expect(find.text('Background'), findsNothing);
     expect(find.text('Primary Accent'), findsNothing);
 
-    await tester.tap(find.text('Theme Mode'));
+    await tester.tap(find.text('Display Mode'));
     await tester.pumpAndSettle();
 
     final customOption = find.byKey(
@@ -882,9 +880,9 @@ void main() {
     });
 
     await _pumpSettings(tester);
-    await tester.tap(find.text('Theme & Colors'));
+    await tester.tap(find.text('Appearance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Theme Mode'));
+    await tester.tap(find.text('Display Mode'));
     await tester.pumpAndSettle();
     final customOption = find.byKey(
       const PageStorageKey('theme-option-custom'),
@@ -914,7 +912,7 @@ void main() {
       await _pumpSettings(tester);
 
       final category = find.ancestor(
-        of: find.text('Theme & Colors'),
+        of: find.text('Appearance'),
         matching: find.byType(Card),
       );
       final pressPosition = tester.getCenter(category) + const Offset(80, 0);
@@ -945,9 +943,9 @@ void main() {
       });
 
       await _pumpSettings(tester);
-      await tester.tap(find.text('Theme & Colors'));
+      await tester.tap(find.text('Appearance'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Theme Mode'));
+      await tester.tap(find.text('Display Mode'));
       await tester.pumpAndSettle();
 
       final darkOption = find.byKey(const PageStorageKey('theme-option-dark'));
@@ -984,9 +982,9 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
 
     await _pumpSettings(tester, textScaler: const TextScaler.linear(1.25));
-    await tester.tap(find.text('Theme & Colors'));
+    await tester.tap(find.text('Appearance'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Theme Mode'));
+    await tester.tap(find.text('Display Mode'));
     await tester.pumpAndSettle();
 
     final customOption = find.byKey(
