@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/javbus/javbus_verification.dart';
+import 'app_glass_components.dart';
 
 class JavBusVerificationDialog extends StatefulWidget {
   const JavBusVerificationDialog({super.key, required this.challenge});
@@ -21,7 +22,8 @@ class _JavBusVerificationDialogState extends State<JavBusVerificationDialog> {
     final l10n = AppLocalizations.of(context);
     final complete = answers.length == widget.challenge.questions.length;
 
-    return AlertDialog(
+    return appAlertDialog(
+      context,
       title: Text(l10n.javBusVerificationTitle),
       content: SizedBox(
         width: 560,

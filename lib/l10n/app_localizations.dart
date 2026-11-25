@@ -421,6 +421,12 @@ abstract class AppLocalizations {
   /// **'外觀'**
   String get appearance;
 
+  /// No description provided for @appearanceLockedForGlass.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'霧面玻璃使用固定深色外觀。'**
+  String get appearanceLockedForGlass;
+
   /// No description provided for @followSystem.
   ///
   /// In zh_TW, this message translates to:
@@ -1801,10 +1807,16 @@ abstract class AppLocalizations {
   /// **'正在下載更新…'**
   String get downloadingUpdate;
 
+  /// No description provided for @updateProgressIndicator.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下載進度'**
+  String get updateProgressIndicator;
+
   /// No description provided for @updateDownloadProgress.
   ///
   /// In zh_TW, this message translates to:
-  /// **'正在下載更新：{percent}%（{received} / {total}）'**
+  /// **'{percent}%（{received} / {total}）'**
   String updateDownloadProgress(Object percent, Object received, Object total);
 
   /// No description provided for @updateDownloadProgressUnknownTotal.
@@ -1860,6 +1872,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'檢查更新失敗，請稍後再試。'**
   String get updateCheckFailed;
+
+  /// No description provided for @updateFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'更新失敗'**
+  String get updateFailed;
 
   /// No description provided for @updateDownloadFailed.
   ///

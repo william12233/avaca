@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:avaca/controllers/software_update_controller.dart';
+import 'package:avaca/core/app_appearance.dart';
 import 'package:avaca/core/config.dart';
 import 'package:avaca/core/database.dart';
 import 'package:avaca/l10n/app_localizations.dart';
@@ -18,6 +19,7 @@ import 'package:avaca/services/app_version_provider.dart';
 import 'package:avaca/services/software_update_installer.dart';
 import 'package:avaca/services/software_update_service.dart';
 import 'package:avaca/views/settings_view.dart';
+import 'package:avaca/views/software_update_view.dart';
 
 class _FakeDatabase extends AppDatabase {
   final Map<String, String> settings = {};
@@ -109,8 +111,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('Update available'), findsNWidgets(2));
-      expect(find.text('Current version: 0.8.1'), findsOneWidget);
+      expect(find.text('Update available'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('0.8.1'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Current version: 0.8.1+2026'), findsNothing);
       expect(find.byKey(const ValueKey('software-update-now')), findsOneWidget);
 
@@ -172,24 +180,42 @@ void main() {
     }
 
     expect(modalProgress().value, closeTo(0, 0.001));
+    expect(find.text('Update available'), findsNothing);
+    expect(find.text('Downloading update…'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('software-update-progress-indicator')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Current version'),
+      ),
+      findsNothing,
+    );
+
+    emitProgress(const DownloadProgress(receivedBytes: 25));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump();
+    expect(find.text('Downloaded 25 B'), findsOneWidget);
+    expect(modalProgress().value, isNull);
 
     emitProgress(const DownloadProgress(receivedBytes: 25, totalBytes: 100));
     await tester.pump(const Duration(milliseconds: 120));
     await tester.pumpAndSettle();
-    expect(
-      find.text('Downloading update: 25% (25 B / 100 B)').last,
-      findsOneWidget,
-    );
+    expect(find.text('25% (25 B / 100 B)').last, findsOneWidget);
     expect(modalProgress().value, closeTo(0.25, 0.001));
 
     emitProgress(const DownloadProgress(receivedBytes: 75, totalBytes: 100));
     await tester.pump(const Duration(milliseconds: 120));
     await tester.pumpAndSettle();
-    expect(
-      find.text('Downloading update: 75% (75 B / 100 B)').last,
-      findsOneWidget,
-    );
+    expect(find.text('75% (75 B / 100 B)').last, findsOneWidget);
     expect(modalProgress().value, closeTo(0.75, 0.001));
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Downloading update…'), findsOneWidget);
+    expect(find.text('75% (75 B / 100 B)'), findsOneWidget);
 
     emitProgress(const DownloadProgress(receivedBytes: 100, totalBytes: 100));
     await tester.pump(const Duration(milliseconds: 120));
@@ -204,6 +230,64 @@ void main() {
     });
     await tester.pumpAndSettle();
     expect(installer.called, isTrue);
+  });
+
+  testWidgets('automatic glass alert and failure fit a narrow scaled screen', (
+    tester,
+  ) async {
+    const host = ValueKey('update-host');
+    tester.view.physicalSize = const Size(320, 500);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final controller = await _buildController(
+      downloadOverride: (_, {onProgress}) async {
+        throw const SoftwareUpdateException(
+          UpdateFailureReason.integrity,
+          'Invalid digest',
+        );
+      },
+    );
+    addTearDown(controller.dispose);
+    final result = await controller.check(automatic: true);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: AppTheme.fromPalette(
+          AppPalettes.dark,
+          visualTheme: AppVisualTheme.frostedGlass,
+        ),
+        home: const Scaffold(body: SizedBox.expand(key: host)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    unawaited(
+      showSoftwareUpdateDialog(
+        tester.element(find.byKey(host)),
+        controller,
+        result,
+        automatic: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Update available'), findsOneWidget);
+    final backdrop = find.descendant(
+      of: find.byType(Dialog),
+      matching: find.byType(BackdropFilter),
+    );
+    expect(tester.widget<BackdropFilter>(backdrop).enabled, isTrue);
+    await tester.tap(find.byKey(const ValueKey('software-update-now')));
+    await tester.pumpAndSettle();
+    final l10n = AppLocalizations.of(tester.element(find.byType(Dialog)));
+    expect(find.text(l10n.updateIntegrityFailed), findsOneWidget);
+    expect(find.text(l10n.updateFailed), findsOneWidget);
+    expect(find.text(l10n.updateAvailable), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
 

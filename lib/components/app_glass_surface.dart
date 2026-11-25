@@ -23,20 +23,27 @@ class AppGlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final glass = (surfaces ?? AppSurfaces.of(context)).glass;
+    final blurEnabled =
+        glass > 0 &&
+        (!grouped ||
+            context.getInheritedWidgetOfExactType<_GlassSurfaceScope>() ==
+                null);
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final sigma = 14 * glass;
+    final sigma = 20 * glass;
     final filter = ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma);
     final fill = ColoredBox(
-      color: color.withValues(alpha: color.a * glass * (dark ? 0.45 : 0.43)),
+      color: color.withValues(alpha: color.a * glass * (dark ? 0.50 : 0.43)),
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            stops: const [0, 0.36, 0.72, 1],
+            stops: const [0, 0.26, 0.67, 1],
             colors: [
-              Colors.white.withValues(alpha: glass * (dark ? 0.19 : 0.66)),
-              Colors.white.withValues(alpha: glass * (dark ? 0.04 : 0.12)),
+              Colors.white.withValues(alpha: glass * (dark ? 0.27 : 0.66)),
+              (dark ? const Color(0xFFB0DFFF) : Colors.white).withValues(
+                alpha: glass * (dark ? 0.08 : 0.12),
+              ),
               Colors.transparent,
               (dark ? Colors.black : Colors.white).withValues(
                 alpha: glass * 0.15,
@@ -48,13 +55,13 @@ class AppGlassSurface extends StatelessWidget {
           foregroundPainter: glass > 0 && borderRadius != BorderRadius.zero
               ? _GlassRim(
                   borderRadius,
-                  reflection: glass * (dark ? 0.34 : 0.85),
+                  reflection: glass * (dark ? 0.58 : 0.85),
                   edgeShade: (dark ? Colors.white : Colors.black).withValues(
                     alpha: glass * (dark ? 0.10 : 0.15),
                   ),
                 )
               : null,
-          child: child,
+          child: glass > 0 ? _GlassSurfaceScope(child: child) : child,
         ),
       ),
     );
@@ -63,13 +70,20 @@ class AppGlassSurface extends StatelessWidget {
       clipBehavior: glass > 0 ? Clip.antiAlias : Clip.none,
       child: grouped
           ? BackdropFilter.grouped(
-              enabled: glass > 0,
+              enabled: blurEnabled,
               filter: filter,
               child: fill,
             )
-          : BackdropFilter(enabled: glass > 0, filter: filter, child: fill),
+          : BackdropFilter(enabled: blurEnabled, filter: filter, child: fill),
     );
   }
+}
+
+class _GlassSurfaceScope extends InheritedWidget {
+  const _GlassSurfaceScope({required super.child});
+
+  @override
+  bool updateShouldNotify(_GlassSurfaceScope oldWidget) => false;
 }
 
 class _GlassRim extends CustomPainter {

@@ -118,6 +118,7 @@ class SoftwareUpdateService {
   Future<DownloadedUpdate> download(
     SoftwareUpdateResult result, {
     UpdateProgressCallback? onProgress,
+    void Function()? onVerifying,
   }) async {
     final override = _downloadOverride;
     if (override != null) {
@@ -204,6 +205,7 @@ class SoftwareUpdateService {
         await output.close();
       }
 
+      onVerifying?.call();
       if (received != asset.size) {
         throw const SoftwareUpdateException(
           UpdateFailureReason.integrity,

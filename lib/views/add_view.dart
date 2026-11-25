@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
+import '../components/app_glass_components.dart';
 import '../components/app_scaffold.dart';
 import '../controllers/add_controller.dart';
 import '../core/app_appearance.dart';
@@ -155,7 +156,7 @@ class _AddViewState extends State<AddView> {
   Widget _buildImagePlaceholder(AppLayoutTokens tokens) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
+    return AppPanel(
       width: 180,
       height: 180,
       decoration: BoxDecoration(

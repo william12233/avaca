@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
+import 'app_glass_components.dart';
 
 /// 顯示單一演員資料的卡片。
 class ActressCard extends StatelessWidget {
@@ -42,7 +43,7 @@ class ActressCard extends StatelessWidget {
 
     return Align(
       alignment: Alignment.topCenter,
-      child: Card(
+      child: AppCard(
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         color: colorScheme.surfaceContainerHighest,

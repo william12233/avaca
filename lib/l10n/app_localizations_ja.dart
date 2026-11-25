@@ -172,6 +172,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appearance => '外観';
 
   @override
+  String get appearanceLockedForGlass => 'すりガラスは固定のダーク表示を使います。';
+
+  @override
   String get followSystem => 'システム設定に従う';
 
   @override
@@ -893,8 +896,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get downloadingUpdate => '更新をダウンロード中…';
 
   @override
+  String get updateProgressIndicator => 'ダウンロードの進捗';
+
+  @override
   String updateDownloadProgress(Object percent, Object received, Object total) {
-    return '更新をダウンロード中: $percent% ($received / $total)';
+    return '$percent% ($received / $total)';
   }
 
   @override
@@ -925,6 +931,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get updateCheckFailed => '更新を確認できませんでした。後でもう一度お試しください。';
+
+  @override
+  String get updateFailed => '更新できませんでした';
 
   @override
   String get updateDownloadFailed => '更新のダウンロードに失敗しました。既存データは変更されていません。';
@@ -1525,6 +1534,9 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get appearance => '外観';
 
   @override
+  String get appearanceLockedForGlass => 'すりガラスは固定のダーク表示を使います。';
+
+  @override
   String get followSystem => 'システム設定に従う';
 
   @override
@@ -2246,8 +2258,11 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get downloadingUpdate => '更新をダウンロード中…';
 
   @override
+  String get updateProgressIndicator => 'ダウンロードの進捗';
+
+  @override
   String updateDownloadProgress(Object percent, Object received, Object total) {
-    return '更新をダウンロード中: $percent% ($received / $total)';
+    return '$percent% ($received / $total)';
   }
 
   @override
@@ -2278,6 +2293,9 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
 
   @override
   String get updateCheckFailed => '更新を確認できませんでした。後でもう一度お試しください。';
+
+  @override
+  String get updateFailed => '更新できませんでした';
 
   @override
   String get updateDownloadFailed => '更新のダウンロードに失敗しました。既存データは変更されていません。';

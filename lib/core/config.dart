@@ -111,6 +111,32 @@ class AppPalettes {
     outline: Color(0xFF4A4A4A),
     snackbarBackground: Color(0xFF000000),
   );
+
+  static const AppPalette frostedGlass = AppPalette(
+    brightness: Brightness.dark,
+    surface: Color(0xFF111317),
+    surfaceContainer: Color(0xFF24303E),
+    onSurface: Color(0xFFF1F6FC),
+    onSurfaceVariant: Color(0xFFB9C9DA),
+    primary: Color(0xFFB5E0FB),
+    onPrimary: Color(0xFF112333),
+    outline: Color(0xFF728AA1),
+    snackbarBackground: Color(0xFF243746),
+  );
+
+  static AppPalette custom(
+    Map<String, Color> colors, {
+    AppPalette base = dark,
+  }) => base.copyWith(
+    surface: colors['surface'],
+    surfaceContainer: colors['surfaceContainer'],
+    onSurface: colors['onSurface'],
+    onSurfaceVariant: colors['onSurfaceVariant'],
+    primary: colors['primary'],
+    onPrimary: colors['onPrimary'],
+    outline: colors['outline'],
+    snackbarBackground: colors['snackbarBackground'],
+  );
 }
 
 /// OLED 純黑背景覆蓋規則。
@@ -213,11 +239,17 @@ class AppTheme {
   }
 
   static ThemeData fromPalette(
-    AppPalette palette, {
+    AppPalette basePalette, {
     AppVisualTheme visualTheme = AppVisualTheme.standard,
   }) {
+    final glass = visualTheme == AppVisualTheme.frostedGlass;
+    final palette = glass ? AppPalettes.frostedGlass : basePalette;
     final scheme = _colorSchemeFromPalette(palette);
     final surfaces = AppSurfaces.forTheme(visualTheme);
+    final inputTheme = _inputDecorationTheme(palette);
+    final filledButtonTheme = _filledButtonTheme(palette);
+    final elevatedButtonTheme = _elevatedButtonTheme(palette);
+    final popupTheme = _popupMenuTheme(palette);
 
     return ThemeData(
       useMaterial3: true,
@@ -232,25 +264,91 @@ class AppTheme {
       ),
       cardTheme: _cardTheme(palette),
       textTheme: _textTheme(palette),
-      inputDecorationTheme: _inputDecorationTheme(palette),
+      inputDecorationTheme: glass
+          ? inputTheme.copyWith(
+              fillColor: palette.surfaceContainer.withValues(alpha: 0.68),
+            )
+          : inputTheme,
       textButtonTheme: _textButtonTheme(palette),
-      filledButtonTheme: _filledButtonTheme(palette),
-      elevatedButtonTheme: _elevatedButtonTheme(palette),
+      filledButtonTheme: glass
+          ? FilledButtonThemeData(
+              style: _glassButtonStyle(filledButtonTheme.style!, palette),
+            )
+          : filledButtonTheme,
+      elevatedButtonTheme: glass
+          ? ElevatedButtonThemeData(
+              style: _glassButtonStyle(elevatedButtonTheme.style!, palette),
+            )
+          : elevatedButtonTheme,
       outlinedButtonTheme: _outlinedButtonTheme(palette),
       iconTheme: _iconTheme(palette),
       dividerTheme: _dividerTheme(palette),
       switchTheme: _switchTheme(palette),
       checkboxTheme: _checkboxTheme(palette),
       radioTheme: _radioTheme(palette),
+      chipTheme: glass
+          ? ChipThemeData(
+              backgroundColor: palette.surfaceContainer.withValues(alpha: 0.68),
+              selectedColor: palette.primary.withValues(alpha: 0.22),
+              side: BorderSide(color: palette.outline.withValues(alpha: 0.62)),
+            )
+          : null,
+      sliderTheme: glass
+          ? SliderThemeData(
+              activeTrackColor: palette.primary,
+              inactiveTrackColor: palette.outline.withValues(alpha: 0.40),
+              thumbColor: palette.primary,
+            )
+          : null,
       listTileTheme: _listTileTheme(palette),
       dialogTheme: _dialogTheme(palette),
       bottomSheetTheme: _bottomSheetTheme(palette),
-      popupMenuTheme: _popupMenuTheme(palette),
-      tooltipTheme: _tooltipTheme(palette),
+      popupMenuTheme: glass
+          ? popupTheme.copyWith(
+              color: palette.surfaceContainer.withValues(alpha: 0.94),
+            )
+          : popupTheme,
+      tooltipTheme: _tooltipTheme(palette, glass: glass),
       navigationBarTheme: _navigationBarTheme(palette),
       snackBarTheme: _snackBarTheme(palette),
     );
   }
+
+  static ButtonStyle _glassButtonStyle(ButtonStyle base, AppPalette palette) =>
+      base.copyWith(
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) => palette.primary.withValues(
+            alpha: states.contains(WidgetState.disabled) ? 0.08 : 0.24,
+          ),
+        ),
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.disabled)
+              ? palette.onSurfaceVariant.withValues(alpha: 0.55)
+              : palette.onSurface,
+        ),
+        side: WidgetStateProperty.resolveWith(
+          (states) => BorderSide(
+            color: palette.primary.withValues(
+              alpha: states.contains(WidgetState.focused) ? 0.88 : 0.38,
+            ),
+          ),
+        ),
+        backgroundBuilder: (context, states, child) => DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(
+                  alpha: states.contains(WidgetState.disabled) ? 0.03 : 0.13,
+                ),
+                Colors.transparent,
+              ],
+            ),
+          ),
+          child: child,
+        ),
+      );
 
   static SnackBarThemeData _snackBarTheme(AppPalette palette) {
     final background = Color.alphaBlend(
@@ -513,7 +611,10 @@ class AppTheme {
     );
   }
 
-  static TooltipThemeData _tooltipTheme(AppPalette palette) {
+  static TooltipThemeData _tooltipTheme(
+    AppPalette palette, {
+    required bool glass,
+  }) {
     return TooltipThemeData(
       triggerMode: TooltipTriggerMode.tap,
       waitDuration: const Duration(milliseconds: 300),
@@ -522,10 +623,18 @@ class AppTheme {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       constraints: const BoxConstraints(maxWidth: 280),
       decoration: BoxDecoration(
-        color: palette.onSurface,
+        color: glass
+            ? palette.surfaceContainer.withValues(alpha: 0.96)
+            : palette.onSurface,
+        border: glass
+            ? Border.all(color: palette.outline.withValues(alpha: 0.62))
+            : null,
         borderRadius: BorderRadius.circular(AppShapeTokens.defaultCardRadius),
       ),
-      textStyle: _appTextStyle(color: palette.surface, fontSize: 13),
+      textStyle: _appTextStyle(
+        color: glass ? palette.onSurface : palette.surface,
+        fontSize: 13,
+      ),
     );
   }
 

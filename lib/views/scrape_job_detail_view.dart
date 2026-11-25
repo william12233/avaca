@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_glass_components.dart';
 import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../components/javbus_verification_dialog.dart';
@@ -180,7 +181,7 @@ class _ScrapeJobDetailViewState extends State<ScrapeJobDetailView> {
     return ListView(
       padding: EdgeInsets.only(bottom: tokens.sectionGap * 2),
       children: [
-        Card(
+        AppCard(
           margin: EdgeInsets.zero,
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -464,7 +465,7 @@ class _ScrapeJobDetailViewState extends State<ScrapeJobDetailView> {
   }
 
   Widget _buildSection(BuildContext context, String title, Widget child) {
-    return Card(
+    return AppCard(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),

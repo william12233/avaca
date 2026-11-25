@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_glass_components.dart';
 import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../components/adaptive_page_layout.dart';
@@ -247,7 +248,7 @@ class _WorkDetailViewState extends State<WorkDetailView> {
     final duration = work['duration_minutes'];
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Card(
+    return AppCard(
       margin: EdgeInsets.zero,
       elevation: 0,
       color: colorScheme.surfaceContainerLow,
@@ -418,7 +419,8 @@ class _WorkStorageDialogState extends State<_WorkStorageDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AlertDialog(
+    return appAlertDialog(
+      context,
       key: const Key('work-storage-dialog'),
       title: Text(l10n.workStorageTitle),
       content: SingleChildScrollView(

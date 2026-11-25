@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../components/app_glass_components.dart';
+import '../components/app_glass_menus.dart';
 import '../components/app_help_tooltip.dart';
 import '../components/app_snackbar.dart';
 import '../controllers/prefix_route_file_transfer.dart';
@@ -233,7 +235,7 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
   Widget _summaryCard(BuildContext context) {
     final localizations = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    return Card(
+    return AppCard(
       margin: EdgeInsets.zero,
       elevation: 0,
       color: colorScheme.surfaceContainerHighest,
@@ -272,7 +274,7 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
     required String message,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Card(
+    return AppCard(
       margin: EdgeInsets.zero,
       elevation: 0,
       color: colorScheme.surfaceContainer,
@@ -294,7 +296,7 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
     final localizations = AppLocalizations.of(context);
     final family = rule.manualOverride ?? rule.preferredFamily;
     final status = _statusPresentation(context, rule.status);
-    return Card(
+    return AppCard(
       margin: EdgeInsets.zero,
       elevation: 0,
       clipBehavior: Clip.antiAlias,
@@ -317,9 +319,8 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
   }
 
   Future<void> _openDetail(WorkImagePrefixRouteRule rule) async {
-    await showModalBottomSheet<void>(
+    await showAppModalBottomSheet<void>(
       context: context,
-      sheetAnimationStyle: AppMotion.instantIfReduced(context),
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => _PrefixRouteRuleDetailSheet(
@@ -348,7 +349,10 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
       AppSnackBar.showSuccess(context, localizations.prefixRouteExportSuccess);
     } on Object {
       if (mounted) {
-        AppSnackBar.showError(context, localizations.prefixRouteOperationFailed);
+        AppSnackBar.showError(
+          context,
+          localizations.prefixRouteOperationFailed,
+        );
       }
     }
   }
@@ -363,7 +367,8 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
       context: context,
       animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (context, setDialogState) => appAlertDialog(
+          context,
           title: Text(localizations.prefixRouteExportDialogTitle),
           content: RadioGroup<bool>(
             groupValue: includeStatistics,
@@ -434,7 +439,10 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
       );
     } on Object {
       if (mounted) {
-        AppSnackBar.showError(context, localizations.prefixRouteOperationFailed);
+        AppSnackBar.showError(
+          context,
+          localizations.prefixRouteOperationFailed,
+        );
       }
     }
   }
@@ -446,7 +454,8 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
     return showDialog<PrefixRouteImportMode>(
       context: context,
       animationStyle: AppMotion.instantIfReduced(context),
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => appAlertDialog(
+        dialogContext,
         title: Text(localizations.prefixRouteImportDialogTitle),
         content: Text(
           localizations.prefixRouteImportPreview(
@@ -479,7 +488,8 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
     final confirmed = await showDialog<bool>(
       context: context,
       animationStyle: AppMotion.instantIfReduced(context),
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => appAlertDialog(
+        dialogContext,
         title: Text(localizations.prefixRouteClearAutomaticTitle),
         content: Text(localizations.prefixRouteClearAutomaticMessage),
         actions: [
@@ -505,7 +515,10 @@ class _PrefixRouteRulesBodyState extends State<PrefixRouteRulesBody> {
       );
     } on Object {
       if (mounted) {
-        AppSnackBar.showError(context, localizations.prefixRouteOperationFailed);
+        AppSnackBar.showError(
+          context,
+          localizations.prefixRouteOperationFailed,
+        );
       }
     }
   }
@@ -619,7 +632,8 @@ class _PrefixRouteRuleDetailSheetState
     final confirmed = await showDialog<bool>(
       context: context,
       animationStyle: AppMotion.instantIfReduced(context),
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => appAlertDialog(
+        dialogContext,
         title: Text(localizations.prefixRouteResetTitle),
         content: Text(localizations.prefixRouteResetMessage),
         actions: [
@@ -649,7 +663,8 @@ class _PrefixRouteRuleDetailSheetState
     final confirmed = await showDialog<bool>(
       context: context,
       animationStyle: AppMotion.instantIfReduced(context),
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => appAlertDialog(
+        dialogContext,
         title: Text(localizations.prefixRouteForgetTitle),
         content: Text(localizations.prefixRouteForgetMessage),
         actions: [
@@ -734,7 +749,7 @@ class _PrefixRouteRuleDetailSheetState
               const SizedBox(height: 4),
               SizedBox(
                 height: tokens.controlHeight,
-                child: DropdownButtonFormField<WorkImageNormalizationFamily?>(
+                child: AppDropdownField<WorkImageNormalizationFamily?>(
                   initialValue: manual,
                   elevation: 3,
                   dropdownColor: colorScheme.surfaceContainer,
@@ -797,7 +812,7 @@ class _PrefixRouteRuleDetailSheetState
   ) {
     final localizations = AppLocalizations.of(context);
     final status = _candidateStatus(context, candidate.status);
-    return Card(
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 0,
       color: Theme.of(context).colorScheme.surfaceContainer,

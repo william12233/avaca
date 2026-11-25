@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.2 - 2026-11-25
+
+- Expanded Frosted Glass to cards, search fields, controls, menus, dialogs,
+  and other surfaces, with stronger blur and brighter edges.
+- Gave Frosted Glass a fixed dark appearance. The Appearance options are
+  disabled with an explanation while it is active, and the Default theme
+  restores your saved appearance settings.
+- Simplified software update dialogs. Download progress shows the percentage,
+  file sizes, and a progress bar under a single status heading.
+
 ## 1.6.1 - 2026-11-25
 
 - Frosted Glass blurs content behind toolbars and settings panels while using

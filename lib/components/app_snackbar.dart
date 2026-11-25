@@ -2,7 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../core/app_appearance.dart';
 import '../core/app_motion.dart';
+import '../core/shapes.dart';
+import 'app_glass_surface.dart';
 
 class AppSnackBar {
   AppSnackBar._();
@@ -52,6 +55,7 @@ class AppSnackBar {
           color: theme.colorScheme.onInverseSurface,
         );
     final messenger = ScaffoldMessenger.of(context);
+    final glass = AppSurfaces.of(context).glass > 0;
     final width = _calculateWidth(
       context,
       MediaQuery.of(messenger.context),
@@ -64,11 +68,24 @@ class AppSnackBar {
       ..removeCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message, textAlign: TextAlign.center),
+          content: glass
+              ? AppGlassSurface(
+                  color: theme.colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(
+                    AppShapeTokens.defaultCardRadius,
+                  ),
+                  child: Padding(
+                    padding: _contentPadding,
+                    child: Text(message, textAlign: TextAlign.center),
+                  ),
+                )
+              : Text(message, textAlign: TextAlign.center),
           behavior: SnackBarBehavior.floating,
           duration: _duration,
           width: width,
-          padding: _contentPadding,
+          padding: glass ? EdgeInsets.zero : _contentPadding,
+          backgroundColor: glass ? Colors.transparent : null,
+          elevation: glass ? 0 : null,
         ),
         snackBarAnimationStyle: AppMotion.instantIfReduced(context),
       );

@@ -45,6 +45,28 @@ void main() {
       );
     });
 
+    testWidgets('Home frosted glass compact golden', (tester) async {
+      await loadUiTestFonts();
+      SharedPreferences.setMockInitialValues({
+        'app_locale': 'zh_TW',
+        'theme_mode': 'light',
+        'visual_theme': 'frostedGlass',
+        'motion_enabled': false,
+      });
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 620);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      await tester.pumpWidget(AvacaApp(db: GoldenFixtureDatabase()));
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(GridView), const Offset(0, -68));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(AppScaffold),
+        matchesGoldenFile('goldens/compact/home-frosted-glass.png'),
+      );
+    });
+
     testWidgets('Add compact golden', (tester) async {
       await pumpGoldenApp(
         tester,

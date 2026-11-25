@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:avaca/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+import '../components/app_glass_components.dart';
 import '../controllers/software_update_controller.dart';
 import '../core/app_motion.dart';
 import '../core/layout.dart';
@@ -38,6 +39,9 @@ class _SoftwareUpdateViewState extends State<SoftwareUpdateView> {
       builder: (context, _) {
         final localizations = AppLocalizations.of(context);
         final controller = widget.controller;
+        final failure = controller.status == UpdateStatus.failed
+            ? _failureDescription(localizations, controller.error)
+            : null;
         final current = controller.currentVersion?.version ?? '—';
         final latest = controller.latestRelease?.version.toString() ?? '—';
         final tokens = AppLayoutPolicy.resolve(
@@ -78,18 +82,27 @@ class _SoftwareUpdateViewState extends State<SoftwareUpdateView> {
                 child: Text(localizations.checkForUpdates),
               ),
             ),
-            if (controller.status == UpdateStatus.checking ||
-                controller.status == UpdateStatus.downloading ||
-                controller.status == UpdateStatus.verifying ||
-                controller.status == UpdateStatus.handingOff) ...[
+            if ((ModalRoute.isCurrentOf(context) ?? true) &&
+                (controller.isBusy ||
+                    controller.status == UpdateStatus.failed ||
+                    controller.status == UpdateStatus.unavailable ||
+                    controller.status == UpdateStatus.notSupported)) ...[
               const SizedBox(height: 12),
-              _StatusMessage(controller: controller),
-            ],
-            if (controller.status == UpdateStatus.failed ||
-                controller.status == UpdateStatus.unavailable ||
-                controller.status == UpdateStatus.notSupported) ...[
-              const SizedBox(height: 12),
-              _StatusMessage(controller: controller),
+              Text(
+                _statusTitle(
+                  localizations,
+                  controller.status,
+                  failure: failure,
+                ),
+              ),
+              if (controller.status == UpdateStatus.downloading) ...[
+                const SizedBox(height: 8),
+                _DownloadProgressView(progress: controller.downloadProgress),
+              ],
+              if (failure != null) ...[
+                const SizedBox(height: 8),
+                Text(failure),
+              ],
             ],
           ],
         );
@@ -105,69 +118,81 @@ class _SoftwareUpdateViewState extends State<SoftwareUpdateView> {
 }
 
 Future<void> showSoftwareUpdateDialog(
-  BuildContext context,
+  BuildContext hostContext,
   SoftwareUpdateController controller,
   SoftwareUpdateResult result, {
   bool automatic = false,
 }) async {
-  final localizations = AppLocalizations.of(context);
   await showDialog<void>(
-    context: context,
-    animationStyle: AppMotion.instantIfReduced(context),
+    context: hostContext,
+    animationStyle: AppMotion.instantIfReduced(hostContext),
     builder: (dialogContext) {
       return ListenableBuilder(
         listenable: controller,
         builder: (context, _) {
+          final l10n = AppLocalizations.of(context);
           final liveResult = controller.currentResult ?? result;
+          final status = controller.status == UpdateStatus.idle
+              ? liveResult.status
+              : controller.status;
           final canUpdate =
-              liveResult.hasUpdate &&
-              liveResult.asset != null &&
-              !controller.isBusy;
-          return AlertDialog(
-            title: Text(_dialogTitle(localizations, liveResult.status)),
-            content: Column(
+              status == UpdateStatus.updateAvailable &&
+              liveResult.asset != null;
+          final failure = status == UpdateStatus.failed
+              ? _failureDescription(l10n, controller.error ?? liveResult.error)
+              : null;
+          final release = liveResult.release;
+          final content = switch (status) {
+            UpdateStatus.downloading => _DownloadProgressView(
+              progress: controller.downloadProgress,
+            ),
+            UpdateStatus.updateAvailable ||
+            UpdateStatus.upToDate ||
+            UpdateStatus.unavailable when release != null => Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 6,
               children: [
-                if (liveResult.release != null) ...[
-                  Text(
-                    '${localizations.currentVersion}: '
-                    '${liveResult.current.version}',
+                _VersionRow(
+                  label: l10n.currentVersion,
+                  value: liveResult.current.version,
+                ),
+                _VersionRow(
+                  label: l10n.latestVersion,
+                  value: release.version.toString(),
+                ),
+                if (canUpdate)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      l10n.updateDataPreserved,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${localizations.latestVersion}: '
-                    '${liveResult.release!.version}',
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                if (controller.isBusy)
-                  _StatusMessage(controller: controller)
-                else
-                  Text(_dialogMessage(localizations, liveResult)),
-                if (canUpdate) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    localizations.updateDataPreserved,
-                    style: Theme.of(dialogContext).textTheme.bodySmall,
-                  ),
-                ],
               ],
             ),
+            _ when failure != null => Text(failure),
+            _ => null,
+          };
+          return appAlertDialog(
+            context,
+            scrollable: true,
+            title: Text(_statusTitle(l10n, status, failure: failure)),
+            content: content,
             actions: [
               TextButton(
                 onPressed: controller.isBusy
                     ? null
                     : () => Navigator.pop(dialogContext),
-                child: Text(localizations.updateLater),
+                child: Text(l10n.updateLater),
               ),
               if (canUpdate)
                 FilledButton(
                   key: const ValueKey('software-update-now'),
                   onPressed: () => unawaited(
-                    _startUpdate(context, dialogContext, controller),
+                    _startUpdate(hostContext, dialogContext, controller),
                   ),
-                  child: Text(localizations.updateNow),
+                  child: Text(l10n.updateNow),
                 ),
             ],
           );
@@ -183,64 +208,52 @@ Future<void> _startUpdate(
   SoftwareUpdateController controller,
 ) async {
   final installResult = await controller.update();
-  if (!pageContext.mounted || installResult?.started == true) {
-    if (installResult?.started == true && dialogContext.mounted) {
-      Navigator.pop(dialogContext);
-    }
-    return;
-  }
   if (!dialogContext.mounted) return;
-  Navigator.pop(dialogContext);
-  await _showInstallFailure(
-    pageContext,
-    controller,
-    installResult?.requiresUserAction == true,
-  );
+  if (installResult?.started == true) {
+    Navigator.pop(dialogContext);
+  } else if (pageContext.mounted && installResult?.requiresUserAction == true) {
+    Navigator.pop(dialogContext);
+    await _showInstallPermission(pageContext);
+  }
 }
 
-String _dialogTitle(AppLocalizations localizations, UpdateStatus status) {
-  return switch (status) {
-    UpdateStatus.updateAvailable => localizations.updateAvailable,
-    UpdateStatus.upToDate => localizations.upToDate,
-    UpdateStatus.unavailable => localizations.updateUnavailable,
-    UpdateStatus.notSupported => localizations.updateNotSupported,
-    _ => localizations.updateCheckFailed,
-  };
-}
+String _statusTitle(
+  AppLocalizations l10n,
+  UpdateStatus status, {
+  String? failure,
+}) => switch (status) {
+  UpdateStatus.updateAvailable => l10n.updateAvailable,
+  UpdateStatus.upToDate => l10n.upToDate,
+  UpdateStatus.unavailable => l10n.updateUnavailable,
+  UpdateStatus.notSupported => l10n.updateNotSupported,
+  UpdateStatus.checking => l10n.checkingForUpdates,
+  UpdateStatus.downloading => l10n.downloadingUpdate,
+  UpdateStatus.verifying => l10n.verifyingUpdate,
+  UpdateStatus.handingOff => l10n.installingUpdate,
+  UpdateStatus.failed when failure != null => l10n.updateFailed,
+  _ => l10n.updateCheckFailed,
+};
 
-String _dialogMessage(
-  AppLocalizations localizations,
-  SoftwareUpdateResult result,
-) {
-  return switch (result.status) {
-    UpdateStatus.updateAvailable => localizations.updateAvailable,
-    UpdateStatus.upToDate => localizations.upToDate,
-    UpdateStatus.unavailable => localizations.updateUnavailable,
-    UpdateStatus.notSupported => localizations.updateNotSupported,
-    _ => switch (result.error?.reason) {
-      UpdateFailureReason.integrity => localizations.updateIntegrityFailed,
-      UpdateFailureReason.assetUnavailable => localizations.updateUnavailable,
-      UpdateFailureReason.notSupported => localizations.updateNotSupported,
-      _ => localizations.updateCheckFailed,
-    },
-  };
-}
+String? _failureDescription(
+  AppLocalizations l10n,
+  SoftwareUpdateException? error,
+) => switch (error?.reason) {
+  UpdateFailureReason.download => l10n.updateDownloadFailed,
+  UpdateFailureReason.integrity => l10n.updateIntegrityFailed,
+  UpdateFailureReason.assetUnavailable => l10n.updateUnavailable,
+  UpdateFailureReason.installer => l10n.updateInstallerFailed,
+  _ => null,
+};
 
-Future<void> _showInstallFailure(
-  BuildContext context,
-  SoftwareUpdateController controller,
-  bool requiresUserAction,
-) {
+Future<void> _showInstallPermission(BuildContext context) {
   final localizations = AppLocalizations.of(context);
-  final message = requiresUserAction
-      ? localizations.updateInstallPermissionRequired
-      : localizations.updateInstallerFailed;
   return showDialog<void>(
     context: context,
     animationStyle: AppMotion.instantIfReduced(context),
-    builder: (dialogContext) => AlertDialog(
-      title: Text(localizations.updateCheckFailed),
-      content: Text(message),
+    builder: (dialogContext) => appAlertDialog(
+      dialogContext,
+      title: Text(localizations.updateFailed),
+      content: Text(localizations.updateInstallPermissionRequired),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext),
@@ -278,39 +291,22 @@ class _VersionRow extends StatelessWidget {
   }
 }
 
-class _StatusMessage extends StatelessWidget {
-  const _StatusMessage({required this.controller});
+class _DownloadProgressView extends StatelessWidget {
+  const _DownloadProgressView({required this.progress});
 
-  final SoftwareUpdateController controller;
+  final DownloadProgress? progress;
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
-    final message = switch (controller.status) {
-      UpdateStatus.downloading => localizations.downloadingUpdate,
-      UpdateStatus.checking => localizations.checkingForUpdates,
-      UpdateStatus.verifying => localizations.verifyingUpdate,
-      UpdateStatus.handingOff => localizations.installingUpdate,
-      UpdateStatus.unavailable => localizations.updateUnavailable,
-      UpdateStatus.notSupported => localizations.updateNotSupported,
-      _ => localizations.updateCheckFailed,
-    };
-    final progress = controller.downloadProgress;
+    final l10n = AppLocalizations.of(context);
+    final value = progress ?? const DownloadProgress(receivedBytes: 0);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 8,
       children: [
-        Text(message),
-        if (progress != null &&
-            (controller.status == UpdateStatus.downloading ||
-                controller.status == UpdateStatus.verifying)) ...[
-          const SizedBox(height: 8),
-          Text(_progressLabel(localizations, progress)),
-          const SizedBox(height: 6),
-          _DownloadProgressIndicator(
-            progress: progress,
-            localizations: localizations,
-          ),
-        ],
+        Text(_progressLabel(l10n, value)),
+        _DownloadProgressIndicator(progress: value, localizations: l10n),
       ],
     );
   }
@@ -337,15 +333,20 @@ class _DownloadProgressIndicator extends StatelessWidget {
         minHeight: 6,
         color: colorScheme.primary,
         backgroundColor: colorScheme.surfaceContainerHighest,
-        semanticsLabel: localizations.downloadingUpdate,
+        semanticsLabel: localizations.updateProgressIndicator,
       );
     }
 
-    if (fraction == null) return indicator(null);
+    if (fraction == null) {
+      return TickerMode(
+        enabled: AppMotion.enabledOf(context),
+        child: indicator(null),
+      );
+    }
 
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(end: fraction),
-      duration: const Duration(milliseconds: 120),
+      duration: AppMotion.duration(context, const Duration(milliseconds: 120)),
       curve: Curves.linear,
       builder: (context, value, child) => indicator(value),
     );

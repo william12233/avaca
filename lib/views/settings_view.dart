@@ -13,6 +13,8 @@ import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
 import '../components/app_appearance_controls.dart';
 import '../components/app_glass_surface.dart';
+import '../components/app_glass_components.dart';
+import '../components/app_glass_menus.dart';
 import '../components/app_help_tooltip.dart';
 import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
@@ -23,6 +25,7 @@ import '../controllers/settings_controller.dart';
 import '../controllers/software_update_controller.dart';
 import '../core/app_appearance.dart';
 import '../core/app_motion.dart';
+import '../core/config.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
 import '../core/shapes.dart';
@@ -555,6 +558,22 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   ) {
     final l10n = AppLocalizations.of(context);
     final appearance = controller.appearance;
+    final glass = appearance.visualTheme == AppVisualTheme.frostedGlass;
+    final standardPalette = AppThemeResolver.resolve(
+      options: AppThemeOptions(
+        mode: switch (controller.themeModeString) {
+          'light' => AppThemeMode.light,
+          'dark' => AppThemeMode.dark,
+          'custom' => AppThemeMode.custom,
+          _ => AppThemeMode.system,
+        },
+        oledBlack: controller.isPureBlack,
+        customPalette: controller.isCustomTheme
+            ? AppPalettes.custom(controller.customColors)
+            : null,
+      ),
+      systemBrightness: MediaQuery.platformBrightnessOf(context),
+    );
     return ListView(
       padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
       children: [
@@ -565,6 +584,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
           title: l10n.visualTheme,
           child: AppThemeChoices(
             selected: appearance.visualTheme,
+            standardPalette: standardPalette,
             tokens: tokens,
             onChanged: (theme) => _saveAppearancePreference(
               context,
@@ -573,7 +593,26 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
           ),
         ),
         const SizedBox(height: 12),
-        _themeModeSelector(context, tokens),
+        if (glass)
+          _settingsCard(
+            context,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: ListTile(
+              key: const ValueKey('appearance-locked'),
+              enabled: false,
+              minTileHeight: tokens.controlHeight,
+              title: Text(l10n.appearance),
+              subtitle: Text(
+                l10n.appearanceLockedForGlass,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              trailing: const Icon(Icons.lock_outline, size: 18),
+            ),
+          )
+        else
+          _themeModeSelector(context, tokens),
         const SizedBox(height: 12),
         AppMotionControl(
           enabled: appearance.motionEnabled,
@@ -1026,7 +1065,8 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {
           final localizations = AppLocalizations.of(context);
-          return AlertDialog(
+          return appAlertDialog(
+            context,
             shape: _outlinedCardShape(context),
             title: Text(localizations.dataTransferDuplicateTitle),
             content: ConstrainedBox(
@@ -1095,7 +1135,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     required Widget image,
   }) {
     final localizations = AppLocalizations.of(context);
-    return Card(
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 0,
       color: Theme.of(context).colorScheme.surfaceContainer,
@@ -1408,7 +1448,8 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => _SettingsTapFeedback(
           id: 'color-dialog',
-          child: AlertDialog(
+          child: appAlertDialog(
+            context,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(_settingsCardRadius),
               side: BorderSide(width: 1, color: temp),
@@ -2036,7 +2077,7 @@ class _ScrapePreferencesSettingsBodyState
               children: [
                 SizedBox(
                   height: widget.tokens.controlHeight,
-                  child: DropdownButtonFormField<bool>(
+                  child: AppDropdownField<bool>(
                     key: const Key('scrape-existing-data-policy'),
                     initialValue: current.fillMissingOnly,
                     isExpanded: true,

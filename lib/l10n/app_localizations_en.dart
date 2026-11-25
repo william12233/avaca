@@ -173,6 +173,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appearance => 'Appearance';
 
   @override
+  String get appearanceLockedForGlass =>
+      'Frosted Glass uses a fixed dark appearance.';
+
+  @override
   String get followSystem => 'Follow System';
 
   @override
@@ -916,8 +920,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadingUpdate => 'Downloading update…';
 
   @override
+  String get updateProgressIndicator => 'Download progress';
+
+  @override
   String updateDownloadProgress(Object percent, Object received, Object total) {
-    return 'Downloading update: $percent% ($received / $total)';
+    return '$percent% ($received / $total)';
   }
 
   @override
@@ -950,6 +957,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateCheckFailed =>
       'Could not check for updates. Try again later.';
+
+  @override
+  String get updateFailed => 'Update failed';
 
   @override
   String get updateDownloadFailed =>

@@ -172,6 +172,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appearance => '外觀';
 
   @override
+  String get appearanceLockedForGlass => '霧面玻璃使用固定深色外觀。';
+
+  @override
   String get followSystem => '跟隨系統';
 
   @override
@@ -890,8 +893,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadingUpdate => '正在下載更新…';
 
   @override
+  String get updateProgressIndicator => '下載進度';
+
+  @override
   String updateDownloadProgress(Object percent, Object received, Object total) {
-    return '正在下載更新：$percent%（$received / $total）';
+    return '$percent%（$received / $total）';
   }
 
   @override
@@ -922,6 +928,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get updateCheckFailed => '檢查更新失敗，請稍後再試。';
+
+  @override
+  String get updateFailed => '更新失敗';
 
   @override
   String get updateDownloadFailed => '更新下載失敗，原有資料未變更。';
@@ -1512,6 +1521,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get appearance => '外观';
+
+  @override
+  String get appearanceLockedForGlass => '磨砂玻璃使用固定深色外观。';
 
   @override
   String get followSystem => '跟随系统';
@@ -2232,8 +2244,11 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get downloadingUpdate => '正在下载更新…';
 
   @override
+  String get updateProgressIndicator => '下载进度';
+
+  @override
   String updateDownloadProgress(Object percent, Object received, Object total) {
-    return '正在下载更新：$percent%（$received / $total）';
+    return '$percent%（$received / $total）';
   }
 
   @override
@@ -2264,6 +2279,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get updateCheckFailed => '检查更新失败，请稍后再试。';
+
+  @override
+  String get updateFailed => '更新失败';
 
   @override
   String get updateDownloadFailed => '更新下载失败，现有资料未变更。';
@@ -2854,6 +2872,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get appearance => '外觀';
+
+  @override
+  String get appearanceLockedForGlass => '霧面玻璃使用固定深色外觀。';
 
   @override
   String get followSystem => '跟隨系統';
@@ -3574,8 +3595,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get downloadingUpdate => '正在下載更新…';
 
   @override
+  String get updateProgressIndicator => '下載進度';
+
+  @override
   String updateDownloadProgress(Object percent, Object received, Object total) {
-    return '正在下載更新：$percent%（$received / $total）';
+    return '$percent%（$received / $total）';
   }
 
   @override
@@ -3606,6 +3630,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get updateCheckFailed => '檢查更新失敗，請稍後再試。';
+
+  @override
+  String get updateFailed => '更新失敗';
 
   @override
   String get updateDownloadFailed => '更新下載失敗，原有資料未變更。';

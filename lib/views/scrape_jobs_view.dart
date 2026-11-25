@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_glass_components.dart';
 import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../core/app_motion.dart';
@@ -153,7 +154,7 @@ class _ScrapeJobsViewState extends State<ScrapeJobsView> {
         final l10n = AppLocalizations.of(context);
         final selected = _selectedJobIds.contains(job.id);
         final colorScheme = Theme.of(context).colorScheme;
-        return Card(
+        return AppCard(
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
@@ -247,7 +248,8 @@ class _ScrapeJobsViewState extends State<ScrapeJobsView> {
     final confirmed = await showDialog<bool>(
       context: context,
       animationStyle: AppMotion.instantIfReduced(context),
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => appAlertDialog(
+        dialogContext,
         title: Text(l10n.scrapeJobsDeleteTitle),
         content: Text(l10n.scrapeJobsDeleteMessage(selectedIds.length)),
         actions: [

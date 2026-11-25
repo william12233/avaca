@@ -182,11 +182,13 @@ class SoftwareUpdateController extends ChangeNotifier {
       final downloaded = await _service.download(
         result,
         onProgress: _publishDownloadProgress,
+        onVerifying: () {
+          _cancelProgressNotification();
+          status = UpdateStatus.verifying;
+          notifyListeners();
+        },
       );
       _cancelProgressNotification();
-      status = UpdateStatus.verifying;
-      notifyListeners();
-
       status = UpdateStatus.handingOff;
       notifyListeners();
       final installResult = await _installer.install(downloaded);

@@ -50,6 +50,7 @@ void main() {
           'avaca-service-test-',
         );
         addTearDown(() => tempRoot.delete(recursive: true));
+        var verifying = false;
         final client = MockClient((request) async {
           if (request.url.path.endsWith('/releases/latest')) {
             return http.Response(
@@ -64,6 +65,7 @@ void main() {
               headers: {'content-length': '${bytes.length}'},
             );
           }
+          expect(verifying, isTrue);
           return http.Response('$checksum  avaca-0.8.2-arm64-v8a.apk\n', 200);
         });
 
@@ -84,6 +86,10 @@ void main() {
         final downloaded = await service.download(
           result,
           onProgress: progress.add,
+          onVerifying: () {
+            expect(progress.last.percentage, 100);
+            verifying = true;
+          },
         );
         expect(progress.first.receivedBytes, 0);
         expect(progress.first.totalBytes, bytes.length);

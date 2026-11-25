@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
+import '../components/app_glass_components.dart';
+import '../components/app_glass_menus.dart';
 import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../controllers/detail_controller.dart';
@@ -545,7 +547,7 @@ class _DetailViewState extends State<DetailView> {
     final name = controller.actressData.name;
     final isEditing = controller.isEditing;
 
-    return Container(
+    return AppPanel(
       key: const Key('detail-profile-panel'),
       padding: EdgeInsets.all(isEditing ? 0 : 12),
       decoration: isEditing
@@ -578,7 +580,7 @@ class _DetailViewState extends State<DetailView> {
     final colorScheme = Theme.of(context).colorScheme;
     final isEditing = controller.isEditing;
 
-    return Container(
+    return AppPanel(
       key: const Key('detail-metadata-panel'),
       padding: EdgeInsets.all(tokens.cardRadius),
       decoration: BoxDecoration(
@@ -671,7 +673,7 @@ class _DetailViewState extends State<DetailView> {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    return PopupMenuButton<_DetailMenuAction>(
+    return AppPopupMenuButton<_DetailMenuAction>(
       popUpAnimationStyle: AppMotion.instantIfReduced(context),
       key: const Key('detail-overflow-menu'),
       icon: const Icon(Icons.more_vert),
@@ -744,9 +746,17 @@ class _DetailViewState extends State<DetailView> {
   // 顯示個人照片、照片操作與屬性內容。
   Widget _buildProfilePanel(AppLayoutTokens tokens) {
     final isEditing = controller.isEditing;
+    final glass = AppSurfaces.of(context).glass > 0;
 
-    return Container(
+    return AppPanel(
       key: const Key('detail-profile-panel'),
+      padding: glass ? const EdgeInsets.all(10) : null,
+      decoration: glass
+          ? BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(tokens.cardRadius),
+            )
+          : null,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final horizontalGap = isEditing && tokens.isCompact
@@ -1334,9 +1344,8 @@ class _DetailViewState extends State<DetailView> {
 
   Future<void> _openBirthDatePicker() async {
     _dismissKeyboard();
-    final result = await showModalBottomSheet<_BirthDatePickerResult>(
+    final result = await showAppModalBottomSheet<_BirthDatePickerResult>(
       context: context,
-      sheetAnimationStyle: AppMotion.instantIfReduced(context),
       isScrollControlled: true,
       builder: (context) => _BirthDatePickerSheet(initialDate: birthDate),
     );
@@ -1533,11 +1542,10 @@ class _DetailViewState extends State<DetailView> {
     if (onTap != null) {
       return SizedBox(
         width: double.infinity,
-        child: Material(
+        child: AppSurfaceMaterial(
           key: key,
           color: colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(radius),
-          clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(radius),
@@ -1547,7 +1555,7 @@ class _DetailViewState extends State<DetailView> {
       );
     }
 
-    return Container(
+    return AppPanel(
       key: key,
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1566,7 +1574,8 @@ class _DetailViewState extends State<DetailView> {
       animationStyle: AppMotion.instantIfReduced(context),
       barrierDismissible: false,
       builder: (dialogContext) {
-        return AlertDialog(
+        return appAlertDialog(
+          dialogContext,
           title: Text(AppLocalizations.of(context).confirmDeleteTitle),
           content: Text(AppLocalizations.of(context).deleteWarningWithPhoto),
           actions: [
@@ -1684,7 +1693,8 @@ class _AliasesDialogState extends State<_AliasesDialog> {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final inputRadius = BorderRadius.circular(AppShapeTokens.dialogRadius);
-    return AlertDialog(
+    return appAlertDialog(
+      context,
       key: const Key('detail-aliases-dialog'),
       shape: RoundedRectangleBorder(borderRadius: inputRadius),
       title: Text(l10n.manageAliases),
@@ -1867,7 +1877,8 @@ class _RatingsDialogState extends State<_RatingsDialog> {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final dialogRadius = BorderRadius.circular(AppShapeTokens.dialogRadius);
-    return AlertDialog(
+    return appAlertDialog(
+      context,
       key: const Key('detail-ratings-dialog'),
       shape: RoundedRectangleBorder(borderRadius: dialogRadius),
       title: Text(l10n.ratingDialogTitle),

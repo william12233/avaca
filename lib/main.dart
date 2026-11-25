@@ -254,7 +254,9 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigatorKey,
       locale: _locale,
-      themeMode: _themeMode,
+      themeMode: _appearance.visualTheme == AppVisualTheme.frostedGlass
+          ? ThemeMode.dark
+          : _themeMode,
       theme: lightTheme,
       darkTheme: darkTheme,
       themeAnimationStyle: motionEnabled
@@ -287,15 +289,14 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
     required AppPalette fallbackPalette,
     required bool motionEnabled,
   }) {
+    final colors = _customColors;
     final theme = AppTheme.fromOptions(
       options: AppThemeOptions(
         mode: mode,
         oledBlack: oledBlack,
-        customPalette: _buildCustomPalette(
-          customColors: _customColors,
-          fallback: fallbackPalette,
-          brightness: brightness,
-        ),
+        customPalette: colors == null
+            ? null
+            : AppPalettes.custom(colors, base: fallbackPalette),
       ),
       systemBrightness: brightness,
       visualTheme: _appearance.visualTheme,
@@ -305,31 +306,6 @@ class _AvacaAppState extends ConsumerState<_AvacaAppContent> {
         : theme.copyWith(
             pageTransitionsTheme: AppMotion.instantPageTransitions,
           );
-  }
-
-  AppPalette? _buildCustomPalette({
-    required Map<String, Color>? customColors,
-    required AppPalette fallback,
-    required Brightness brightness,
-  }) {
-    if (customColors == null) {
-      return null;
-    }
-
-    return AppPalette(
-      brightness: brightness,
-      surface: customColors['surface'] ?? fallback.surface,
-      surfaceContainer:
-          customColors['surfaceContainer'] ?? fallback.surfaceContainer,
-      onSurface: customColors['onSurface'] ?? fallback.onSurface,
-      onSurfaceVariant:
-          customColors['onSurfaceVariant'] ?? fallback.onSurfaceVariant,
-      primary: customColors['primary'] ?? fallback.primary,
-      onPrimary: customColors['onPrimary'] ?? fallback.onPrimary,
-      outline: customColors['outline'] ?? fallback.outline,
-      snackbarBackground:
-          customColors['snackbarBackground'] ?? fallback.snackbarBackground,
-    );
   }
 
   Route<void> _onGenerateRoute(RouteSettings settings) {

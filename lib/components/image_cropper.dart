@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../core/app_motion.dart';
 import 'package:image/image.dart' as img;
 import 'package:avaca/l10n/app_localizations.dart';
+import 'app_glass_components.dart';
 
 class ImageCropper {
   ImageCropper._();
@@ -77,15 +78,18 @@ class _ImageCropperDialogState extends State<_ImageCropperDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(
-        horizontal: _dialogHorizontalInset,
-        vertical: _dialogVerticalInset,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(_dialogPadding),
-        child: _buildContent(context),
+    return appGlassDialog(
+      context,
+      Dialog(
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: _dialogHorizontalInset,
+          vertical: _dialogVerticalInset,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(_dialogPadding),
+          child: _buildContent(context),
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:avaca/components/actress_card.dart';
+import 'package:avaca/components/app_glass_menus.dart';
 import 'package:avaca/core/app_appearance.dart';
 import 'package:avaca/core/app_motion.dart';
 import 'package:avaca/core/config.dart';
@@ -24,35 +25,31 @@ const _motionSample = ValueKey('appearance-motion-sample');
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({'app_locale': 'en'}));
 
-  test('frosted glass respects the custom palette and the OLED override', () {
-    final oled = AppTheme.fromOptions(
-      options: const AppThemeOptions(mode: AppThemeMode.dark, oledBlack: true),
-      systemBrightness: Brightness.dark,
-      visualTheme: AppVisualTheme.frostedGlass,
-    );
-    final oledSurfaces = oled.extension<AppSurfaces>()!;
-    expect(oledSurfaces.glass, 1);
-    expect(oled.scaffoldBackgroundColor, Colors.black);
-    expect(oled.cardTheme.color, const Color(0xFF121212));
-
-    final palette = AppPalettes.dark.copyWith(
-      surface: const Color(0xFF18132C),
-      primary: const Color(0xFFDBC7FF),
-    );
-    final custom = AppTheme.fromOptions(
-      options: AppThemeOptions(
-        mode: AppThemeMode.custom,
-        oledBlack: true,
-        customPalette: palette,
-      ),
-      systemBrightness: Brightness.dark,
-      visualTheme: AppVisualTheme.frostedGlass,
-    );
-    expect(custom.colorScheme.surface, palette.surface);
-    expect(custom.colorScheme.primary, palette.primary);
-    expect(custom.extension<AppSurfaces>()!.glass, 1);
-    expect(custom.cardTheme.color, palette.surfaceContainer);
-  });
+  test(
+    'frosted glass uses its own dark palette for every saved appearance',
+    () {
+      for (final mode in AppThemeMode.values) {
+        for (final brightness in Brightness.values) {
+          final glass = AppTheme.fromOptions(
+            options: AppThemeOptions(
+              mode: mode,
+              oledBlack: true,
+              customPalette: AppPalettes.dark.copyWith(primary: Colors.purple),
+            ),
+            systemBrightness: brightness,
+            visualTheme: AppVisualTheme.frostedGlass,
+          );
+          expect(glass.extension<AppSurfaces>()!.glass, 1);
+          expect(glass.brightness, Brightness.dark);
+          expect(
+            glass.scaffoldBackgroundColor,
+            AppPalettes.frostedGlass.surface,
+          );
+          expect(glass.colorScheme.primary, AppPalettes.frostedGlass.primary);
+        }
+      }
+    },
+  );
 
   testWidgets('glass blurs painted content only within the panel', (
     tester,
@@ -114,41 +111,134 @@ void main() {
     expect(red(173, 119) - red(142, 119), greaterThan(24));
   });
 
-  testWidgets(
-    'glass blurs the scrolling gallery over the original page color',
-    (tester) async {
-      tester.view.physicalSize = const Size(320, 420);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      SharedPreferences.setMockInitialValues({
-        'theme_mode': 'light',
-        'visual_theme': 'frostedGlass',
-        'motion_enabled': false,
-      });
-      await tester.pumpWidget(AvacaApp(db: GoldenFixtureDatabase()));
-      await tester.pumpAndSettle();
+  testWidgets('glass popup and dropdown keep their selections', (tester) async {
+    String? action;
+    bool? selection;
+    const menu = ValueKey('glass-menu');
+    const field = ValueKey('glass-field');
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.fromPalette(
+          AppPalettes.dark,
+          visualTheme: AppVisualTheme.frostedGlass,
+        ),
+        home: Scaffold(
+          appBar: AppBar(
+            actions: [
+              AppPopupMenuButton<String>(
+                key: menu,
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) => action = value,
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'edit', child: Text('Edit collection')),
+                ],
+              ),
+            ],
+          ),
+          body: Center(
+            child: SizedBox(
+              width: 232,
+              child: AppDropdownField<bool>(
+                key: field,
+                initialValue: false,
+                onChanged: (value) => selection = value,
+                decoration: const InputDecoration(labelText: 'Source'),
+                items: const [
+                  DropdownMenuItem(value: false, child: Text('Automatic')),
+                  DropdownMenuItem(value: true, child: Text('Manual')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(menu));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<BackdropFilter>(find.byType(BackdropFilter)).enabled,
+      isTrue,
+    );
+    await tester.tap(find.text('Edit collection'));
+    await tester.pumpAndSettle();
+    expect(action, 'edit');
+    expect(find.text('Edit collection'), findsNothing);
 
-      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-      final context = tester.element(find.byType(Scaffold));
-      expect(
-        scaffold.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
-        AppPalettes.light.surface,
-      );
-      expect(scaffold.extendBodyBehindAppBar, isTrue);
-      final toolbarBottom = tester.getBottomLeft(find.byType(AppBar)).dy;
-      final firstCard = find.byType(ActressCard).first;
-      expect(tester.getTopLeft(firstCard).dy, greaterThan(toolbarBottom));
+    await tester.tap(find.byKey(field));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<BackdropFilter>(find.byType(BackdropFilter)).enabled,
+      isTrue,
+    );
+    await tester.tap(find.text('Manual'));
+    await tester.pumpAndSettle();
+    expect(selection, isTrue);
+    expect(tester.takeException(), isNull);
+  });
 
-      await tester.drag(find.byType(GridView), const Offset(0, -56));
-      await tester.pumpAndSettle();
-      expect(tester.getTopLeft(firstCard).dy, lessThan(toolbarBottom));
-    },
-  );
+  testWidgets('glass covers the gallery, scrolling toolbar and filter sheet', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 420);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({
+      'theme_mode': 'light',
+      'visual_theme': 'frostedGlass',
+      'motion_enabled': false,
+    });
+    await tester.pumpWidget(AvacaApp(db: GoldenFixtureDatabase()));
+    await tester.pumpAndSettle();
+
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    final context = tester.element(find.byType(Scaffold));
+    expect(
+      scaffold.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
+      AppPalettes.frostedGlass.surface,
+    );
+    expect(scaffold.extendBodyBehindAppBar, isTrue);
+    final toolbarBottom = tester.getBottomLeft(find.byType(AppBar)).dy;
+    final firstCard = find.byType(ActressCard).first;
+    expect(tester.getTopLeft(firstCard).dy, greaterThan(toolbarBottom));
+
+    await tester.drag(find.byType(GridView), const Offset(0, -56));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(firstCard).dy, lessThan(toolbarBottom));
+    expect(
+      tester
+          .widgetList<BackdropFilter>(
+            find.descendant(
+              of: firstCard,
+              matching: find.byType(BackdropFilter),
+            ),
+          )
+          .any((filter) => filter.enabled),
+      isTrue,
+    );
+    await tester.tap(find.byTooltip('Filter & Sort'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widgetList<BackdropFilter>(
+            find.descendant(
+              of: find.byType(BottomSheet),
+              matching: find.byType(BackdropFilter),
+            ),
+          )
+          .any((filter) => filter.enabled),
+      isTrue,
+    );
+  });
 
   testWidgets('two separate expanders and a theme that applies and persists', (
     tester,
   ) async {
+    SharedPreferences.setMockInitialValues({
+      'app_locale': 'en',
+      'theme_mode': 'light',
+      'pure_black': true,
+    });
     final database = GoldenFixtureDatabase();
     await tester.pumpWidget(AvacaApp(db: database));
     await tester.pumpAndSettle();
@@ -169,9 +259,6 @@ void main() {
     expect(find.text('Custom Palette'), findsOneWidget);
     expect(find.byKey(_standard), findsOneWidget);
     expect(find.byType(Divider), findsNothing);
-    await tester.tap(find.byKey(_appearanceTile));
-    await _advance(tester);
-
     expect(_surfaces(tester).glass, 0);
     await tester.tap(find.byKey(_glass));
     await tester.pump();
@@ -179,6 +266,18 @@ void main() {
     expect(_surfaces(tester).glass, allOf(greaterThan(0), lessThan(1)));
     await _advance(tester);
     expect(_surfaces(tester).glass, 1);
+    final locked = find.byKey(const ValueKey('appearance-locked'));
+    expect(tester.widget<ListTile>(locked).enabled, isFalse);
+    expect(
+      find.text('Frosted Glass uses a fixed dark appearance.'),
+      findsOneWidget,
+    );
+    expect(find.text('Custom Palette'), findsNothing);
+    await tester.tap(locked);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await _advance(tester);
+    expect(find.byKey(_appearanceTile), findsNothing);
+    expect(find.byKey(_motionSwitch), findsOneWidget);
     expect(
       Theme.of(tester.element(find.byType(AppBar).last)).appBarTheme.shape,
       isNull,
@@ -202,11 +301,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(_surfaces(tester).glass, 1);
     await _openAppearance(tester);
+    expect(locked, findsOneWidget);
     await tester.tap(find.byKey(_themeTile));
     await _advance(tester);
     await tester.tap(find.byKey(_standard));
     await _advance(tester);
     expect(_surfaces(tester).glass, 0);
+    expect(find.byKey(_appearanceTile), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('theme_mode'), 'light');
+    expect(prefs.getBool('pure_black'), isTrue);
   });
 
   testWidgets(

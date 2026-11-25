@@ -6,11 +6,14 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_glass_components.dart';
+import '../components/app_glass_menus.dart';
 import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
 import '../components/javbus_verification_dialog.dart';
 import '../components/local_work_image.dart';
 import '../controllers/works_controller.dart';
+import '../core/app_appearance.dart';
 import '../core/app_motion.dart';
 import '../core/database.dart';
 import '../core/layout.dart';
@@ -238,7 +241,8 @@ class _WorksViewState extends State<WorksView> {
 
       barrierDismissible: false,
 
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => appAlertDialog(
+        dialogContext,
         key: const Key('works-delete-confirm'),
 
         title: Text(l10n.deleteWorksTitle),
@@ -380,7 +384,7 @@ class _WorksViewState extends State<WorksView> {
     final l10n = AppLocalizations.of(context);
     final enabled = controller.status == WorksLoadStatus.loaded;
 
-    return PopupMenuButton<_WorksMenuAction>(
+    return AppPopupMenuButton<_WorksMenuAction>(
       popUpAnimationStyle: AppMotion.instantIfReduced(context),
       key: const Key('works-overflow-menu'),
       icon: const Icon(Icons.more_vert),
@@ -510,10 +514,9 @@ class _WorksViewState extends State<WorksView> {
         top: isOpen ? tokens.gridGap : 0,
         bottom: isOpen ? tokens.gridGap : 0,
       ),
-      child: Material(
+      child: AppSurfaceMaterial(
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(30),
-        clipBehavior: Clip.antiAlias,
         child: InkWell(
           borderRadius: BorderRadius.circular(30),
           onTap: searchFocusNode.requestFocus,
@@ -1045,7 +1048,7 @@ class _WorkCard extends StatelessWidget {
     final imagePath = work['card_image_path']?.toString() ?? '';
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Stack(
+    final content = Stack(
       fit: StackFit.expand,
       children: [
         InkWell(
@@ -1120,6 +1123,13 @@ class _WorkCard extends StatelessWidget {
           ),
       ],
     );
+    return AppSurfaces.of(context).glass > 0
+        ? AppSurfaceMaterial(
+            color: colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(10),
+            child: content,
+          )
+        : content;
   }
 }
 
@@ -1143,7 +1153,8 @@ class _ScrapeProgressDialog extends StatelessWidget {
         .clamp(240.0, 640.0)
         .toDouble();
     final contentWidth = dialogWidth - padding * 2;
-    return AlertDialog(
+    return appAlertDialog(
+      context,
       key: const Key('scrape-progress-dialog'),
       insetPadding: EdgeInsets.symmetric(horizontal: padding, vertical: 16),
       shape: RoundedRectangleBorder(
@@ -1343,7 +1354,8 @@ class _ScrapeResultDialog extends StatelessWidget {
       );
     }
 
-    return AlertDialog(
+    return appAlertDialog(
+      context,
       key: const Key('scrape-result-dialog'),
       insetPadding: EdgeInsets.symmetric(horizontal: padding, vertical: 24),
       shape: RoundedRectangleBorder(

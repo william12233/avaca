@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../components/adaptive_page_layout.dart';
 import '../components/aligned_app_bar_back_button.dart';
+import '../components/app_glass_components.dart';
 import '../components/app_scaffold.dart';
 import '../core/app_motion.dart';
 import '../core/database.dart';
@@ -90,7 +91,7 @@ class _DataHealthViewState extends State<DataHealthView> {
               _Metric(l10n.dataHealthNotStored, health.notStoredWorkCount),
             ]),
             SizedBox(height: tokens.sectionGap),
-            Card(
+            AppCard(
               margin: EdgeInsets.zero,
               child: Column(
                 children: [
@@ -131,7 +132,7 @@ class _DataHealthViewState extends State<DataHealthView> {
   Widget _loadError(BuildContext context, AppLayoutTokens tokens) {
     final l10n = AppLocalizations.of(context);
     return Center(
-      child: Card(
+      child: AppCard(
         margin: EdgeInsets.all(tokens.sectionGap),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -155,7 +156,7 @@ class _DataHealthViewState extends State<DataHealthView> {
   Widget _warningCard(BuildContext context, List<String> warnings) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    return Card(
+    return AppCard(
       margin: EdgeInsets.zero,
       color: colorScheme.errorContainer,
       child: Padding(
@@ -215,7 +216,7 @@ class _DataHealthViewState extends State<DataHealthView> {
           childAspectRatio: 1.7,
           children: metrics
               .map(
-                (metric) => Card(
+                (metric) => AppCard(
                   margin: EdgeInsets.zero,
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -248,7 +249,7 @@ class _DataHealthViewState extends State<DataHealthView> {
     String title,
     Map<String, int> values,
   ) {
-    return Card(
+    return AppCard(
       margin: EdgeInsets.zero,
       child: ExpansionTile(
         expansionAnimationStyle: AppMotion.instantIfReduced(context),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:avaca/l10n/app_localizations.dart';
 import '../components/adaptive_page_layout.dart';
 import '../components/actress_card.dart';
+import '../components/app_glass_components.dart';
 import '../components/app_scaffold.dart';
 import '../components/local_work_image.dart';
 import '../controllers/home_controller.dart';
@@ -80,7 +81,8 @@ class _HomeViewState extends State<HomeView> {
       animationStyle: AppMotion.instantIfReduced(context),
       builder: (dialogContext) {
         final l10n = AppLocalizations.of(dialogContext);
-        return AlertDialog(
+        return appAlertDialog(
+          dialogContext,
           title: Text(l10n.randomWork),
           scrollable: true,
           content: SizedBox(
@@ -137,9 +139,8 @@ class _HomeViewState extends State<HomeView> {
 
   Future<void> openFilterSheet() async {
     _dismissKeyboard();
-    await showModalBottomSheet<void>(
+    await showAppModalBottomSheet<void>(
       context: context,
-      sheetAnimationStyle: AppMotion.instantIfReduced(context),
       showDragHandle: true,
       builder: (_) => _buildFilterSheet(),
     );
@@ -291,10 +292,9 @@ class _HomeViewState extends State<HomeView> {
         top: isOpen ? tokens.gridGap : 0,
         bottom: isOpen ? tokens.gridGap : 0,
       ),
-      child: Material(
+      child: AppSurfaceMaterial(
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(30),
-        clipBehavior: Clip.antiAlias,
         child: InkWell(
           borderRadius: BorderRadius.circular(30),
           onTap: () {

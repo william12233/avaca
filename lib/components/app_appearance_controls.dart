@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_appearance.dart';
 import '../core/app_motion.dart';
+import '../core/config.dart';
 import '../core/layout.dart';
 import '../l10n/app_localizations.dart';
 import 'app_glass_surface.dart';
@@ -11,11 +12,13 @@ class AppThemeChoices extends StatelessWidget {
   const AppThemeChoices({
     super.key,
     required this.selected,
+    required this.standardPalette,
     required this.tokens,
     required this.onChanged,
   });
 
   final AppVisualTheme selected;
+  final AppPalette standardPalette;
   final AppLayoutTokens tokens;
   final ValueChanged<AppVisualTheme> onChanged;
 
@@ -31,6 +34,10 @@ class AppThemeChoices extends StatelessWidget {
           Expanded(
             child: _ThemeChoice(
               visualTheme: theme,
+              previewTheme: AppTheme.fromPalette(
+                standardPalette,
+                visualTheme: theme,
+              ),
               label: switch (theme) {
                 AppVisualTheme.standard => l10n.visualThemeStandard,
                 AppVisualTheme.frostedGlass => l10n.visualThemeFrostedGlass,
@@ -50,6 +57,7 @@ class AppThemeChoices extends StatelessWidget {
 class _ThemeChoice extends StatelessWidget {
   const _ThemeChoice({
     required this.visualTheme,
+    required this.previewTheme,
     required this.label,
     required this.selected,
     required this.radius,
@@ -57,6 +65,7 @@ class _ThemeChoice extends StatelessWidget {
   });
 
   final AppVisualTheme visualTheme;
+  final ThemeData previewTheme;
   final String label;
   final bool selected;
   final BorderRadius radius;
@@ -65,7 +74,6 @@ class _ThemeChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final sample = AppSurfaces.forTheme(visualTheme);
     return Semantics(
       selected: selected,
       inMutuallyExclusiveGroup: true,
@@ -83,7 +91,10 @@ class _ThemeChoice extends StatelessWidget {
               spacing: 8,
               children: [
                 ExcludeSemantics(
-                  child: _ThemeThumbnail(radius: radius, surfaces: sample),
+                  child: Theme(
+                    data: previewTheme,
+                    child: _ThemeThumbnail(radius: radius),
+                  ),
                 ),
                 Row(
                   spacing: 6,
@@ -110,15 +121,15 @@ class _ThemeChoice extends StatelessWidget {
 }
 
 class _ThemeThumbnail extends StatelessWidget {
-  const _ThemeThumbnail({required this.radius, required this.surfaces});
+  const _ThemeThumbnail({required this.radius});
 
   final BorderRadius radius;
-  final AppSurfaces surfaces;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final surfaces = AppSurfaces.of(context);
     return LayoutBuilder(
       builder: (context, constraints) => ClipRRect(
         borderRadius: radius,
