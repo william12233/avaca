@@ -150,7 +150,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
-  String get themeAndColors => 'Appearance';
+  String get themeAndAppearance => 'Theme & Appearance';
 
   @override
   String get interfaceSettings => 'Interface';
@@ -170,7 +170,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get applySettings => 'Apply Settings';
 
   @override
-  String get themeMode => 'Display Mode';
+  String get appearance => 'Appearance';
 
   @override
   String get followSystem => 'Follow System';
@@ -201,13 +201,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your system is set to reduce motion';
 
   @override
-  String get motionPreviewToggle => 'Toggle preview';
+  String get motionPreviewPlaying =>
+      'Motion preview: smooth transition from collection to details';
 
   @override
-  String get motionPreviewExpanded => 'Preview expanded';
-
-  @override
-  String get motionPreviewCollapsed => 'Preview collapsed';
+  String get motionPreviewStill =>
+      'Still preview: collection and details side by side';
 
   @override
   String get appearanceSaveFailed => 'Could not save appearance settings';

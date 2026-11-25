@@ -149,7 +149,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settings => '設定';
 
   @override
-  String get themeAndColors => '外觀';
+  String get themeAndAppearance => '主題與外觀';
 
   @override
   String get interfaceSettings => '介面';
@@ -169,7 +169,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get applySettings => '套用設定';
 
   @override
-  String get themeMode => '顯示模式';
+  String get appearance => '外觀';
 
   @override
   String get followSystem => '跟隨系統';
@@ -199,13 +199,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get motionEffectsSystemReduced => '系統已開啟減少動態效果';
 
   @override
-  String get motionPreviewToggle => '切換預覽';
+  String get motionPreviewPlaying => '動效示意：收藏列表平滑切換至詳情';
 
   @override
-  String get motionPreviewExpanded => '預覽已展開';
-
-  @override
-  String get motionPreviewCollapsed => '預覽已收合';
+  String get motionPreviewStill => '靜態示意：收藏列表和詳情的切換前後';
 
   @override
   String get appearanceSaveFailed => '無法儲存外觀設定';
@@ -1494,7 +1491,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settings => '设置';
 
   @override
-  String get themeAndColors => '外观';
+  String get themeAndAppearance => '主题与外观';
 
   @override
   String get interfaceSettings => '界面';
@@ -1514,7 +1511,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get applySettings => '应用设置';
 
   @override
-  String get themeMode => '显示模式';
+  String get appearance => '外观';
 
   @override
   String get followSystem => '跟随系统';
@@ -1544,13 +1541,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get motionEffectsSystemReduced => '系统已开启减少动态效果';
 
   @override
-  String get motionPreviewToggle => '切换预览';
+  String get motionPreviewPlaying => '动效示意：收藏列表平滑切换至详情';
 
   @override
-  String get motionPreviewExpanded => '预览已展开';
-
-  @override
-  String get motionPreviewCollapsed => '预览已收起';
+  String get motionPreviewStill => '静态示意：收藏列表和详情的切换前后';
 
   @override
   String get appearanceSaveFailed => '无法保存外观设置';
@@ -2839,7 +2833,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settings => '設定';
 
   @override
-  String get themeAndColors => '外觀';
+  String get themeAndAppearance => '主題與外觀';
 
   @override
   String get interfaceSettings => '介面';
@@ -2859,7 +2853,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get applySettings => '套用設定';
 
   @override
-  String get themeMode => '顯示模式';
+  String get appearance => '外觀';
 
   @override
   String get followSystem => '跟隨系統';
@@ -2889,13 +2883,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get motionEffectsSystemReduced => '系統已開啟減少動態效果';
 
   @override
-  String get motionPreviewToggle => '切換預覽';
+  String get motionPreviewPlaying => '動效示意：收藏列表平滑切換至詳情';
 
   @override
-  String get motionPreviewExpanded => '預覽已展開';
-
-  @override
-  String get motionPreviewCollapsed => '預覽已收合';
+  String get motionPreviewStill => '靜態示意：收藏列表和詳情的切換前後';
 
   @override
   String get appearanceSaveFailed => '無法儲存外觀設定';

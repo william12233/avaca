@@ -12,6 +12,7 @@ import '../app/app_providers.dart';
 import '../components/aligned_app_bar_back_button.dart';
 import '../components/adaptive_page_layout.dart';
 import '../components/app_appearance_controls.dart';
+import '../components/app_glass_surface.dart';
 import '../components/app_help_tooltip.dart';
 import '../components/app_scaffold.dart';
 import '../components/app_snackbar.dart';
@@ -65,12 +66,29 @@ AppLayoutTokens _settingsTokensForContext(BuildContext context) {
   );
 }
 
-RoundedRectangleBorder _settingsCardShape(BuildContext context) {
-  return RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(AppShapeTokens.defaultCardRadius),
-    side: AppSurfaces.of(context).edge(Theme.of(context).colorScheme),
-  );
-}
+const _settingsPanelRadius = BorderRadius.all(
+  Radius.circular(AppShapeTokens.defaultCardRadius),
+);
+
+Widget _settingsCard(
+  BuildContext context, {
+  Key? key,
+  required Color color,
+  required Widget child,
+}) => AppGlassSurface(
+  color: color,
+  borderRadius: _settingsPanelRadius,
+  grouped: true,
+  child: Card(
+    key: key,
+    margin: EdgeInsets.zero,
+    elevation: 0,
+    clipBehavior: Clip.antiAlias,
+    color: AppSurfaces.of(context).clearForGlass(color),
+    shape: const RoundedRectangleBorder(borderRadius: _settingsPanelRadius),
+    child: child,
+  ),
+);
 
 Widget _settingsOptionTitle(
   BuildContext context, {
@@ -339,6 +357,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   static final Uri _issuesUri = Uri.parse(
     'https://github.com/william12233/avaca/issues',
   );
+  bool _savingAppearancePreference = false;
   late final SettingsController controller;
   late final DataTransferController dataTransferController;
   late final SoftwareUpdateController updateController;
@@ -375,6 +394,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   Widget build(BuildContext context) {
     return _SettingsInteractionTheme(
       child: AppScaffold(
+        scrollUnderGlassToolbar: true,
         appBar: AppBar(
           title: Text(AppLocalizations.of(context).settings),
           leading: _SettingsTapFeedback(
@@ -388,15 +408,17 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
         ),
         body: AdaptivePageLayout(
           padding: EdgeInsets.zero,
-          compactBuilder: (context, tokens) => _buildSettingsCategories(tokens),
-          expandedBuilder: (context, tokens) =>
-              _buildSettingsCategories(tokens),
+          compactBuilder: _buildSettingsCategories,
+          expandedBuilder: _buildSettingsCategories,
         ),
       ),
     );
   }
 
-  Widget _buildSettingsCategories(AppLayoutTokens tokens) {
+  Widget _buildSettingsCategories(
+    BuildContext context,
+    AppLayoutTokens tokens,
+  ) {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -405,17 +427,20 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
               : tokens.settingsShortContentMaxWidth,
         ),
         child: ListView(
-          padding: tokens.pagePadding,
+          padding: tokens.pagePadding.add(
+            EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+          ),
           children: [
             _categoryCard(
               tokens: tokens,
               feedbackId: 'category-theme-colors',
               icon: Icons.palette_outlined,
-              title: AppLocalizations.of(context).themeAndColors,
+              title: AppLocalizations.of(context).themeAndAppearance,
               onTap: () => _openCategory(
                 titleBuilder: (context) =>
-                    AppLocalizations.of(context).themeAndColors,
-                bodyBuilder: _buildThemeAndColors,
+                    AppLocalizations.of(context).themeAndAppearance,
+                bodyBuilder: _buildThemeAndAppearance,
+                scrollUnderGlassToolbar: true,
               ),
             ),
             const SizedBox(height: 8),
@@ -483,14 +508,9 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
 
     return _SettingsTapFeedback(
       id: feedbackId,
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        color: AppSurfaces.of(
-          context,
-        ).panel(colorScheme.surfaceContainerHighest),
-        elevation: 0,
-        shape: _settingsCardShape(context),
+      child: _settingsCard(
+        context,
+        color: colorScheme.surfaceContainerHighest,
         child: ListTile(
           minTileHeight: tokens.controlHeight,
           leading: Icon(icon),
@@ -515,6 +535,7 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     required String Function(BuildContext context) titleBuilder,
     required Widget Function(BuildContext context, AppLayoutTokens tokens)
     bodyBuilder,
+    bool scrollUnderGlassToolbar = false,
   }) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute(
@@ -522,20 +543,70 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
           controller: controller,
           titleBuilder: titleBuilder,
           bodyBuilder: bodyBuilder,
+          scrollUnderGlassToolbar: scrollUnderGlassToolbar,
         ),
       ),
     );
   }
 
-  Widget _buildThemeAndColors(BuildContext context, AppLayoutTokens tokens) {
+  Widget _buildThemeAndAppearance(
+    BuildContext context,
+    AppLayoutTokens tokens,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final appearance = controller.appearance;
     return ListView(
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
       children: [
+        _settingsExpansionCard(
+          context: context,
+          tokens: tokens,
+          feedbackId: 'visual-theme',
+          title: l10n.visualTheme,
+          child: AppThemeChoices(
+            selected: appearance.visualTheme,
+            tokens: tokens,
+            onChanged: (theme) => _saveAppearancePreference(
+              context,
+              () => controller.visualThemeChanged(theme),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
         _themeModeSelector(context, tokens),
-        const SizedBox(height: 16),
-        AppAppearanceControls(controller: controller, tokens: tokens),
+        const SizedBox(height: 12),
+        AppMotionControl(
+          enabled: appearance.motionEnabled,
+          tokens: tokens,
+          onChanged: (enabled) => _saveAppearancePreference(
+            context,
+            () => controller.motionEnabledChanged(enabled),
+          ),
+        ),
       ],
     );
+  }
+
+  Future<void> _saveAppearancePreference(
+    BuildContext context,
+    Future<bool> Function() save,
+  ) async {
+    if (_savingAppearancePreference) return;
+    _savingAppearancePreference = true;
+    var saved = false;
+    try {
+      saved = await save();
+    } on Exception catch (error) {
+      debugPrint('Appearance preference save failed: $error');
+    } finally {
+      _savingAppearancePreference = false;
+    }
+    if (!saved && context.mounted) {
+      AppSnackBar.showError(
+        context,
+        AppLocalizations.of(context).appearanceSaveFailed,
+      );
+    }
   }
 
   Widget _buildInterfaceSettings(BuildContext context, AppLayoutTokens tokens) {
@@ -852,14 +923,9 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     final hasHelp = helpText != null && helpText.isNotEmpty;
     return _SettingsTapFeedback(
       id: feedbackId,
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        color: AppSurfaces.of(
-          context,
-        ).panel(colorScheme.surfaceContainerHighest),
-        elevation: 0,
-        shape: _settingsCardShape(context),
+      child: _settingsCard(
+        context,
+        color: colorScheme.surfaceContainerHighest,
         child: ListTile(
           key: ValueKey(feedbackId),
           enabled: enabled,
@@ -880,42 +946,45 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
     required AppLayoutTokens tokens,
     required BuildContext context,
     required String feedbackId,
-    required IconData icon,
+    IconData? icon,
     required String title,
     String? helpText,
     double? minTileHeight,
     required Widget child,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final shape = _settingsCardShape(context);
+    final color = colorScheme.surfaceContainerHighest;
+    final fill = AppSurfaces.of(context).clearForGlass(color);
+    const shape = RoundedRectangleBorder(borderRadius: _settingsPanelRadius);
     final hasHelp = helpText != null && helpText.isNotEmpty;
     final expansionTile = ExpansionTile(
       key: PageStorageKey(feedbackId),
       tilePadding: const EdgeInsets.symmetric(horizontal: 16),
       minTileHeight: minTileHeight ?? tokens.controlHeight,
       childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-      backgroundColor: AppSurfaces.of(
-        context,
-      ).panel(colorScheme.surfaceContainerHighest),
-      collapsedBackgroundColor: AppSurfaces.of(
-        context,
-      ).panel(colorScheme.surfaceContainerHighest),
+      backgroundColor: fill,
+      collapsedBackgroundColor: fill,
       shape: shape,
       collapsedShape: shape,
       clipBehavior: Clip.antiAlias,
       expansionAnimationStyle: AppMotion.expansionOf(context),
-      leading: Icon(icon),
+      leading: icon == null ? null : Icon(icon),
       title: _settingsTitle(context, title: title, helpText: helpText),
       children: [child],
     );
     return _SettingsTapFeedback(
       id: feedbackId,
-      child: hasHelp
-          ? ListTileTheme.merge(
-              horizontalTitleGap: AppHelpTitleRow.gap,
-              child: expansionTile,
-            )
-          : expansionTile,
+      child: AppGlassSurface(
+        color: color,
+        borderRadius: _settingsPanelRadius,
+        grouped: true,
+        child: hasHelp
+            ? ListTileTheme.merge(
+                horizontalTitleGap: AppHelpTitleRow.gap,
+                child: expansionTile,
+              )
+            : expansionTile,
+      ),
     );
   }
 
@@ -1101,66 +1170,44 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
   Widget _themeModeSelector(BuildContext context, AppLayoutTokens tokens) {
     final current = controller.themeModeString;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
-    final shape = _settingsCardShape(context);
-
-    return _SettingsTapFeedback(
-      id: 'theme-mode',
-      child: ExpansionTile(
-        key: const PageStorageKey('theme-mode'),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-        minTileHeight: tokens.controlHeight,
-        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        backgroundColor: AppSurfaces.of(
-          context,
-        ).panel(colorScheme.surfaceContainerHighest),
-        collapsedBackgroundColor: AppSurfaces.of(
-          context,
-        ).panel(colorScheme.surfaceContainerHighest),
-        shape: shape,
-        collapsedShape: shape,
-        clipBehavior: Clip.antiAlias,
-        expansionAnimationStyle: AppMotion.expansionOf(context),
-        title: _settingsTitle(
-          context,
-          title: AppLocalizations.of(context).themeMode,
+    return _settingsExpansionCard(
+      context: context,
+      tokens: tokens,
+      feedbackId: 'theme-mode',
+      title: AppLocalizations.of(context).appearance,
+      child: RadioGroup<String>(
+        groupValue: current,
+        onChanged: (selected) async {
+          if (selected != null) {
+            await controller.themeModeChanged(selected);
+          }
+        },
+        child: Column(
+          children: [
+            _themeModeRadioOption(context, tokens, 'system'),
+            _themeModeRadioOption(context, tokens, 'light'),
+            if (isDark && !controller.isCustomTheme)
+              _expandableThemeModeOption(
+                context,
+                tokens: tokens,
+                key: const PageStorageKey('theme-option-dark'),
+                value: 'dark',
+                child: _pureBlackSwitch(context, tokens),
+              )
+            else
+              _themeModeRadioOption(context, tokens, 'dark'),
+            if (controller.isCustomTheme)
+              _expandableThemeModeOption(
+                context,
+                tokens: tokens,
+                key: const PageStorageKey('theme-option-custom'),
+                value: 'custom',
+                child: _customThemeEditor(context, tokens),
+              )
+            else
+              _themeModeRadioOption(context, tokens, 'custom'),
+          ],
         ),
-        children: [
-          RadioGroup<String>(
-            groupValue: current,
-            onChanged: (selected) async {
-              if (selected != null) {
-                await controller.themeModeChanged(selected);
-              }
-            },
-            child: Column(
-              children: [
-                _themeModeRadioOption(context, tokens, 'system'),
-                _themeModeRadioOption(context, tokens, 'light'),
-                if (isDark && !controller.isCustomTheme)
-                  _expandableThemeModeOption(
-                    context,
-                    tokens: tokens,
-                    key: const PageStorageKey('theme-option-dark'),
-                    value: 'dark',
-                    child: _pureBlackSwitch(context, tokens),
-                  )
-                else
-                  _themeModeRadioOption(context, tokens, 'dark'),
-                if (controller.isCustomTheme)
-                  _expandableThemeModeOption(
-                    context,
-                    tokens: tokens,
-                    key: const PageStorageKey('theme-option-custom'),
-                    value: 'custom',
-                    child: _customThemeEditor(context, tokens),
-                  )
-                else
-                  _themeModeRadioOption(context, tokens, 'custom'),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1203,108 +1250,64 @@ class _SettingsViewState extends ConsumerState<_SettingsViewContent> {
 
   Widget _languageSelector(BuildContext context, AppLayoutTokens tokens) {
     final current = controller.localeString;
-    final colorScheme = Theme.of(context).colorScheme;
-    final shape = _settingsCardShape(context);
-
-    return _SettingsTapFeedback(
-      id: 'language',
-      child: ExpansionTile(
-        key: const PageStorageKey('language'),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-        minTileHeight: tokens.controlHeight,
-        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        backgroundColor: AppSurfaces.of(
-          context,
-        ).panel(colorScheme.surfaceContainerHighest),
-        collapsedBackgroundColor: AppSurfaces.of(
-          context,
-        ).panel(colorScheme.surfaceContainerHighest),
-        shape: shape,
-        collapsedShape: shape,
-        clipBehavior: Clip.antiAlias,
-        expansionAnimationStyle: AppMotion.expansionOf(context),
-        title: _settingsTitle(
-          context,
-          title: AppLocalizations.of(context).language,
+    return _settingsExpansionCard(
+      context: context,
+      tokens: tokens,
+      feedbackId: 'language',
+      title: AppLocalizations.of(context).language,
+      child: RadioGroup<String>(
+        groupValue: current,
+        onChanged: (selected) async {
+          if (selected != null) {
+            await controller.languageChanged(selected);
+          }
+        },
+        child: Column(
+          children: controller.getLocaleOptions().map((value) {
+            return RadioListTile<String>(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              minTileHeight: tokens.controlHeight,
+              title: Text(_localeLabel(context, value)),
+              value: value,
+            );
+          }).toList(),
         ),
-        children: [
-          RadioGroup<String>(
-            groupValue: current,
-            onChanged: (selected) async {
-              if (selected != null) {
-                await controller.languageChanged(selected);
-              }
-            },
-            child: Column(
-              children: controller.getLocaleOptions().map((value) {
-                return RadioListTile<String>(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                  minTileHeight: tokens.controlHeight,
-                  title: Text(_localeLabel(context, value)),
-                  value: value,
-                );
-              }).toList(),
-            ),
-          ),
-        ],
       ),
     );
   }
 
   Widget _worksPageSizeSelector(BuildContext context, AppLayoutTokens tokens) {
     final current = controller.worksPageSize;
-    final colorScheme = Theme.of(context).colorScheme;
-    final shape = _settingsCardShape(context);
-
-    return _SettingsTapFeedback(
-      id: 'works-page-size',
-      child: ExpansionTile(
-        key: const PageStorageKey('works-page-size'),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-        minTileHeight: tokens.controlHeight,
-        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        backgroundColor: AppSurfaces.of(
-          context,
-        ).panel(colorScheme.surfaceContainerHighest),
-        collapsedBackgroundColor: AppSurfaces.of(
-          context,
-        ).panel(colorScheme.surfaceContainerHighest),
-        shape: shape,
-        collapsedShape: shape,
-        clipBehavior: Clip.antiAlias,
-        expansionAnimationStyle: AppMotion.expansionOf(context),
-        title: _settingsTitle(
-          context,
-          title: AppLocalizations.of(context).worksPageSize,
-        ),
-        children: [
-          RadioGroup<WorksPageSize>(
-            groupValue: current,
-            onChanged: (selected) async {
-              if (selected != null) {
-                await controller.worksPageSizeChanged(selected);
-              }
-            },
-            child: Column(
-              children: [
-                RadioListTile<WorksPageSize>(
-                  key: const PageStorageKey('works-page-size-option-small'),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                  minTileHeight: tokens.controlHeight,
-                  title: Text(AppLocalizations.of(context).worksPageSizeSmall),
-                  value: WorksPageSize.small,
-                ),
-                RadioListTile<WorksPageSize>(
-                  key: const PageStorageKey('works-page-size-option-large'),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                  minTileHeight: tokens.controlHeight,
-                  title: Text(AppLocalizations.of(context).worksPageSizeLarge),
-                  value: WorksPageSize.large,
-                ),
-              ],
+    return _settingsExpansionCard(
+      context: context,
+      tokens: tokens,
+      feedbackId: 'works-page-size',
+      title: AppLocalizations.of(context).worksPageSize,
+      child: RadioGroup<WorksPageSize>(
+        groupValue: current,
+        onChanged: (selected) async {
+          if (selected != null) {
+            await controller.worksPageSizeChanged(selected);
+          }
+        },
+        child: Column(
+          children: [
+            RadioListTile<WorksPageSize>(
+              key: const PageStorageKey('works-page-size-option-small'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              minTileHeight: tokens.controlHeight,
+              title: Text(AppLocalizations.of(context).worksPageSizeSmall),
+              value: WorksPageSize.small,
             ),
-          ),
-        ],
+            RadioListTile<WorksPageSize>(
+              key: const PageStorageKey('works-page-size-option-large'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              minTileHeight: tokens.controlHeight,
+              title: Text(AppLocalizations.of(context).worksPageSizeLarge),
+              value: WorksPageSize.large,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1655,12 +1658,9 @@ class _ScrapeSourcesSettingsBodyState
     final localizations = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: AppSurfaces.of(context).panel(colorScheme.surfaceContainer),
-      shape: _settingsCardShape(context),
-      clipBehavior: Clip.antiAlias,
+    return _settingsCard(
+      context,
+      color: colorScheme.surfaceContainer,
       child: ListTileTheme.merge(
         horizontalTitleGap: AppHelpTitleRow.gap,
         child: ExpansionTile(
@@ -1776,12 +1776,9 @@ class _ScrapeSourcesSettingsBodyState
         .where((source) => !selected.contains(source))
         .toList(growable: false);
 
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: AppSurfaces.of(context).panel(colorScheme.surfaceContainer),
-      shape: _settingsCardShape(context),
-      clipBehavior: Clip.antiAlias,
+    return _settingsCard(
+      context,
+      color: colorScheme.surfaceContainer,
       child: ListTileTheme.merge(
         horizontalTitleGap: AppHelpTitleRow.gap,
         child: ExpansionTile(
@@ -1866,12 +1863,9 @@ class _ScrapeSourcesSettingsBodyState
   }) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: AppSurfaces.of(context).panel(colorScheme.surfaceContainer),
-      shape: _settingsCardShape(context),
-      clipBehavior: Clip.antiAlias,
+    return _settingsCard(
+      context,
+      color: colorScheme.surfaceContainer,
       child: ExpansionTile(
         expansionAnimationStyle: AppMotion.instantIfReduced(context),
         key: key,
@@ -2030,15 +2024,10 @@ class _ScrapePreferencesSettingsBodyState
         if (current == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return Card(
+        return _settingsCard(
+          context,
           key: const Key('settings-scrape-preferences'),
-          color: AppSurfaces.of(
-            context,
-          ).panel(Theme.of(context).colorScheme.surfaceContainer),
-          shape: _settingsCardShape(context),
-          margin: EdgeInsets.zero,
-          elevation: 0,
-          clipBehavior: Clip.antiAlias,
+          color: Theme.of(context).colorScheme.surfaceContainer,
           child: Padding(
             key: const Key('scrape-preferences-padding'),
             padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
@@ -2162,17 +2151,20 @@ class _SettingsCategoryPage extends StatelessWidget {
     required this.controller,
     required this.titleBuilder,
     required this.bodyBuilder,
+    this.scrollUnderGlassToolbar = false,
   });
 
   final SettingsController controller;
   final String Function(BuildContext context) titleBuilder;
   final Widget Function(BuildContext context, AppLayoutTokens tokens)
   bodyBuilder;
+  final bool scrollUnderGlassToolbar;
 
   @override
   Widget build(BuildContext context) {
     return _SettingsInteractionTheme(
       child: AppScaffold(
+        scrollUnderGlassToolbar: scrollUnderGlassToolbar,
         appBar: AppBar(
           title: Text(titleBuilder(context)),
           leading: _SettingsTapFeedback(

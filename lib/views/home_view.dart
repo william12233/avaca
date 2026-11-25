@@ -177,17 +177,23 @@ class _HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     return AppScaffold(
       appBar: _buildAppBar(),
+      scrollUnderGlassToolbar: true,
       body: AdaptivePageLayout(
         padding: EdgeInsets.zero,
-        compactBuilder: (context, tokens) => _buildHomeContent(tokens),
-        expandedBuilder: (context, tokens) => _buildHomeContent(tokens),
+        compactBuilder: _buildHomeContent,
+        expandedBuilder: _buildHomeContent,
       ),
     );
   }
 
-  Widget _buildHomeContent(AppLayoutTokens tokens) {
+  Widget _buildHomeContent(BuildContext context, AppLayoutTokens tokens) {
     return Column(
       children: [
+        SizedBox(
+          height: controller.isSearchOpen
+              ? MediaQuery.paddingOf(context).top
+              : 0,
+        ),
         _buildSearchBar(tokens),
         Expanded(child: _buildGalleryFuture(tokens)),
       ],
@@ -345,9 +351,17 @@ class _HomeViewState extends State<HomeView> {
             (usableWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
 
         final childAspectRatio = _calculateCardAspectRatio(context, itemWidth);
+        final toolbarInset = controller.isSearchOpen
+            ? 0.0
+            : MediaQuery.paddingOf(context).top;
 
         return GridView.builder(
-          padding: const EdgeInsets.all(padding),
+          padding: EdgeInsets.fromLTRB(
+            padding,
+            padding + toolbarInset,
+            padding,
+            padding,
+          ),
           itemCount: actressData.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,

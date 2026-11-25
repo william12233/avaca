@@ -298,41 +298,67 @@ void main() {
         size: _compactViewport,
       );
       await tester.tap(find.byIcon(Icons.palette_outlined));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.tap(find.byKey(const PageStorageKey('visual-theme')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 220));
       await tester.tap(find.byKey(const PageStorageKey('theme-mode')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 220));
       await expectLater(
         find.byType(Scaffold).last,
         matchesGoldenFile('goldens/compact/settings-theme-expanded.png'),
       );
     });
 
-    testWidgets('Settings frosted glass and motion preview golden', (
-      tester,
-    ) async {
-      await loadUiTestFonts();
-      SharedPreferences.setMockInitialValues({
-        'app_locale': 'zh_TW',
-        'theme_mode': 'dark',
-        'visual_theme': 'frostedGlass',
+    for (final (label, size, displayMode, motion, golden) in [
+      (
+        'desktop while playing',
+        _expandedViewport,
+        'dark',
+        true,
+        'goldens/expanded/settings-appearance-glass.png',
+      ),
+      (
+        'phone with stills',
+        _compactViewport,
+        'light',
+        false,
+        'goldens/compact/settings-appearance-glass.png',
+      ),
+    ]) {
+      testWidgets('Settings frosted glass $label golden', (tester) async {
+        await loadUiTestFonts();
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        SharedPreferences.setMockInitialValues({
+          'app_locale': 'zh_TW',
+          'theme_mode': displayMode,
+          'visual_theme': 'frostedGlass',
+          'motion_enabled': motion,
+        });
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = size;
+        addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(tester.view.resetPhysicalSize);
+        await tester.pumpWidget(AvacaApp(db: GoldenFixtureDatabase()));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('設定'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('主題與外觀'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.tap(find.byKey(const PageStorageKey('visual-theme')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        await expectLater(
+          find.byType(AppScaffold).last,
+          matchesGoldenFile(golden),
+        );
       });
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = _expandedViewport;
-      addTearDown(tester.view.resetDevicePixelRatio);
-      addTearDown(tester.view.resetPhysicalSize);
-      await tester.pumpWidget(AvacaApp(db: GoldenFixtureDatabase()));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('設定'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('外觀'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('切換預覽'));
-      await tester.pumpAndSettle();
-      await expectLater(
-        find.byType(AppScaffold).last,
-        matchesGoldenFile('goldens/expanded/settings-appearance-glass.png'),
-      );
-    });
+    }
 
     testWidgets('Works scrape progress overlay golden', (tester) async {
       final result = Completer<WorksScrapeResult>();

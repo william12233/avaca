@@ -77,7 +77,7 @@ class _AddViewState extends State<AddView> {
         leading: AlignedAppBarBackButton(onPressed: goBack),
         backgroundColor: AppSurfaces.of(
           context,
-        ).toolbar(colorScheme.surfaceContainerHighest),
+        ).clearForGlass(colorScheme.surfaceContainerHighest),
       ),
       body: SafeArea(
         child: AdaptivePageLayout(

@@ -438,7 +438,7 @@ class _DetailViewState extends State<DetailView> {
               centerTitle: true,
               backgroundColor: AppSurfaces.of(
                 context,
-              ).toolbar(colorScheme.surfaceContainerHighest),
+              ).clearForGlass(colorScheme.surfaceContainerHighest),
               leading: controller.isEditing || Navigator.canPop(context)
                   ? AlignedAppBarBackButton(
                       onPressed: controller.isEditing ? _cancelEditMode : null,

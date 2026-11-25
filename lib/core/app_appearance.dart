@@ -13,88 +13,34 @@ const AppAppearance defaultAppearance = (
 
 @immutable
 class AppSurfaces extends ThemeExtension<AppSurfaces> {
-  const AppSurfaces({this.glass = 0, this.tint = 0});
+  const AppSurfaces({this.glass = 0});
 
-  factory AppSurfaces.forTheme(
-    AppVisualTheme theme, {
-    required bool pureBlack,
-  }) {
-    return switch (theme) {
-      AppVisualTheme.standard => const AppSurfaces(),
-      AppVisualTheme.frostedGlass => AppSurfaces(
-        glass: 1,
-        tint: pureBlack ? 0 : 1,
-      ),
-    };
-  }
+  factory AppSurfaces.forTheme(AppVisualTheme theme) => switch (theme) {
+    AppVisualTheme.standard => const AppSurfaces(),
+    AppVisualTheme.frostedGlass => const AppSurfaces(glass: 1),
+  };
 
   final double glass;
-  final double tint;
 
   static AppSurfaces of(BuildContext context) =>
       Theme.of(context).extension<AppSurfaces>() ?? const AppSurfaces();
 
-  BoxDecoration backdrop(ColorScheme scheme, {Color? background}) {
-    final dark = scheme.brightness == Brightness.dark;
-    final base = Color.alphaBlend(
-      background ?? scheme.surface,
-      dark ? const Color(0xFF121212) : Colors.white,
-    );
-    return BoxDecoration(
-      color: base,
-      gradient: tint == 0
-          ? null
-          : LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              stops: const [0, 0.53, 1],
-              colors: [
-                Color.alphaBlend(
-                  (dark ? const Color(0xFF226279) : const Color(0xFF8ED4DB))
-                      .withValues(alpha: tint * 0.34),
-                  base,
-                ),
-                base,
-                Color.alphaBlend(
-                  (dark ? const Color(0xFF3A4D84) : const Color(0xFFA4B7F1))
-                      .withValues(alpha: tint * 0.27),
-                  base,
-                ),
-              ],
-            ),
-    );
-  }
-
-  Color panel(Color base) =>
-      base.withValues(alpha: base.a * (1 - glass * 0.36));
-
-  Color toolbar(Color base) =>
-      base.withValues(alpha: base.a * (1 - glass * 0.42));
-
-  BorderSide edge(ColorScheme scheme) => glass == 0
-      ? BorderSide.none
-      : BorderSide(
-          color: scheme.outline.withValues(
-            alpha: scheme.outline.a * glass * 0.75,
-          ),
-        );
+  Color clearForGlass(Color base) =>
+      base.withValues(alpha: base.a * (1 - glass));
 
   @override
-  AppSurfaces copyWith({double? glass, double? tint}) =>
-      AppSurfaces(glass: glass ?? this.glass, tint: tint ?? this.tint);
+  AppSurfaces copyWith({double? glass}) =>
+      AppSurfaces(glass: glass ?? this.glass);
 
   @override
   AppSurfaces lerp(AppSurfaces? other, double t) => other == null
       ? this
-      : AppSurfaces(
-          glass: lerpDouble(glass, other.glass, t)!,
-          tint: lerpDouble(tint, other.tint, t)!,
-        );
+      : AppSurfaces(glass: lerpDouble(glass, other.glass, t)!);
 
   @override
   bool operator ==(Object other) =>
-      other is AppSurfaces && glass == other.glass && tint == other.tint;
+      other is AppSurfaces && glass == other.glass;
 
   @override
-  int get hashCode => Object.hash(glass, tint);
+  int get hashCode => glass.hashCode;
 }

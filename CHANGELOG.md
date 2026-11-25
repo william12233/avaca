@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1 - 2026-11-25
+
+- Frosted Glass blurs content behind toolbars and settings panels while using
+  the active palette for the page background.
+- Settings → Theme & Appearance has separate expandable sections for theme
+  and appearance. Both theme previews show the same empty collection grid.
+- The Motion Effects switch plays a short transition preview when on and
+  shows before-and-after stills when off or when the system reduces motion.
+
 ## 1.6.0 - 2026-11-25
 
 - Added selectable Default and Frosted Glass themes with side-by-side previews

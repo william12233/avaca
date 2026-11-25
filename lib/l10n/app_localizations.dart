@@ -379,11 +379,11 @@ abstract class AppLocalizations {
   /// **'設定'**
   String get settings;
 
-  /// No description provided for @themeAndColors.
+  /// No description provided for @themeAndAppearance.
   ///
   /// In zh_TW, this message translates to:
-  /// **'外觀'**
-  String get themeAndColors;
+  /// **'主題與外觀'**
+  String get themeAndAppearance;
 
   /// No description provided for @interfaceSettings.
   ///
@@ -415,11 +415,11 @@ abstract class AppLocalizations {
   /// **'套用設定'**
   String get applySettings;
 
-  /// No description provided for @themeMode.
+  /// No description provided for @appearance.
   ///
   /// In zh_TW, this message translates to:
-  /// **'顯示模式'**
-  String get themeMode;
+  /// **'外觀'**
+  String get appearance;
 
   /// No description provided for @followSystem.
   ///
@@ -475,23 +475,17 @@ abstract class AppLocalizations {
   /// **'系統已開啟減少動態效果'**
   String get motionEffectsSystemReduced;
 
-  /// No description provided for @motionPreviewToggle.
+  /// No description provided for @motionPreviewPlaying.
   ///
   /// In zh_TW, this message translates to:
-  /// **'切換預覽'**
-  String get motionPreviewToggle;
+  /// **'動效示意：收藏列表平滑切換至詳情'**
+  String get motionPreviewPlaying;
 
-  /// No description provided for @motionPreviewExpanded.
+  /// No description provided for @motionPreviewStill.
   ///
   /// In zh_TW, this message translates to:
-  /// **'預覽已展開'**
-  String get motionPreviewExpanded;
-
-  /// No description provided for @motionPreviewCollapsed.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'預覽已收合'**
-  String get motionPreviewCollapsed;
+  /// **'靜態示意：收藏列表和詳情的切換前後'**
+  String get motionPreviewStill;
 
   /// No description provided for @appearanceSaveFailed.
   ///

@@ -149,7 +149,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings => '設定';
 
   @override
-  String get themeAndColors => '外観';
+  String get themeAndAppearance => 'テーマと外観';
 
   @override
   String get interfaceSettings => 'インターフェース';
@@ -169,7 +169,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get applySettings => '設定を適用';
 
   @override
-  String get themeMode => '表示モード';
+  String get appearance => '外観';
 
   @override
   String get followSystem => 'システム設定に従う';
@@ -199,13 +199,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get motionEffectsSystemReduced => 'システムで視差効果を減らす設定が有効です';
 
   @override
-  String get motionPreviewToggle => 'プレビューを切り替え';
+  String get motionPreviewPlaying => '動きのプレビュー：コレクションから詳細へ滑らかに切り替わる';
 
   @override
-  String get motionPreviewExpanded => 'プレビューを展開しました';
-
-  @override
-  String get motionPreviewCollapsed => 'プレビューを折りたたみました';
+  String get motionPreviewStill => '静止プレビュー：コレクションと詳細を並べて表示';
 
   @override
   String get appearanceSaveFailed => '外観設定を保存できませんでした';
@@ -1505,7 +1502,7 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get settings => '設定';
 
   @override
-  String get themeAndColors => '外観';
+  String get themeAndAppearance => 'テーマと外観';
 
   @override
   String get interfaceSettings => 'インターフェース';
@@ -1525,7 +1522,7 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get applySettings => '設定を適用';
 
   @override
-  String get themeMode => '表示モード';
+  String get appearance => '外観';
 
   @override
   String get followSystem => 'システム設定に従う';
@@ -1555,13 +1552,10 @@ class AppLocalizationsJaJp extends AppLocalizationsJa {
   String get motionEffectsSystemReduced => 'システムで視差効果を減らす設定が有効です';
 
   @override
-  String get motionPreviewToggle => 'プレビューを切り替え';
+  String get motionPreviewPlaying => '動きのプレビュー：コレクションから詳細へ滑らかに切り替わる';
 
   @override
-  String get motionPreviewExpanded => 'プレビューを展開しました';
-
-  @override
-  String get motionPreviewCollapsed => 'プレビューを折りたたみました';
+  String get motionPreviewStill => '静止プレビュー：コレクションと詳細を並べて表示';
 
   @override
   String get appearanceSaveFailed => '外観設定を保存できませんでした';

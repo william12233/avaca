@@ -209,23 +209,15 @@ class AppTheme {
       systemBrightness: systemBrightness,
     );
 
-    return fromPalette(
-      palette,
-      visualTheme: visualTheme,
-      pureBlack:
-          options.oledBlack &&
-          options.mode != AppThemeMode.custom &&
-          palette.brightness == Brightness.dark,
-    );
+    return fromPalette(palette, visualTheme: visualTheme);
   }
 
   static ThemeData fromPalette(
     AppPalette palette, {
     AppVisualTheme visualTheme = AppVisualTheme.standard,
-    bool pureBlack = false,
   }) {
     final scheme = _colorSchemeFromPalette(palette);
-    final surfaces = AppSurfaces.forTheme(visualTheme, pureBlack: pureBlack);
+    final surfaces = AppSurfaces.forTheme(visualTheme);
 
     return ThemeData(
       useMaterial3: true,
@@ -235,11 +227,8 @@ class AppTheme {
       scaffoldBackgroundColor: palette.surface,
       extensions: [surfaces],
       appBarTheme: _appBarTheme(palette).copyWith(
-        backgroundColor: surfaces.toolbar(palette.surface),
+        backgroundColor: surfaces.clearForGlass(palette.surface),
         scrolledUnderElevation: surfaces.glass == 0 ? null : 0,
-        shape: surfaces.glass == 0
-            ? null
-            : Border(bottom: surfaces.edge(scheme)),
       ),
       cardTheme: _cardTheme(palette),
       textTheme: _textTheme(palette),
